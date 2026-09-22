@@ -132,7 +132,7 @@ The fixture dates (24–29 August 2026), titles, snippets, features, and URLs ar
 
 ## Live query-mismatch rates (September 2026)
 
-On 16 September 2026 none of 73 applicable Google captures failed the check. From 17 to 22 September, 23–46% of daily applicable Google desktop captures in the two existing workspaces did (87 of 348 desktop, 3 of 29 mobile; 0 of 8 Bing). In the 22 September pilot, 6 of 22 first responses failed; an immediate retry fixed 3, and retries about 80 seconds later fixed the rest (one needed two). Before drift-v4, these captures produced most of the `watch` states in both workspaces. The cause is outside this tool; provider request IDs of affected captures are kept in the observation trace.
+Across the two existing workspaces, 90 of 385 applicable captures (23%) failed the check: none of 73 on 16 September 2026, then 25–35% of each day's captures from 17 to 22 September (23–46% per workspace and day). By engine and device: 87 of 348 Google desktop, 3 of 29 Google mobile, 0 of 8 Bing. In the 22 September pilot, 6 of 22 first responses failed; an immediate retry fixed 3, and retries about 80 seconds later fixed the rest (one needed two). In the first study round (30-second pause, up to two retries), 8 of 23 first responses failed; the first retry fixed 4, the second 2, and 2 stayed affected. Before drift-v4, these captures produced most of the `watch` states in both workspaces. The cause is outside this tool; provider request IDs of affected captures are kept in the observation trace.
 
 ## Limits to validate with real data
 

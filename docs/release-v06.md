@@ -4,7 +4,7 @@ A beta release candidate built from real use. It is not an accuracy-certified or
 
 ## What changed and why
 
-Running 54 live panels for a week showed that about one Google capture in four, from 17 September 2026 on, returned organic results for a single word of the query while the provider echoed the full query (see [SearchApi notes](searchapi.md#observed-from-17-september-2026-results-for-one-query-word)). drift-v3 treated those captures as real SERP changes: most `watch` states in both live workspaces came from them. 0.6.0 therefore:
+Running 54 live panels for a week showed that about one Google capture in four (90 of 385 applicable captures; 25–35% per day from 17 September 2026 on) returned organic results for a single word of the query while the provider echoed the full query (see [SearchApi notes](searchapi.md#observed-from-17-september-2026-results-for-one-query-word)). drift-v3 treated those captures as real SERP changes: most `watch` states in both live workspaces came from them. 0.6.0 therefore:
 
 - flags such captures (`query_mismatch`) in the analysis view and never uses them as samples, while keeping the observation and letting a reviewer override the flag;
 - takes status, positions and staleness from the newest valid capture and says how many newer captures were not used;
@@ -22,13 +22,14 @@ Rollback: stop the collector, reinstall 0.5.0 and restart. The database needs no
 
 ## Verification record
 
-Filled in on 23 September 2026 (UTC) for commit `78d1544` and the documentation commit that follows it:
+Recorded on 22–23 September 2026 (UTC):
 
-- 127 automated tests pass on Python 3.14 locally; the GitHub Check workflow runs 3.11–3.14 (link in the handoff).
-- ruff 0.16.7 passes; JavaScript assets parse.
-- Browser walkthrough on copies of the three live workspaces, without a scheduler: portfolio, study dashboard, panel overview, history, compare, data quality, review, AI Overview and panel settings at 1440×900 and 390×844 in light and dark themes. Fixed during the walkthrough: first-score dates a day early for 12-hour intervals, narrow-screen horizontal overflow on four views, row markers against the last baseline capture instead of the whole baseline, rejected captures labelled "sparse" in history, verbose stale reasons. No console errors.
-- Package build, archive inspection and clean install: see the handoff for the exact commands and results.
-- Live: the collector on the operator's Mac runs this code for three workspaces; the prospective study collected its first 23 panels at 22:30Z on 22 September with 12 query-check retries and 40 requests.
+- Automated tests: 127 pass on Python 3.14 in the development tree; the same suite from a clean `git archive` export passes on Python 3.11, 3.12, 3.13 and 3.14 (one environment-dependent test skipped there). GitHub Check on the pushed commits passes on 3.11–3.14 plus lint.
+- ruff 0.16.7 passes; every JavaScript asset parses; `scripts/generate-fixtures.py` reproduces `example-data.json` byte for byte; the synthetic demo gives the documented four outcomes (76.7 review, 0.2 stable, 35.0 watch, sparse).
+- Packaging: `uv build` from a clean export produced `serp_intent_drift-0.6.0` wheel and sdist. The wheel holds 46 files, all under `serp_drift/` or its metadata; neither archive contains a database, key, `.env`, workspace config, report, log or local path. The wheel installed into a fresh Python 3.13 environment, reported `0.6.0`, validated the example config and rendered the demo.
+- Browser walkthrough on copies of the three live workspaces without a scheduler: portfolio, study dashboard, panel overview, history, compare, data quality, review, AI Overview and panel settings at 1440×900 and 390×844, light and dark. Fixed during the walkthrough: first-score dates a day early for 12-hour intervals, horizontal overflow on narrow screens, row markers against the last baseline capture instead of the whole baseline, rejected captures labelled "sparse" in history, verbose stale reasons. Fixed while capturing screenshots: AI Overview list items and code were not rendered, reference numbers ran together. No console errors.
+- Acceptance step 8 (invalid key) passed; see [acceptance](acceptance.md).
+- Live: the collector on the operator's Mac runs this code for three workspaces; the prospective study collected its first 23 panels at 22:30Z on 22 September with 12 query-check retries and 40 requests (8 of 23 first responses rejected; 6 fixed by a retry).
 
 ## Known limits
 
