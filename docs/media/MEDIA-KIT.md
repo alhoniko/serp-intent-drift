@@ -21,7 +21,7 @@ Screenshots of serp-drift **0.6.0**, captured on 22 September 2026 (UTC) from th
 
 **Evidence gap.** No real panel had a confirmed intent change or page-fit mismatch on the capture date, so the decision form of the review workflow is not shown with real data. Screenshot 07 shows what the workflow does instead.
 
-**Rules.** The screenshots are genuine captures; they were cropped (cover only), scaled and framed, never retouched. Private data was avoided at capture time: no settings or connection pages (they show workspace paths), no credentials, no browser chrome.
+**Rules.** The screenshots are genuine captures; they were cropped (cover and the two detail images only), scaled and framed, never retouched. Private data was avoided at capture time: no settings or connection pages (they show workspace paths), no credentials, no browser chrome.
 
 **One line.** serp-drift is an open-source monitor that tells you when a search results page changes enough to deserve a content review, with the working shown.
 
