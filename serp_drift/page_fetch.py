@@ -6,6 +6,8 @@ import socket
 import ssl
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
+from . import __version__
+
 MAX_BYTES = 2_000_000
 
 
@@ -33,7 +35,7 @@ def fetch_page(url: str, timeout: float = 20) -> tuple[str, str, str]:
             # Pin the verified public IP while retaining TLS hostname verification and the Host header.
             connection.sock = ssl.create_default_context().wrap_socket(raw_socket, server_hostname=host) if parts.scheme == "https" else raw_socket
             path = urlunsplit(("", "", parts.path or "/", parts.query, ""))
-            connection.request("GET", path, headers={"User-Agent": "SERPIntentDriftMonitor/0.1 (+https://nikoalho.fi/)", "Accept": "text/html,text/plain,application/xhtml+xml", "Accept-Encoding": "identity"})
+            connection.request("GET", path, headers={"User-Agent": f"SERPIntentDriftMonitor/{__version__} (+https://nikoalho.fi/)", "Accept": "text/html,text/plain,application/xhtml+xml", "Accept-Encoding": "identity"})
             response = connection.getresponse()
             if response.status in {301, 302, 303, 307, 308}:
                 location = response.getheader("Location")
