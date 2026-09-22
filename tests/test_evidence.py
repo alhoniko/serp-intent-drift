@@ -381,7 +381,7 @@ class QueryCheckTests(unittest.TestCase):
                 store.add(DECAY_TARGET, decay_snapshot(hours, degraded=bad), decay_payload(bad))
             config = {'settings': DEFAULTS, 'targets': [DECAY_TARGET]}
             first = evaluation.export_annotation(config, store, Path(temporary) / 'a', sample_results=5, latest_windows=True)
-            second = evaluation.export_annotation(config, store, Path(temporary) / 'b', sample_results=5, latest_windows=True)
+            evaluation.export_annotation(config, store, Path(temporary) / 'b', sample_results=5, latest_windows=True)
             self.assertEqual((first['windows'], first['results'], first['skipped_query_mismatch_captures']), (1, 5, 1))
             self.assertEqual((Path(temporary) / 'a/predictions.jsonl').read_text(), (Path(temporary) / 'b/predictions.jsonl').read_text())
             observed = evaluation.read_jsonl(Path(temporary) / 'a/observations.jsonl')

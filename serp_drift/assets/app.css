@@ -78,7 +78,8 @@ kbd { font-family:var(--font); font-size:11px; color:var(--muted); border:1px so
 .sidebar-foot { display:grid; gap:6px; padding:12px 10px 0; border-top:1px solid var(--line); font-size:12px; color:var(--muted); }
 .code { margin:0; max-width:100%; font-family:var(--mono); font-size:12px; line-height:1.55; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:12px 14px; overflow:auto; white-space:pre; }
 .sidebar-foot a { color:var(--muted); }
-.main { padding:28px 40px 56px; max-width:1200px; width:100%; display:grid; gap:24px; align-content:start; }
+.main { padding:28px 40px 56px; max-width:1200px; width:100%; display:grid; grid-template-columns:minmax(0,1fr); gap:24px; align-content:start; }
+.main > *, .section > * { min-width:0; }
 /* status dots */
 .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--muted); flex:none; box-sizing:border-box; }
 .dot.review { background:var(--review); } .dot.watch { background:var(--watch); } .dot.ok { background:var(--ok); } .dot.info { background:var(--info); }
@@ -318,7 +319,7 @@ input[type=checkbox], input[type=radio] { width:14px; height:14px; margin:0; acc
 @keyframes pulse { 50% { opacity:.5; } }
 /* mobile */
 @media (max-width: 900px) {
-  .shell { grid-template-columns:1fr; }
+  .shell { grid-template-columns:minmax(0,1fr); }
   .topbar { display:flex; align-items:center; gap:10px; height:52px; padding:0 12px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:12; }
   .topbar-actions { margin-left:auto; display:flex; gap:4px; align-items:center; }
   .topbar .switcher { width:auto; max-width:60vw; }
@@ -337,6 +338,17 @@ input[type=checkbox], input[type=radio] { width:14px; height:14px; margin:0; acc
   .cands .cr > :nth-child(n+4) { display:none; }
   .attn { grid-template-columns:8px minmax(0,1fr); }
   .attn .act { grid-column:2; justify-self:start; }
+  /* Narrow screens: segmented filters scroll sideways and table cells truncate instead of widening the page. */
+  .seg { max-width:100%; overflow-x:auto; scrollbar-width:none; }
+  .grid-table { overflow:hidden; }
+  .grid-table .q, .grid-table .q small { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .sides > *, .two > * { min-width:0; }
+  .ai-grid { grid-template-columns:minmax(0,1fr) !important; }
+  .ai-grid > *, .reader > * { min-width:0; }
+  .card-head { flex-wrap:wrap; }
+  .mini-list .mono, .reader p { overflow-wrap:anywhere; }
+  .row-between { flex-wrap:wrap; }
+  .refs { overflow-x:clip; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .runbar, .skeleton, .select-content { animation:none; } .sidebar { transition:none; } }
 @media print { .sidebar, .topbar, .btn, .tabs { display:none !important; } .shell { grid-template-columns:1fr; } .main { padding:0; } }

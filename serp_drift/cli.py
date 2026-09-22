@@ -589,6 +589,8 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"days": args.days, "query_panels": len(config["targets"]), "runs": runs, "scheduled_search_requests": requests,
                               "ai_overview_expansions_max": expandable * runs, "expected_total_max": requests + expandable * runs,
                               "maximum_with_retries": requests * (config["settings"]["max_retries"] + 1) + expandable * runs,
+                              "query_check_retries_max": requests * config["settings"]["retry_query_mismatch"],
+                              "workspace_request_cap": config["settings"]["max_total_requests"] or None, "collect_until": config["settings"]["collect_until"] or None,
                               "note": "One credit per request was observed live; expansions happen only when Google returns a token. Not a price guarantee."}, indent=2))
             return 0
         database = args.db or workspace.database

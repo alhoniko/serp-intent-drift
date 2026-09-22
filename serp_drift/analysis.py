@@ -196,6 +196,8 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
         result["reasons"] = latest["quality"].get("reasons", []) or ["This observation is excluded from comparisons."]
     if latest["source"] != "synthetic" and (now - parse_time(latest["captured_at"])).total_seconds() > interval * 1.75:
         result["status"] = "stale"
+        # An old comparison says nothing current; keep only what explains the gap.
+        result["reasons"] = [reason for reason in result["reasons"] if "different query" in reason]
         result["reasons"].append("No valid capture within 1.75 collection intervals: recent captures did not match the query. Check collection before interpreting this panel."
                                  if rejected else "Collection is overdue. Previous observations cannot describe the current SERP.")
     if last_attempt and not last_attempt["success"] and parse_time(last_attempt["attempted_at"]) > parse_time(latest["captured_at"]):
