@@ -44,7 +44,7 @@ packages = ["serp_drift"]
 
 [tool.hatch.build.targets.sdist]
 include = ["/serp_drift", "/tests", "/scripts", "/examples", "/docs", "/.github", "/README.md", "/LICENSE", "/CHANGELOG.md", "/pyproject.toml", "/.gitignore", "/.env.example"]
-exclude = ["**/__pycache__", "**/*.pyc"]
+exclude = ["**/__pycache__", "**/*.pyc", "/docs/media"]
 
 [tool.ruff]
 line-length = 170

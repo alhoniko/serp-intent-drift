@@ -33,7 +33,11 @@ Prefer no server at all? Fork the repository, add one secret, and [GitHub Action
 - **Data audit.** Retained search parameters, provider request IDs, quality quarantine, and reversible exclusions with reasons. A query-term check flags captures whose organic results do not contain the query (live data showed results for one word of the query); they stay stored but never count as evidence. Older observations remain explicitly unverified.
 - **Honest limits.** Intent comes from English and Finnish lexical rules (add a language with one TOML file, or an optional LLM for the gaps). Coverage is shown on every capture; unknowns cannot trigger a page-fit alert.
 
-Earlier UI screenshots are archived in [the media kit](docs/media/MEDIA-KIT.md); they show 0.4.0.
+![A serp-drift panel in watch status: the SERP changed (score 47) but the estimated intent did not, so no intent shift is confirmed](docs/media/v0.6/branded/03-panel-watch.webp)
+
+![Data-quality view: 4 of 8 captures of the query domain rating returned results for a different query and are kept but not used](docs/media/v0.6/branded/08-data-quality.webp)
+
+Screenshots show 0.6.0 with live data captured on 22 September 2026; they are not live statistics. More views, captions and the reproducible capture and composition tools are in [the media kit](docs/media/MEDIA-KIT.md).
 
 ## Run the demo
 

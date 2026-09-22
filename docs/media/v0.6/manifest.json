@@ -1,0 +1,328 @@
+{
+  "set": "serp-drift 0.6.0 media",
+  "captured": "2026-09-22 (UTC), from the operator's local app on 127.0.0.1:8765 with live workspace data",
+  "note": "Illustrative views as of the capture time, not live statistics. All images are real data; none is synthetic. Captures were taken with docs/media/compose/capture.py and composed with docs/media/compose/compose.py; originals are untouched.",
+  "repository": "https://github.com/alhoniko/serp-intent-drift",
+  "attribution": {
+    "website": "https://nikoalho.fi/",
+    "github": "https://github.com/alhoniko"
+  },
+  "disclosure": "Developed for a paid collaboration with SearchApi.",
+  "assets": [
+    {
+      "id": "00-cover",
+      "original": "originals/03-panel-watch.png",
+      "crop": [
+        530,
+        356,
+        2270,
+        1107
+      ],
+      "branded_web": "branded/00-cover.webp",
+      "branded_html": "branded/00-cover.html",
+      "outside_repository": {
+        "master_png": "masters/00-cover@2x.png",
+        "web_png": "web/00-cover.png"
+      },
+      "captured_at": "2026-09-22T23:04:32Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "cover: crop of 03-panel-watch (decision block and the four separate measures)",
+      "route": "/p/serp-intent-drift/panel/best-crm-software",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-watch-best-crm-software-2026",
+      "size_px": [
+        1200,
+        630
+      ],
+      "caption": "serp-drift separates SERP change, intent, page fit and data quality, and says when a change is not a confirmed intent shift.",
+      "alt": "serp-drift panel explaining a watch status: change observed, intent shift unconfirmed, with separate SERP change, intent, page fit and data quality measures."
+    },
+    {
+      "id": "01-portfolio",
+      "original": "originals/01-portfolio.png",
+      "branded_web": "branded/01-portfolio.webp",
+      "branded_html": "branded/01-portfolio.html",
+      "outside_repository": {
+        "master_png": "masters/01-portfolio@2x.png",
+        "web_png": "web/01-portfolio.png"
+      },
+      "captured_at": "2026-09-22T23:04:05Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "portfolio: all three workspaces",
+      "route": "/portfolio",
+      "theme": "light",
+      "data": "real",
+      "case_id": "collection-health",
+      "caption": "Portfolio on 22 September 2026: three workspaces, 77 panels. Four nikoalho.fi panels are stale because their two newest captures returned results for a different query and were not used.",
+      "alt": "serp-drift portfolio listing three projects and 77 panels; four nikoalho.fi panels are stale because their two newest captures returned results for a different query.",
+      "original_sha256": "eb2395a65daa548f9b6ef556c6c2b4b9a08c6a9a3d7dc8057e9861585634bd06",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "02-study-dashboard",
+      "original": "originals/02-study-dashboard.png",
+      "branded_web": "branded/02-study-dashboard.webp",
+      "branded_html": "branded/02-study-dashboard.html",
+      "outside_repository": {
+        "master_png": "masters/02-study-dashboard@2x.png",
+        "web_png": "web/02-study-dashboard.png"
+      },
+      "captured_at": "2026-09-22T23:03:38Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "dashboard: ahrefs.com 7-day study",
+      "route": "/p/ahrefs-7d/dashboard",
+      "theme": "light",
+      "data": "real",
+      "case_id": "study-ahrefs-7d",
+      "caption": "The prospective ahrefs.com study after its first capture round (22:30 UTC, 22 September 2026): 23 panels building their baselines, 40 of 1,415 requests used, ahrefs.com ranking in 21 of 23 queries.",
+      "alt": "Dashboard of a 23-panel ahrefs.com study after its first capture round: every panel is building its baseline, 40 of 1,415 requests used.",
+      "original_sha256": "ca55dd1afdedef09e0263eac69c77e981d081c35113e3fe0d89f3a74b3ab92c9",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "03-panel-watch",
+      "original": "originals/03-panel-watch.png",
+      "branded_web": "branded/03-panel-watch.webp",
+      "branded_html": "branded/03-panel-watch.html",
+      "outside_repository": {
+        "master_png": "masters/03-panel-watch@2x.png",
+        "web_png": "web/03-panel-watch.png"
+      },
+      "captured_at": "2026-09-22T23:04:32Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "panel overview: best crm software 2026 (nikoalho.fi workspace)",
+      "route": "/p/serp-intent-drift/panel/best-crm-software",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-watch-best-crm-software-2026",
+      "caption": "A watch case: the SERP for 'best crm software 2026' changed (score 47) while the estimated intent stayed commercial, so no intent shift is confirmed. Hollow dots mark two captures rejected by the query-term check.",
+      "alt": "Panel for 'best crm software 2026' in watch status with a change score of 47; the explanation says the intent shift is unconfirmed, and hollow dots mark two rejected captures.",
+      "original_sha256": "e11ae43d3dfbe4ff839fa6e4f7c149543feeca55236a4a1b6901cbdb8a48f5e9",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "04-history",
+      "original": "originals/04-history.png",
+      "branded_web": "branded/04-history.webp",
+      "branded_html": "branded/04-history.html",
+      "outside_repository": {
+        "master_png": "masters/04-history@2x.png",
+        "web_png": "web/04-history.png"
+      },
+      "captured_at": "2026-09-22T23:04:35Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "panel history: URL trajectories",
+      "route": "/p/serp-intent-drift/panel/best-crm-software?tab=history",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-watch-best-crm-software-2026",
+      "caption": "What moved in 'best crm software 2026': on 22 September a Reddit thread entered at position 1 and four listicles (pcmag, klaviyo, business.com, 6sense) left the top ten; HubSpot stayed in the top two.",
+      "alt": "URL trajectory matrix for 'best crm software 2026': a Reddit thread entered at position 1 on 22 September while four listicles left the top ten.",
+      "original_sha256": "86d864120ebc6cafa0fc4361664aad18de45ca6792741d3506344434cc3dd0fc",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "05-compare",
+      "original": "originals/05-compare.png",
+      "branded_web": "branded/05-compare.webp",
+      "branded_html": "branded/05-compare.html",
+      "outside_repository": {
+        "master_png": "masters/05-compare@2x.png",
+        "web_png": "web/05-compare.png"
+      },
+      "captured_at": "2026-09-22T23:04:39Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "panel compare: baseline vs latest",
+      "route": "/p/serp-intent-drift/panel/best-crm-software?tab=compare",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-watch-best-crm-software-2026",
+      "caption": "The baseline (three captures, 16–20 September, averaged) against the latest capture. URL turnover contributes 23 of the 47 points; the intent mix contributes 12.",
+      "alt": "Compare view: the three averaged baseline captures against the latest capture, with each score component's weight, distance and contribution.",
+      "original_sha256": "4275fbd1ad316c218722019b13837bf3830ac558a505dfee0d9400813848b15c",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "06-ai-overview",
+      "original": "originals/06-ai-overview.png",
+      "branded_web": "branded/06-ai-overview.webp",
+      "branded_html": "branded/06-ai-overview.html",
+      "outside_repository": {
+        "master_png": "masters/06-ai-overview@2x.png",
+        "web_png": "web/06-ai-overview.png"
+      },
+      "captured_at": "2026-09-22T23:06:28Z",
+      "app_version": "0.6.0",
+      "commit": "94e670e (assets), 8814bbc (server)",
+      "source_view": "AI Overview reader: canonical tags (Ahrefs example workspace)",
+      "route": "/p/ahrefs/panel/canonical-tags?tab=ai",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-control-canonical-tags",
+      "caption": "A stable control with AI Overview evidence: for 'canonical tags', all 8 captured AI Overviews cited ahrefs.com and 7 cited the declared page. A citation is an observation per capture, not a traffic measure.",
+      "alt": "AI Overview reader for 'canonical tags': ahrefs.com was cited in all 8 captured overviews, the declared page in 7.",
+      "original_sha256": "2e887812f50127c4c4463dec80511ec1691122e8e69e0a1129b7755d1d1af90e",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "07-review",
+      "original": "originals/07-review.png",
+      "branded_web": "branded/07-review.webp",
+      "branded_html": "branded/07-review.html",
+      "outside_repository": {
+        "master_png": "masters/07-review@2x.png",
+        "web_png": "web/07-review.png"
+      },
+      "captured_at": "2026-09-22T23:04:45Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "review tab: watch panel",
+      "route": "/p/serp-intent-drift/panel/best-crm-software?tab=review",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-watch-best-crm-software-2026",
+      "caption": "The review workflow withholds a decision prompt when no change is confirmed: a high change index alone is not treated as an intent shift. No real panel had a confirmed change on 22 September, so a recorded decision cannot be shown with real data.",
+      "alt": "Review tab for a watch panel stating that there is no confirmed change to decide on.",
+      "original_sha256": "603d69c6e6af9da9bf6aba171f5bbf85d1c01f15822726c38646175806ea8519",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "08-data-quality",
+      "original": "originals/08-data-quality.png",
+      "branded_web": "branded/08-data-quality.webp",
+      "branded_html": "branded/08-data-quality.html",
+      "outside_repository": {
+        "master_png": "masters/08-data-quality@2x.png",
+        "web_png": "web/08-data-quality.png"
+      },
+      "captured_at": "2026-09-22T23:04:49Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "data-quality view: domain rating (Ahrefs example workspace)",
+      "route": "/p/ahrefs/panel/domain-rating?tab=evidence",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-quality-domain-rating",
+      "caption": "Data quality for 'domain rating': 4 of 8 captures returned organic results for the word 'rating' only. They are kept as observations but not used, so the baseline completed only on 22 September.",
+      "alt": "Data-quality view for 'domain rating': 4 of 8 captures returned results for a different query and are kept but not used as samples.",
+      "original_sha256": "6bc1e02f934f56ba539a213a171a73c767e9ddce9a1e4f901e7056b4a9705984",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "09-example-dashboard-dark",
+      "original": "originals/09-example-dashboard-dark.png",
+      "branded_web": "branded/09-example-dashboard-dark.webp",
+      "branded_html": "branded/09-example-dashboard-dark.html",
+      "outside_repository": {
+        "master_png": "masters/09-example-dashboard-dark@2x.png",
+        "web_png": "web/09-example-dashboard-dark.png"
+      },
+      "captured_at": "2026-09-22T23:04:52Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "dashboard: Ahrefs example workspace, dark theme",
+      "route": "/p/ahrefs/dashboard",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "collection-health",
+      "caption": "The Ahrefs example workspace in the dark theme: 12 stable panels, 2 with a baseline completed later because of rejected captures; ahrefs.com ranks in 11 of 14 queries.",
+      "alt": "Dark-theme dashboard of the Ahrefs example workspace with 14 panels.",
+      "original_sha256": "7b5c7efe359923f026e401f00f7eabc7ea8da905557833bcb0654d2fa40622f5",
+      "size_px": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "id": "10-detail-data-quality",
+      "original": "originals/08-data-quality.png",
+      "crop": [
+        530,
+        640,
+        2270,
+        1107
+      ],
+      "branded_web": "branded/10-detail-data-quality.webp",
+      "branded_html": "branded/10-detail-data-quality.html",
+      "outside_repository": {
+        "master_png": "masters/10-detail-data-quality@2x.png",
+        "web_png": "web/10-detail-data-quality.png"
+      },
+      "captured_at": "2026-09-22T23:04:49Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "detail crop of 08-data-quality",
+      "route": "/p/ahrefs/panel/domain-rating?tab=evidence",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-quality-domain-rating",
+      "size_px": [
+        1200,
+        630
+      ],
+      "caption": "Readable detail for articles: the data-quality explanation for 'domain rating' (4 of 8 captures rejected by the query-term check).",
+      "alt": "Detail of the data-quality view for 'domain rating': 4 of 8 captures returned results for a different query and are kept but not used as samples."
+    },
+    {
+      "id": "11-detail-history",
+      "original": "originals/04-history.png",
+      "crop": [
+        530,
+        690,
+        2270,
+        1107
+      ],
+      "branded_web": "branded/11-detail-history.webp",
+      "branded_html": "branded/11-detail-history.html",
+      "outside_repository": {
+        "master_png": "masters/11-detail-history@2x.png",
+        "web_png": "web/11-detail-history.png"
+      },
+      "captured_at": "2026-09-22T23:04:35Z",
+      "app_version": "0.6.0",
+      "commit": "8814bbc",
+      "source_view": "detail crop of 04-history",
+      "route": "/p/serp-intent-drift/panel/best-crm-software?tab=history",
+      "theme": "light",
+      "data": "real",
+      "case_id": "case-watch-best-crm-software-2026",
+      "size_px": [
+        1200,
+        630
+      ],
+      "caption": "Readable detail for articles: URL trajectories of 'best crm software 2026' around the 22 September reshuffle.",
+      "alt": "Detail of the URL trajectory matrix for 'best crm software 2026': a Reddit thread entered at position 1 on 22 September while four listicles left the top ten."
+    }
+  ]
+}
