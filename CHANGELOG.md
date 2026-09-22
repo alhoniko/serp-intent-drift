@@ -10,6 +10,7 @@ Changes found through real use: 400 live captures across 54 panels and a prospec
 - **Bounded collection.** `max_total_requests` caps every request a workspace records, and `collect_until` ends collection at a UTC time. The scheduler stops, the dashboard shows the budget and one "Collection ended" notice, and panels keep final observations instead of reporting themselves overdue. `estimate` shows the cap, end date and maximum query-check retries.
 - **Annotation samples.** `benchmark export --sample-results N --latest-windows` produces a manageable, deterministic human-review sample and skips rejected captures.
 - Dataset export adds a `quality_state` column. The settings page edits the three new settings.
+- The main column is centered and widens up to 1,600 px on large screens (was left-aligned at 1,200 px).
 - Documentation: methodology describes whole-baseline comparison (the 0.5 text still described a final-capture anchor), the query-term check, bounded collection and live mismatch rates. New release notes: [docs/release-v06.md](docs/release-v06.md). An example workspace rule pack for free-tool SERPs is in `examples/rules/`.
 - No change to intent rules (`rules-en-fi-v2`), panel identities, storage schema (6) or synthetic demo outcomes. Human-reviewed accuracy is still unmeasured.
 
