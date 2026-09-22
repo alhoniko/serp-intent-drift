@@ -26,6 +26,8 @@ Patterns are Python regular expressions, matched case-insensitively against the 
 
 A workspace file with the same `language` as a built-in pack **extends** it: your patterns are appended. Set `replace = true` to use only your patterns.
 
+`examples/rules/en.toml` is such an extension: it labels free-tool and product-task titles ("Free Backlink Checker", "Keyword Generator", "Rank Tracker") transactional. In the September 2026 live pilot the built-in rules classified 0–7% of rank weight on those SERPs; with the extension, 66–100%. It has not been validated against human labels.
+
 ## What changes when rules change
 
 The effective rule set is part of every panel identity. Built-in packs give `rules-en-fi-v2`. Any workspace pack changes the identity to `rules-…+<languages>-<fingerprint>`, so panels start a fresh baseline; earlier captures stay in the database under the old identity. Change rules deliberately, then re-run `serp-drift run`. `serp-drift rules` prints the loaded packs and the resulting version.

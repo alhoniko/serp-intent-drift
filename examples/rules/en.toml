@@ -1,0 +1,15 @@
+# Example workspace extension of the built-in English pack for free-tool and product-task SERPs.
+# Built-in rules-en-fi-v2 matches nothing in titles such as "Free Backlink Checker" or "Keyword Generator", so tool SERPs
+# stay unclassified and a tool page's fit cannot be judged. Copy this file to <workspace>/rules/en.toml to label such
+# results transactional. It changes that workspace's panel identities (a new baseline starts); decide before collecting.
+# Used unchanged in the September 2026 ahrefs.com study; not validated against human labels.
+language = "en"
+version = 1
+name = "English: tool-task extension (example)"
+
+[rules]
+transactional = [
+  '\b(?:checker|generator|tracker|finder|analy[sz]er)s?\b',
+  '\bfree (?:online |seo |ai |keyword |backlink )?tools?\b',
+  '\bonline tool\b', '\btry (?:it )?(?:for )?free\b', '\bstart (?:your )?free\b',
+]

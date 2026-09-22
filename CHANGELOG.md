@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 · 2026-09-23 · trustworthy collection (release candidate)
+
+Changes found through real use: 400 live captures across 54 panels and a prospective 23-panel study.
+
+- **Query-term check (drift-v4).** About one in four Google captures from 17 September on returned organic results for a single word of the query while the provider reported the requested query unchanged. A capture whose results miss the query terms far more than the panel's own best capture is marked `query_mismatch` in the analysis view. The observation is kept unchanged, the reason is shown, and a reviewer can keep it with a written reason. Before this, such captures caused most `watch` states in the live workspaces.
+- **Invalid observations are not samples.** Quarantined, excluded and query-mismatched captures no longer occupy an interval slot or count toward a baseline. The status comes from the newest valid capture, rejected newer captures are disclosed, and staleness is measured from the valid capture. URL trajectories, the change log, citation history and stability use valid captures. The timeline and chart mark rejected captures.
+- **Retry a rejected response** (`retry_query_mismatch = 1|2`, default off). The rejected response is stored without spending an AI Overview expansion, then the search is repeated after a 30-second pause. Attempt rows record requests since the previous row, so retries are never counted twice.
+- **Bounded collection.** `max_total_requests` caps every request a workspace records, and `collect_until` ends collection at a UTC time. The scheduler stops, the dashboard shows the budget and one "Collection ended" notice, and panels keep final observations instead of reporting themselves overdue. `estimate` shows the cap, end date and maximum query-check retries.
+- **Annotation samples.** `benchmark export --sample-results N --latest-windows` produces a manageable, deterministic human-review sample and skips rejected captures.
+- Dataset export adds a `quality_state` column. The settings page edits the three new settings.
+- Documentation: methodology describes whole-baseline comparison (the 0.5 text still described a final-capture anchor), the query-term check, bounded collection and live mismatch rates. New release notes: [docs/release-v06.md](docs/release-v06.md). An example workspace rule pack for free-tool SERPs is in `examples/rules/`.
+- No change to intent rules (`rules-en-fi-v2`), panel identities, storage schema (6) or synthetic demo outcomes. Human-reviewed accuracy is still unmeasured.
+
 ## 0.5.0 · 2026-09-20 · evidence and decisions
 
 - Returned search-context provenance, context quarantine, reversible observation exclusions and an audit trail; legacy data remains visibly unverified.

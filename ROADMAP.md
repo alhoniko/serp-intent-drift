@@ -48,6 +48,15 @@ staying dependency-free. Items are ordered; each lands as one verified commit.
 - [ ] Independent human benchmark with precision, recall, delay and language breakdown
 - [ ] Full WCAG 2.2 AA audit with assistive-technology testing
 
+## 5. Trustworthy collection (0.6.0)
+- [x] Query-term check: captures whose results miss the query are rejected as evidence, kept as observations, reviewable
+- [x] Invalid captures no longer occupy samples; status from the newest valid capture; honest staleness
+- [x] Optional retry of rejected responses without spending an Overview expansion
+- [x] Workspace request cap and collection end date for bounded studies
+- [x] Deterministic human-review samples
+- [ ] Seven-day prospective study on ahrefs.com (running 22–30 September 2026) and its evidence report
+- [ ] Human annotation of the pilot sample; publish measured numbers only after it returns
+
 ## Next
 - Publish the first real dataset after thirty days of collection and write the benchmark piece on it
 - Language packs beyond English and Finnish (Swedish, German, Spanish are the obvious first three)

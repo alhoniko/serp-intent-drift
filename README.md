@@ -6,7 +6,7 @@ Track when a search results page changes enough to deserve a content review. Goo
 
 [![Check](https://github.com/alhoniko/serp-intent-drift/actions/workflows/check.yml/badge.svg)](https://github.com/alhoniko/serp-intent-drift/actions/workflows/check.yml) ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue) ![License MIT](https://img.shields.io/badge/license-MIT-black)
 
-**0.5.0 beta:** evidence quality, separate intent/page-fit decisions, reversible observation exclusions, and a review workflow. Classification accuracy has not yet been independently measured. See [the upgrade and verification record](docs/release-v05.md).
+**0.6.0 beta (release candidate):** detects captures whose results do not match the query and keeps them out of the evidence, retries them, and bounds collection by a request cap and an end date. Built on 0.5's evidence quality, separate intent/page-fit decisions and review workflow. Classification accuracy has not yet been independently measured. See [the 0.6 release notes](docs/release-v06.md).
 
 ## Quickstart
 
@@ -30,7 +30,7 @@ Prefer no server at all? Fork the repository, add one secret, and [GitHub Action
 - **Page fit.** Declare the intent your page serves, hand in a local export, or let the collector fetch the public HTML; the report compares the estimated SERP intent with that profile.
 - **One app, one process.** Dashboard, panel views, insights across panels, panel management that edits `monitor.toml`, runs and events, a static export, a webhook with a digest, and `serp-drift mcp` for agents.
 - **Review workflow.** Investigate a confirmed change, record an action and rationale, set a review date, and track its outcome. Notification deduplication follows the signal episode.
-- **Data audit.** Retained search parameters, provider request IDs, quality quarantine, and reversible exclusions with reasons. Older observations remain explicitly unverified.
+- **Data audit.** Retained search parameters, provider request IDs, quality quarantine, and reversible exclusions with reasons. A query-term check flags captures whose organic results do not contain the query (live data showed results for one word of the query); they stay stored but never count as evidence. Older observations remain explicitly unverified.
 - **Honest limits.** Intent comes from English and Finnish lexical rules (add a language with one TOML file, or an optional LLM for the gaps). Coverage is shown on every capture; unknowns cannot trigger a page-fit alert.
 
 Earlier UI screenshots are archived in [the media kit](docs/media/MEDIA-KIT.md); they show 0.4.0.
@@ -146,8 +146,9 @@ Results the rules leave `unknown`, or every result in full-review mode, can be l
 - **Watch changes:** a candidate mismatch or change score at/above the configured threshold, without a confirmed review signal.
 - **Stable:** no confirmed intent or page-profile mismatch in the comparison. It does not mean every rank is unchanged.
 - **Building baseline / baseline ready:** more spaced captures are needed.
-- **Check data quality:** an excluded observation or returned context mismatch prevents an intent alert.
+- **Check data quality:** an excluded observation, a returned context mismatch, or only query-mismatched captures prevent an intent alert. When just the newest captures were rejected by the query check, the status comes from the newest valid capture and says so.
 - **Sparse results / collection overdue / collection error:** collection health prevents a current alert.
+- **Collection ended:** the workspace reached its request cap or end date; panels show their final observations.
 
 The change score is a configurable-threshold review priority, **not a probability, Google metric, traffic forecast, or confidence score**. Component weights are documented and versioned in code. Lexical rules infer intent from titles, snippets, and URL paths; English and Finnish ship built in, and any workspace can add a language with one TOML file (see [language packs](docs/language-packs.md)). Other languages retain ranking/feature observations but leave intent unknown. Read [the methodology](docs/methodology.md) before drawing conclusions.
 
@@ -157,6 +158,7 @@ The change score is a configurable-threshold review priority, **not a probabilit
 - Three daily Google panels over 30 days estimate 90 search requests plus up to 90 Overview expansions, or more with retries. In the first live run every request cost one credit and `link=resolved` cost nothing extra; credit conversion and account limits still come from SearchApi, not this arithmetic.
 - HTTP 408/429 and selected 5xx/network failures receive bounded retries. `Retry-After` is respected; waits over 60 seconds halt the run for later retry. Authentication failures halt the remaining panel.
 - `max_requests_per_run` counts attempts, including retries. It is a local per-invocation cap, not a shared account-wide rate limiter. Configure delay/cadence for the account's actual limits.
+- `max_total_requests` caps everything a workspace ever records (searches, retries, Overview expansions); `collect_until = "2026-09-30T02:00:00Z"` ends collection at a UTC time. Both stop the scheduler without error spam. `retry_query_mismatch = 1` (or 2) repeats a search whose results miss the query after a 30-second pause, at one request per retry; the rejected response spends no Overview expansion. In the September 2026 live data roughly one Google capture in four needed it.
 - SQLite retains immutable normalized observations, a scrubbed response subset, and failed attempt codes. It contains search queries and page evidence: keep real databases/reports private unless deliberately sharing them.
 - Feature detection records what the response contained. A token-only AI Overview that could not be expanded is marked `requires_followup`, Google's "not available" message is recorded as `not_available`, and engines without Overviews report `not_applicable`; none of these counts as an observed Overview.
 - The raw provider subset of captures older than `raw_retention_days` (default 90) is dropped; normalized observations and stored AI Overview text are kept.
@@ -164,7 +166,7 @@ The change score is a configurable-threshold review priority, **not a probabilit
 
 ## Documentation
 
-[Methodology](docs/methodology.md) · [Human evaluation](docs/evaluation.md) · [Upgrade and rollback](docs/release-v05.md) · [SearchApi integration and live observations](docs/searchapi.md) · [Language packs](docs/language-packs.md) · [Notifications](docs/notifications.md) · [Insights and dataset](docs/insights.md) · [MCP](docs/mcp.md) · [Labeling](docs/labeling.md) · [Deployment](docs/deployment.md) · [GitHub Actions](docs/github-actions.md) · [The client on its own](docs/client.md) · [Acceptance testing](docs/acceptance.md) · [Architecture](ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
+[Methodology](docs/methodology.md) · [Human evaluation](docs/evaluation.md) · [0.6 release notes](docs/release-v06.md) · [0.5 upgrade and rollback](docs/release-v05.md) · [SearchApi integration and live observations](docs/searchapi.md) · [Language packs](docs/language-packs.md) · [Notifications](docs/notifications.md) · [Insights and dataset](docs/insights.md) · [MCP](docs/mcp.md) · [Labeling](docs/labeling.md) · [Deployment](docs/deployment.md) · [GitHub Actions](docs/github-actions.md) · [The client on its own](docs/client.md) · [Acceptance testing](docs/acceptance.md) · [Architecture](ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
 
 ## Development
 

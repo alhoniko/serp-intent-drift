@@ -8,6 +8,8 @@ serp-drift --dir ~/serp-drift benchmark export --out ~/serp-benchmark --holdout-
 serp-drift benchmark score --predictions ~/serp-benchmark/predictions.jsonl --labels ~/serp-benchmark/labels.jsonl
 ```
 
+For a first pilot, keep it small and deterministic: `--sample-results 90 --latest-windows` keeps a fixed, hash-ordered subset of result rows and one window (the newest valid capture) per panel. Captures rejected by the query-term check are skipped and counted, never exported for annotation.
+
 The export refuses to overwrite annotation files. Keep real queries and snippets private. `observations.jsonl` has unlabelled result evidence and time windows; keep `predictions.jsonl` away from reviewers until annotation is frozen. Every filled label needs `source: "human"` and a reviewer name. Null means unresolved and is excluded from the relevant metric. It must not be turned into a negative label.
 
 For a result, label the intent served *for this query*, plus its content format. Review the actual result when snippets are insufficient; document that in `note`. For a window, judge whether the latest observations provide repeated evidence of a material intent shift compared with the baseline, and separately whether they conflict with the declared page profile. Mark collection corruption or insufficient evidence unresolved, and record why. Do not use rank movement alone as the positive criterion. Two independent reviewers should resolve disagreements before scoring.

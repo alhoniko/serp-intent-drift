@@ -34,7 +34,7 @@ monitor.toml ──load_config──▶ targets (query, engine, market, page, id
 | `intent.py` | Lexical classification of a result (title 3, snippet 2, URL 2, section 2 points) and page profiles. |
 | `normalize.py` | Provider payload → normalized snapshot: canonical URLs, top-ten rows, features, AI Overview summary, aggregates. |
 | `labeling.py` | Optional OpenAI-compatible labels for unknown results, cached. |
-| `storage.py` | SQLite schema and migrations: snapshots, results, attempts, runs, panel_settings, events, ai_overviews, meta, labels. |
+| `storage.py` | SQLite schema and migrations: snapshots, results, attempts, runs, panel_settings, events, ai_overviews, meta, labels. `history()` applies the analysis overlays (human exclusions, the query-term check) to every read. |
 | `analysis.py` | Fixed baseline, interval sampling, confirmation, the five components, `compare_sets`. |
 | `history.py` | Timeline, URL trajectories, change log, period resolution, citations, stability. |
 | `insights.py` | Cross-panel metrics and the dataset export. |
@@ -86,3 +86,9 @@ Standard library only, so `uv tool install` works everywhere and the client can 
 `analysis.explain` supplies one decision contract to the app, JSON exports, static report and MCP. Whole-period membership is frequency-weighted. Review lifecycle never treats an unknown or failed collection as recovery. Reading a dashboard does not create a case or send a notification.
 
 Workspace rules use a ContextVar instead of a process-wide mutable registry. Configuration mutations use an advisory lock, full validation and atomic replacement. SQLite collection locks remain per workspace. `maintenance` provides SQLite backup and offline reanalysis; `evaluation` exports blind annotation tasks and computes held-out human-label metrics.
+
+## 0.6.0 query check and bounded collection
+
+`quality.query_match` scores how much of a capture's rank weight contains every query term; `quality.apply_query_check` compares each capture with the panel's best one and marks outliers `query_mismatch`. It runs inside `Store.history()`, before any date filter, so the app, reports, exports, notifications, insights and MCP all see the same overlay; the stored observation never changes and a human review with `excluded = false` overrides it. `analysis.INVALID_STATES` (quarantined, excluded, query_mismatch) are skipped by the interval sampler; the newest valid capture is the analysed `latest`, and `rejected_after_latest` lists what was skipped.
+
+`cli.capture()` performs one capture of record. With `retry_query_mismatch`, it normalizes the response locally first, stores a rejected response without an Overview expansion, pauses, and searches again. `record_attempt` writes the requests spent since the previous attempt row, which `Store.total_requests()` sums for the workspace cap. `scheduler.budget_exhausted()` (cap or `collect_until`) stops due detection; `report.build_report` turns overdue panels of an ended workspace into final observations and `ProjectState.attention` shows one notice.

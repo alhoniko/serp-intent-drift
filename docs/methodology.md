@@ -1,4 +1,4 @@
-# Methodology · drift-v3 / rules-en-fi-v2
+# Methodology · drift-v4 / rules-en-fi-v2
 
 This monitor measures changes in **observed search results**. Dominant intent is an estimate from visible text, not an observation of the searcher's mind. The system prioritizes human review; it never rewrites a page automatically.
 
@@ -39,11 +39,31 @@ Insufficient classified coverage produces `unknown`; competing known intents pro
 
 ## Fixed baseline and confirmation
 
-The first three eligible, interval-spaced captures form the default baseline. Their intent/type distributions are averaged. The final baseline capture anchors URL membership, rankings, and feature presence. The baseline never rolls forward automatically.
+The first three eligible, interval-spaced captures form the default baseline. The whole baseline is the comparison side: intent and result-type distributions are averaged over its captures, URL and feature membership is the fraction of baseline captures that contained each item, and ranks are each URL's mean position across the baseline (see the table below). No single baseline capture anchors the comparison. The baseline never rolls forward automatically.
 
-The interval sampler retains the first capture, then the next one after the configured interval. A tolerance of the smaller of 60 seconds or 1% of that interval accommodates timer/HTTP timing jitter; this same tolerance is used for collection due checks. Forced captures remain in storage and can be displayed as the latest observation, but cannot fabricate repeated evidence. If the displayed latest capture is not an eligible interval sample, confirmation is suppressed.
+The interval sampler retains the first valid capture, then the next valid one after the configured interval. A tolerance of the smaller of 60 seconds or 1% of that interval accommodates timer/HTTP timing jitter; this same tolerance is used for collection due checks. Forced captures remain in storage and can be displayed as the latest observation, but cannot fabricate repeated evidence. If the displayed latest capture is not an eligible interval sample, confirmation is suppressed.
+
+Captures that do not describe this panel are not samples: a provider-context quarantine, a human exclusion, or a query-term mismatch (next section). They stay in storage and in the timeline, but they neither count toward the baseline nor occupy an interval slot, so a valid capture taken shortly afterwards can fill it. Sparse captures are real observations of this panel and still occupy their slot.
 
 After the baseline, two consecutive spaced captures must agree for a review alert. Sparse captures interrupt the sequence. A gap larger than 1.75 collection intervals breaks consecutive confirmation. Default first possible confirmation therefore needs five eligible captures in total.
+
+## Query-term check (new in drift-v4)
+
+Live collection in September 2026 showed Google captures whose organic results matched only one word of a multi-word query while the provider reported the requested query unchanged: `seo reporting tools` returned sustainability and football "reporting" pages, `domain rating` returned chess and film "ratings", `rank tracker` returned TV-series and baby "trackers". The AI Overview in the same response was usually on topic. Such a capture is a failed collection, not a SERP change.
+
+For every capture of a query with at least two terms (stopwords removed), the check computes the rank-weighted share of organic results whose title, snippet or URL words contain every query term (terms of five or more letters match on a stem). The panel's reference is the best share any of its captures reached. A capture is flagged `query_mismatch` when the reference is at least 0.35 and the capture's share is at most 0.20 and at most 40% of the reference. Single-term queries and panels whose results rarely contain their own query terms abstain. The thresholds are engineering choices fitted to the bimodal pattern in 400 September captures (normal captures 0.35–1.00, affected ones 0.00–0.17); they are not a validated classifier.
+
+The flag is an analysis overlay: the stored observation is unchanged, the reason is shown in the data-quality view, and a reviewer can keep a flagged capture with a written reason. Because the reference can rise later, a panel's first capture can become flagged retroactively once a matching capture exists.
+
+Optional collection behavior: with `retry_query_mismatch = 1` or `2`, a response that fails the check (or, before the panel has a reference, one whose share is at most 0.10) is stored as an observation without an AI Overview expansion, and after a 30-second pause the search is repeated. Every request counts toward the run and workspace budgets. The replacement is the capture of record for that slot; the rejected one is never a sample.
+
+## Status from the newest valid capture
+
+When the newest captures were rejected by the query check, the status is computed from the newest capture that describes the panel, and the reasons state how many newer captures were not used. Staleness is measured from that valid capture: if no valid capture exists within 1.75 intervals, the panel is `stale` with an explanation. Only when every capture is invalid, or the newest is quarantined/excluded, does the panel show `data_quality`. Site and page positions always come from a valid capture. URL trajectories, the change log, citation history and intent stability use valid captures only.
+
+## Bounded collection
+
+`max_total_requests` caps every SearchApi request a workspace records (searches, retries, AI Overview expansions). `collect_until` ends collection at a UTC time. When either is reached the scheduler stops, `run` collects nothing, the dashboard shows one "Collection ended" notice, and panels keep their final observations instead of reporting themselves overdue.
 
 ## Comparing periods and re-anchoring
 
@@ -85,7 +105,7 @@ Low quality, a collection failure newer than the displayed successful snapshot, 
 
 ## Quality and classification evidence
 
-New observations retain an allowlisted provenance trace: requested and returned query, engine, country, language, device, location, page, request ID and provider timestamp. Credentials and request URLs are excluded. A returned context mismatch or substituted query quarantines the capture. Missing provenance remains unverified; legacy metadata is not reconstructed or invented. Title-vocabulary changes are inspection hints, never automatic exclusions.
+New observations retain an allowlisted provenance trace: requested and returned query, engine, country, language, device, location, page, request ID and provider timestamp. Credentials and request URLs are excluded. A returned context mismatch or substituted query quarantines the capture. Missing provenance remains unverified; legacy metadata is not reconstructed or invented. Title-vocabulary changes are inspection hints, never automatic exclusions; the query-term check above is automatic but is an overlay a reviewer can override.
 
 An exclusion requires a written reason and overlays the analysis view. Restoring removes that overlay; it cannot override a provider-context quarantine. Original observations stay unchanged, and every exclusion/restore produces an audit event.
 
@@ -109,6 +129,10 @@ Regenerate with `python3 scripts/generate-fixtures.py`, then `python3 -m serp_dr
 | Search workflow templates | Informational → sparse capture | — | Two usable results; alert suppressed |
 
 The fixture dates (24–29 August 2026), titles, snippets, features, and URLs are invented. These rows describe deterministic software behavior. They provide no evidence about the actual market for CRM automation, Google trends, classifier accuracy, traffic loss, or ranking recovery.
+
+## Live query-mismatch rates (September 2026)
+
+On 16 September 2026 none of 73 applicable Google captures failed the check. From 17 to 22 September, 23–46% of daily applicable Google desktop captures in the two existing workspaces did (87 of 348 desktop, 3 of 29 mobile; 0 of 8 Bing). In the 22 September pilot, 6 of 22 first responses failed; an immediate retry fixed 3, and retries about 80 seconds later fixed the rest (one needed two). Before drift-v4, these captures produced most of the `watch` states in both workspaces. The cause is outside this tool; provider request IDs of affected captures are kept in the observation trace.
 
 ## Limits to validate with real data
 

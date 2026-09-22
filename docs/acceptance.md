@@ -1,6 +1,6 @@
 # Acceptance testing and release gate
 
-For 0.5.0, start with [upgrade and verification](release-v05.md) and the [human benchmark](evaluation.md). Automated checks verify software behavior; they do not measure intent accuracy. The following tests require the operator's credentials, judgment, or publication environment. They are intentionally not marked as passed by synthetic tests.
+For 0.6.0, start with [the release notes and verification record](release-v06.md) and the [human benchmark](evaluation.md). Automated checks verify software behavior; they do not measure intent accuracy. The following tests require the operator's credentials, judgment, or publication environment. They are intentionally not marked as passed by synthetic tests.
 
 ## Offline verification
 
@@ -14,7 +14,7 @@ Expected: four demo scenarios and the exact outcomes in `docs/methodology.md`. O
 
 ## Live SearchApi acceptance
 
-Record: steps 1–4 were completed on 16 September 2026 with one US/English/desktop panel (one credit per search, eight organic results, repeat collection skipped without a request). Step 7 was applied once to that single capture and produced `rules-en-fi-v2`; it must be repeated on a larger labeled sample. Steps 5, 6, 8, and 9 remain open.
+Record: steps 1–4 were completed on 16 September 2026 with one US/English/desktop panel (one credit per search, eight organic results, repeat collection skipped without a request). Step 5: two nikoalho.fi panels fetch their public page at every capture; the stored profile shows the fetched basis and lexical evidence (checked 23 September). Step 6: 54 panels collected daily 16–22 September; baselines completed and later captures were compared. It also exposed query-mismatched captures, handled from 0.6.0. Step 7 was applied once to a single capture and produced `rules-en-fi-v2`; a human-labelled sample is exported but not yet annotated. Step 8 passed on 22 September 2026 (0.6.0 RC): an invalid key gave exit code 1, one failed `http_401` attempt, no snapshot, a `collection_error` report, and the key appeared in no log or report. Step 9: launchd on the operator's Mac has run `serve` with its scheduler since 16 September; a machine-sleep gap has not been deliberately tested.
 
 1. Activate API access. Set `SEARCHAPI_API_KEY` outside source control. Run `account` and record actual credit balance/hourly limits privately.
 2. Use one query, an explicit country/language/device, and a page you own. Run `validate` and `estimate` before spending search credits.
