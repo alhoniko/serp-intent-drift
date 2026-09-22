@@ -272,6 +272,8 @@ input[type=checkbox], input[type=radio] { width:14px; height:14px; margin:0; acc
 .reader h4 { font-size:14px; margin:4px 0 0; color:var(--ink); }
 .reader ul { margin:0 0 0 18px; }
 .reader sup { color:var(--accent); font-size:11px; }
+.reader code { font-family:var(--mono); font-size:12px; }
+.reader pre { overflow-x:auto; margin:0; padding:8px 10px; border:1px solid var(--line-soft); border-radius:6px; }
 .refs { border-top:1px solid var(--line-soft); padding-top:12px; display:grid; gap:8px; font-size:13px; }
 .ref { display:grid; grid-template-columns:20px 1fr; gap:8px; }
 .ref.mine { background:var(--mine); margin:0 -8px; padding:4px 8px; border-radius:4px; }
