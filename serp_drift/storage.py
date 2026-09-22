@@ -8,6 +8,7 @@ import sqlite3
 from urllib.parse import urlsplit
 
 from .normalize import FEATURES
+from .quality import apply_query_check
 
 SCHEMA_VERSION = 6
 
@@ -201,15 +202,9 @@ class Store:
         return self.connection.execute("SELECT COUNT(*) FROM ai_overviews WHERE source=?", (source,)).fetchone()[0]
 
     def history(self, target: dict, source: str = "searchapi", since: str | None = None, until: str | None = None) -> list[dict]:
-        query = "SELECT normalized FROM snapshots WHERE target_id=? AND identity=? AND source=?"
-        params: list = [target["id"], target["identity"], source]
-        if since:
-            query += " AND captured_at>=?"
-            params.append(since)
-        if until:
-            query += " AND captured_at<=?"
-            params.append(until)
-        rows = self.connection.execute(query + " ORDER BY captured_at,id", params).fetchall()
+        # The query check compares a capture with its whole panel, so the overlay is computed before any date filter.
+        rows = self.connection.execute("SELECT normalized FROM snapshots WHERE target_id=? AND identity=? AND source=? ORDER BY captured_at,id",
+                                       (target["id"], target["identity"], source)).fetchall()
         snapshots = [json.loads(row[0]) for row in rows]
         reviews = {row["captured_at"]: dict(row) for row in self.connection.execute(
             "SELECT captured_at,excluded,reason,updated_at FROM observation_reviews WHERE target_id=? AND identity=? AND source=?",
@@ -221,7 +216,12 @@ class Store:
                 if review["excluded"]:
                     snapshot["quality_ok"] = False
                     snapshot["quality"] = {**snapshot.get("quality", {}), "state": "excluded", "eligible": False, "reasons": [review["reason"]]}
-        return snapshots
+        apply_query_check(snapshots)
+        return [snapshot for snapshot in snapshots if (not since or snapshot["captured_at"] >= since) and (not until or snapshot["captured_at"] <= until)]
+
+    def total_requests(self) -> int:
+        """Every SearchApi request this workspace recorded, retries and AI Overview expansions included."""
+        return int(self.connection.execute("SELECT COALESCE(SUM(requests), 0) FROM attempts").fetchone()[0])
 
     def last_capture_time(self, target: dict, source: str = "searchapi") -> str | None:
         row = self.connection.execute("SELECT MAX(captured_at) FROM snapshots WHERE target_id=? AND identity=? AND source=?",

@@ -1,5 +1,6 @@
 """Provider provenance and conservative data-quality checks, independent of intent."""
 
+import math
 import re
 import unicodedata
 
@@ -41,6 +42,95 @@ def assess(payload: dict, search: dict, results: list[dict], minimum: int) -> di
     return {'state': ('quarantined' if trace['mismatches'] or trace['corrected_query'] else 'insufficient') if blocked else 'accepted', 'eligible': not blocked,
             'provenance': 'verified' if 'q' in trace['verified_fields'] else 'unverified',
             'reasons': reasons, 'trace': trace}
+
+
+QUERY_STOP = {'a', 'an', 'the', 'and', 'or', 'for', 'with', 'from', 'what', 'how', 'why', 'are', 'is', 'to', 'of', 'in', 'on', 'at', 'by',
+              'vs', 'versus', 'do', 'does', 'ja', 'tai', 'vai', 'mikä', 'miten', 'kuinka'}
+# A capture is treated as a failed collection only when its organic results miss the query terms far more than this panel's own
+# captures usually do. Thresholds are engineering choices from the September 2026 live data, not a validated classifier.
+QUERY_MATCH_FLOOR = 0.2
+QUERY_MATCH_REFERENCE = 0.35
+QUERY_MATCH_RATIO = 0.4
+QUERY_MATCH_UNREFERENCED = 0.1
+
+
+def query_terms(query: str) -> list[str]:
+    words = re.findall(r'[^\W_]+', unicodedata.normalize('NFKC', query).casefold())
+    return list(dict.fromkeys(word for word in words if word not in QUERY_STOP and len(word) >= 2))
+
+
+def _term_present(term: str, words: set[str]) -> bool:
+    if len(term) <= 4:
+        return term in words or f'{term}s' in words
+    stem = term[:max(4, len(term) - 2)]
+    return any(word.startswith(stem) for word in words)
+
+
+def query_match(snapshot: dict) -> float | None:
+    """Rank-weighted share of organic results whose title, snippet or URL contain every query term. None when not applicable.
+
+    Single-term queries and empty captures abstain: a result set for a different single term cannot be told apart lexically."""
+    terms = query_terms(str((snapshot.get('search') or {}).get('q', '')))
+    results = snapshot.get('results') or []
+    if len(terms) < 2 or not results:
+        return None
+    matched = total = 0.0
+    for row in results:
+        text = ' '.join([str(row.get('title', '')), str(row.get('snippet') or ''), re.sub(r'[/_.\-?=&:]+', ' ', str(row.get('url', '')))])
+        words = set(re.findall(r'[^\W_]+', unicodedata.normalize('NFKC', text).casefold()))
+        weight = 1 / math.log2(int(row.get('position', 1)) + 1)
+        total += weight
+        matched += weight if all(_term_present(term, words) for term in terms) else 0.0
+    return round(matched / total, 3) if total else None
+
+
+def query_check(snapshots: list[dict]) -> dict[str, dict]:
+    """Flag captures whose organic results do not match the panel's own query (observed: results for one query word only).
+
+    The reference is the best match any capture of this panel reached, so the check abstains until one capture has shown that the
+    query terms normally appear in its results. It is an analysis overlay: stored observations are never modified."""
+    shares = {snapshot['captured_at']: query_match(snapshot) for snapshot in snapshots}
+    known = [value for value in shares.values() if value is not None]
+    reference = max(known) if known else None
+    checks = {}
+    for captured_at, share in shares.items():
+        applicable = share is not None and reference is not None and reference >= QUERY_MATCH_REFERENCE
+        flagged = bool(applicable and share <= QUERY_MATCH_FLOOR and share <= reference * QUERY_MATCH_RATIO)
+        checks[captured_at] = {'share': share, 'reference': reference, 'applicable': applicable, 'flagged': flagged}
+    return checks
+
+
+def retry_suspected(history: list[dict], snapshot: dict) -> bool:
+    """Collection-time trigger for one extra request. Without a panel reference only an almost total miss qualifies;
+    a needless retry costs one request and the overlay still decides what the analysis uses."""
+    share = query_match(snapshot)
+    if share is None:
+        return False
+    known = [value for value in (query_match(row) for row in history) if value is not None]
+    reference = max(known) if known else None
+    if reference is not None and reference >= QUERY_MATCH_REFERENCE:
+        return share <= QUERY_MATCH_FLOOR and share <= reference * QUERY_MATCH_RATIO
+    return share <= QUERY_MATCH_UNREFERENCED
+
+
+def apply_query_check(snapshots: list[dict]) -> list[dict]:
+    """Mark flagged captures ineligible in the analysis view. A human review that kept the observation overrides the flag."""
+    for snapshot in snapshots:
+        snapshot.pop('query_check', None)
+    checks = query_check(snapshots)
+    for snapshot in snapshots:
+        check = checks.get(snapshot['captured_at'])
+        if not check or check['share'] is None:
+            continue
+        snapshot['query_check'] = check
+        review = snapshot.get('observation_review') or {}
+        state = (snapshot.get('quality') or {}).get('state')
+        if check['flagged'] and not (review and not review.get('excluded')) and state not in {'quarantined', 'excluded'}:
+            snapshot['quality_ok'] = False
+            snapshot['quality'] = {**(snapshot.get('quality') or {}), 'state': 'query_mismatch', 'eligible': False,
+                                   'reasons': [f"Organic results do not match the query: {check['share']:.0%} of rank weight contains every query term, "
+                                               f"against {check['reference']:.0%} in this panel's best capture. Treated as a failed collection; the observation is kept."]}
+    return snapshots
 
 
 def topic_terms(snapshot: dict) -> set[str]:

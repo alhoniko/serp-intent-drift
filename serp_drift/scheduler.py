@@ -10,6 +10,14 @@ from .storage import Store, parse_time, utc_now
 FAILURE_BACKOFF = timedelta(minutes=15)
 
 
+def budget_exhausted(config: dict, store: Store, now: datetime | None = None) -> bool:
+    """A total request cap or a collection end date stops scheduling; neither is retried as a failure."""
+    settings = config["settings"]
+    cap = settings.get("max_total_requests", 0)
+    until = settings.get("collect_until")
+    return bool((cap and store.total_requests() >= cap) or (until and (now or datetime.now(UTC)) >= parse_time(until)))
+
+
 def due_panels(config: dict, database, now: datetime | None = None) -> list[dict]:
     """Targets whose last capture is older than the interval (or missing), unless paused or a recent attempt failed."""
     now = now or datetime.now(UTC)
@@ -17,6 +25,8 @@ def due_panels(config: dict, database, now: datetime | None = None) -> list[dict
         return list(config["targets"])
     due = []
     with Store(database) as store:
+        if budget_exhausted(config, store, now):
+            return []
         for target in config["targets"]:
             if store.get_setting(target, "paused") == "1":
                 continue
@@ -36,6 +46,8 @@ def next_due_at(config: dict, database, now: datetime | None = None) -> str | No
         return utc_now() if config["targets"] else None
     spacing = timedelta(seconds=minimum_spacing_seconds(config["settings"]))
     with Store(database) as store:
+        if budget_exhausted(config, store, now):
+            return None
         times = []
         for target in config["targets"]:
             if store.get_setting(target, "paused") == "1":

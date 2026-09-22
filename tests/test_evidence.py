@@ -199,3 +199,153 @@ class LabelSafetyTests(unittest.TestCase):
         self.assertTrue(row['results'][0]['label_disagreement'])
         self.assertEqual(row['results'][0]['rule_label']['intent'], 'informational')
         self.assertEqual(row['dominant_intent'], 'commercial')
+
+
+DECAY = SEARCH | {'q': 'content decay'}
+DECAY_TARGET = {'id': 'content-decay', 'query': 'content decay', 'search': DECAY, 'identity': 'decay-panel'}
+
+
+def decay_payload(degraded=False):
+    """Observed September 2026 pattern: some captures return results for one query word only."""
+    rows = [{'position': i, 'link': f'https://site-{i}.example/{"content-hub" if degraded else "content-decay"}',
+             'title': 'Content organization and creators' if degraded else 'What is content decay? How to fix it',
+             'snippet': 'Build a content business.' if degraded else 'Content decay is a slow decline in traffic.'} for i in range(1, 10)]
+    return {'search_metadata': {'status': 'Success'}, 'search_parameters': DECAY, 'organic_results': rows}
+
+
+def decay_snapshot(hours, degraded=False):
+    return normalize(decay_payload(degraded), DECAY, (START + timedelta(hours=hours)).isoformat(), None)
+
+
+class QueryCheckTests(unittest.TestCase):
+    def test_single_word_results_are_flagged_against_the_panels_own_reference(self):
+        from serp_drift.quality import query_check, query_match
+        good, bad = decay_snapshot(0), decay_snapshot(24, degraded=True)
+        self.assertEqual(query_match(good), 1.0)
+        self.assertEqual(query_match(bad), 0.0)
+        checks = query_check([good, bad])
+        self.assertTrue(checks[bad['captured_at']]['flagged'])
+        self.assertFalse(checks[good['captured_at']]['flagged'])
+
+    def test_check_abstains_without_a_reference_or_for_single_terms(self):
+        from serp_drift.quality import query_check, query_match
+        bad = decay_snapshot(0, degraded=True)
+        self.assertFalse(query_check([bad])[bad['captured_at']]['flagged'])
+        single = normalize(response(), SEARCH | {'q': 'eeat'}, START.isoformat(), None)
+        self.assertIsNone(query_match(single))
+
+    def test_history_overlay_keeps_the_observation_and_a_human_can_keep_it(self):
+        with tempfile.TemporaryDirectory() as temporary, Store(Path(temporary) / 'm.sqlite') as store:
+            good, bad = decay_snapshot(0), decay_snapshot(24, degraded=True)
+            store.add(DECAY_TARGET, good, decay_payload())
+            store.add(DECAY_TARGET, bad, decay_payload(True))
+            rows = store.history(DECAY_TARGET)
+            self.assertEqual(rows[1]['quality']['state'], 'query_mismatch')
+            self.assertFalse(rows[1]['quality_ok'])
+            self.assertEqual(json.loads(store.connection.execute('SELECT document FROM observations ORDER BY snapshot_id DESC').fetchone()[0])['quality']['state'], 'accepted')
+            self.assertEqual(len(store.history(DECAY_TARGET, since=rows[1]['captured_at'])), 1)
+            store.review_observation(DECAY_TARGET, bad['captured_at'], False, 'Checked the live SERP: results are correct.')
+            self.assertTrue(store.history(DECAY_TARGET)[1]['quality_ok'])
+
+    def test_mismatched_captures_do_not_occupy_samples_or_confirm(self):
+        rows = [decay_snapshot(0), decay_snapshot(24), decay_snapshot(48)]
+        bad = decay_snapshot(72, degraded=True)
+        retry = decay_snapshot(72.05)
+        from serp_drift.quality import apply_query_check
+        report = analyze(DECAY_TARGET, apply_query_check([*rows, bad, retry]), DEFAULTS, now=START + timedelta(hours=73))
+        self.assertEqual(report['status'], 'stable')
+        self.assertEqual(report['latest']['captured_at'], retry['captured_at'])
+        self.assertIn('query_mismatch', [point.get('quality_state') for point in report['timeline']])
+        latest_bad = analyze(DECAY_TARGET, apply_query_check([*rows, bad]), DEFAULTS, now=START + timedelta(hours=73))
+        self.assertEqual(latest_bad['status'], 'data_quality')
+        self.assertEqual(latest_bad['decision']['title'], 'Latest capture did not match the query')
+
+    def test_collector_retries_a_mismatched_capture_once_and_records_both(self):
+        from serp_drift.cli import collect
+
+        class Fake:
+            requests = 0
+            def __init__(self, payloads): self.payloads, self.pauses = payloads, []
+            def sleep(self, seconds): self.pauses.append(seconds)
+            expansions = 0
+            def ai_overview(self, token, resolve_links=True):
+                self.requests += 1; self.expansions += 1
+                return {'text_blocks': [{'type': 'paragraph', 'answer': 'Content decay is a decline.'}], 'reference_links': []}
+            def search(self, params):
+                self.requests += 1
+                return self.payloads.pop(0)
+        with tempfile.TemporaryDirectory() as temporary:
+            db = Path(temporary) / 'm.sqlite'
+            with Store(db) as store:
+                store.add(DECAY_TARGET, decay_snapshot(-24), decay_payload())
+            settings = DEFAULTS | {'retry_query_mismatch': 1}
+            token = {'ai_overview': {'page_token': 'deferred'}}
+            fake = Fake([decay_payload(True) | token, decay_payload() | token])
+            summary = collect({'settings': settings, 'targets': [DECAY_TARGET]}, db, client=fake)
+            # The rejected response spends no Overview expansion; the capture of record does.
+            self.assertEqual((summary['collected'], fake.requests, fake.expansions, fake.pauses), (1, 3, 1, [30]))
+            with Store(db) as store:
+                codes = [row['code'] for row in store.attempts(DECAY_TARGET)]
+                self.assertEqual(store.total_requests(), 3)
+                states = [row['quality']['state'] for row in store.history(DECAY_TARGET)]
+            self.assertEqual(codes, ['ok', 'query_check_retry'])
+            self.assertEqual(states, ['accepted', 'query_mismatch', 'accepted'])
+            fake = Fake([decay_payload(True)])
+            collect({'settings': DEFAULTS, 'targets': [DECAY_TARGET]}, db, client=fake, force=True)
+            self.assertEqual(fake.requests, 1)
+        with tempfile.TemporaryDirectory() as temporary:
+            # A new panel has no reference yet; an almost total miss still earns the single retry.
+            db = Path(temporary) / 'm.sqlite'
+            fake = Fake([decay_payload(True), decay_payload()])
+            collect({'settings': settings, 'targets': [DECAY_TARGET]}, db, client=fake)
+            self.assertEqual(fake.requests, 2)
+            with Store(db) as store:
+                self.assertEqual([row['quality']['state'] for row in store.history(DECAY_TARGET)], ['query_mismatch', 'accepted'])
+
+    def test_total_request_cap_stops_collection_and_scheduling(self):
+        from serp_drift.cli import collect
+        from serp_drift.client import SearchApi
+        from serp_drift.scheduler import due_panels, next_due_at
+
+        class Opener:
+            calls = 0
+            def open(self, request, timeout):
+                Opener.calls += 1
+                body = json.dumps(decay_payload()).encode()
+                return type('R', (), {'read': lambda self, n: body, '__enter__': lambda self: self, '__exit__': lambda self, *a: None})()
+        other = DECAY_TARGET | {'id': 'other', 'identity': 'other-panel'}
+        settings = DEFAULTS | {'max_total_requests': 1, 'request_delay_seconds': 0, 'ai_overview': 'skip'}
+        config = {'settings': settings, 'targets': [DECAY_TARGET, other]}
+        with tempfile.TemporaryDirectory() as temporary:
+            db = Path(temporary) / 'm.sqlite'
+            summary = collect(config, db, client=SearchApi('k', settings, opener=Opener(), sleep=lambda s: None))
+            self.assertEqual((summary['collected'], Opener.calls), (1, 1))
+            self.assertEqual(summary['budget'], {'cap': 1, 'used': 1, 'exhausted': True})
+            summary = collect(config, db, client=SearchApi('k', settings, opener=Opener(), sleep=lambda s: None), force=True)
+            self.assertEqual((summary['collected'], Opener.calls), (0, 1))
+            self.assertEqual(due_panels(config, db), [])
+            self.assertIsNone(next_due_at(config, db))
+
+    def test_collection_window_end_stops_collection_and_scheduling(self):
+        from serp_drift.cli import collect
+        from serp_drift.config import load_config
+        from serp_drift.scheduler import due_panels
+
+        class Fake:
+            requests = 0
+            def search(self, params):
+                self.requests += 1
+                return decay_payload()
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'monitor.toml'
+            path.write_text('version = 1\n[settings]\ncollect_until = "2026-08-01"\n', encoding='utf-8')
+            with self.assertRaises(ValueError):
+                load_config(path)
+            config = {'settings': DEFAULTS | {'collect_until': '2026-08-01T00:00:00Z'}, 'targets': [DECAY_TARGET]}
+            db = Path(temporary) / 'm.sqlite'
+            fake = Fake()
+            self.assertEqual(collect(config, db, client=fake, force=True)['skipped'], 1)
+            self.assertEqual(fake.requests, 0)
+            Store(db).connection.close()
+            self.assertEqual(due_panels(config, db), [])
+            self.assertEqual(len(due_panels(config | {'settings': DEFAULTS}, db)), 1)

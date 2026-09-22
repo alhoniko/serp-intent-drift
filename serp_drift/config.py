@@ -22,6 +22,9 @@ DEFAULTS = {
     "min_results": 5,
     "drift_threshold": 35,
     "max_requests_per_run": 100,
+    "max_total_requests": 0,
+    "retry_query_mismatch": 0,
+    "collect_until": "",
     "request_delay_seconds": 1,
     "timeout_seconds": 45,
     "max_retries": 2,
@@ -211,8 +214,13 @@ def load_config(path: Path) -> dict:
     if set(data.get("settings", {})) - DEFAULTS.keys():
         raise ValueError("Unknown settings field.")
     settings = DEFAULTS | data.get("settings", {})
-    integer_keys = {"baseline_size", "confirmations", "min_results", "max_requests_per_run", "max_retries", "raw_retention_days"}
+    integer_keys = {"baseline_size", "confirmations", "min_results", "max_requests_per_run", "max_retries", "raw_retention_days",
+                    "max_total_requests", "retry_query_mismatch"}
     for key, value in settings.items():
+        if key == "collect_until":
+            if not isinstance(value, str) or (value and not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z", value)):
+                raise ValueError("collect_until must be empty or a UTC timestamp such as 2026-09-30T02:00:00Z.")
+            continue
         if key in TEXT_SETTINGS:
             if value not in TEXT_SETTINGS[key]:
                 raise ValueError(f"{key} must be one of {TEXT_SETTINGS[key]}.")
@@ -221,10 +229,10 @@ def load_config(path: Path) -> dict:
             raise ValueError(f"{key} must be a finite number.")
         if key in integer_keys and not isinstance(value, int):
             raise ValueError(f"{key} must be an integer.")
-        if value < (0 if key in {"max_retries", "request_delay_seconds", "raw_retention_days"} else 1):
+        if value < (0 if key in {"max_retries", "request_delay_seconds", "raw_retention_days", "max_total_requests", "retry_query_mismatch"} else 1):
             raise ValueError(f"{key} is below the allowed minimum.")
-    if settings["min_results"] > 10 or settings["max_retries"] > 5 or settings["drift_threshold"] > 100:
-        raise ValueError("min_results <= 10, max_retries <= 5, and drift_threshold <= 100 are required.")
+    if settings["min_results"] > 10 or settings["max_retries"] > 5 or settings["drift_threshold"] > 100 or settings["retry_query_mismatch"] > 2:
+        raise ValueError("min_results <= 10, max_retries <= 5, retry_query_mismatch <= 2, and drift_threshold <= 100 are required.")
     if settings["timeout_seconds"] > 120:
         raise ValueError("timeout_seconds must be <= 120.")
     notify = validate_notify(data.get("notify", {}))

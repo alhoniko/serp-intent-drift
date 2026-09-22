@@ -24,6 +24,7 @@ from .importing import candidates as import_candidates
 from .importing import candidates_from_rows
 from .intent import page_profile
 from .normalize import normalize
+from .quality import query_check, retry_suspected
 from .report import build_report, write_report
 from .sources import ahrefs_keywords
 from .storage import Store, collection_lock, parse_time, utc_now
@@ -34,12 +35,27 @@ def collect(config: dict, database: Path, *, force: bool = False, client: Search
             only: set[str] | None = None, labeler=None) -> dict:
     packs.configure(Path(config["rules_dir"]) if config.get("rules_dir") else None)
     summary = {"collected": 0, "skipped": 0, "failed": 0, "requests": 0, "errors": {}}
+    settings = config["settings"]
     if only is not None:
         config = config | {"targets": [target for target in config["targets"] if target["id"] in only]}
     with collection_lock(database), Store(database) as store:
+        until = settings.get("collect_until")
+        if until and datetime.now(UTC) >= parse_time(until):
+            summary["skipped"] = len(config["targets"])
+            summary["ended"] = until
+            print(f"Collection window ended at {until}; nothing collected.", file=sys.stderr)
+            return summary
+        cap = settings.get("max_total_requests", 0)
+        remaining = cap - store.total_requests() if cap else None
+        if remaining is not None and remaining <= 0:
+            # A study cap is a hard stop, not a failure to retry every few minutes; panels become overdue in the report.
+            summary["skipped"] = len(config["targets"])
+            summary["budget"] = {"cap": cap, "used": cap - remaining, "exhausted": True}
+            print(f"Total request cap reached ({cap - remaining}/{cap}); nothing collected.", file=sys.stderr)
+            return summary
         if client is None:
             try:
-                client = SearchApi(api_key, config["settings"])
+                client = SearchApi(api_key, settings)
             except ApiError as error:
                 # No key: record a failed attempt per panel so the report shows a collection error instead of silence.
                 for target in config["targets"]:
@@ -48,6 +64,8 @@ def collect(config: dict, database: Path, *, force: bool = False, client: Search
                 summary["failed"] = len(config["targets"])
                 print(f"Error: {error}", file=sys.stderr)
                 return summary
+        if remaining is not None:
+            client.settings = client.settings | {"max_requests_per_run": min(client.settings["max_requests_per_run"], client.requests + remaining)}
         for target in config["targets"]:
             if store.get_setting(target, "paused") == "1" and not force:
                 summary["skipped"] += 1
@@ -55,40 +73,78 @@ def collect(config: dict, database: Path, *, force: bool = False, client: Search
             history = store.history(target)
             if history and not force:
                 elapsed = (datetime.now(UTC) - parse_time(history[-1]["captured_at"])).total_seconds()
-                if elapsed < minimum_spacing_seconds(config["settings"]):
+                if elapsed < minimum_spacing_seconds(settings):
                     summary["skipped"] += 1
                     continue
-            before = client.requests
+            ledger = {"since": client.requests}
             try:
                 # Validate/read local content before the billable request.
                 page = page_profile(target.get("page", {}), target["search"]["hl"], utc_now(), allow_fetch=True)
-                response = client.search(request_params(target["search"], resolve_links=config["settings"]["resolve_links"]))
-                expand_ai_overview(client, response, target["search"], config["settings"])
-                snapshot = normalize(response, target["search"], utc_now(), page, config["settings"]["min_results"])
-                observation = json.loads(json.dumps(snapshot))
-                if labeler is not None:
-                    from . import labeling
-                    labeling.apply(snapshot, labeler, store)
-                    snapshot["analysis_version"] = config.get("analysis_version", snapshot["analysis_version"])
-                snapshot["observation"] = observation
-                store.add(target, snapshot, response)
-                store.attempt(target, True, "ok" if snapshot["quality_ok"] else "sparse_results", client.requests - before)
+                snapshot = capture(client, store, config, target, page, labeler, history=history, retries=settings.get("retry_query_mismatch", 0),
+                                   on_retry=partial(record_attempt, store, client, target, ledger, "query_check_retry"))
+                flagged = query_check([*history, snapshot])[snapshot["captured_at"]]["flagged"]
+                record_attempt(store, client, target, ledger, "query_mismatch" if flagged else "ok" if snapshot["quality_ok"] else "sparse_results")
                 summary["collected"] += 1
             except (ApiError, ValueError, OSError, UnicodeError) as error:
                 code = error.code if isinstance(error, ApiError) else "invalid_response_or_page"
-                store.attempt(target, False, code, client.requests - before)
+                record_attempt(store, client, target, ledger, code, success=False)
                 summary["failed"] += 1
                 summary["errors"][target["id"]] = code
                 print(f"{target['id']}: {code}", file=sys.stderr)
                 if code in {"budget_exhausted", "http_401", "http_403", "http_402", "http_429", "rate_limited", "missing_key"}:
                     # Halt the remaining panel on account-wide or rate-limit failures.
-                    for remaining in config["targets"][config["targets"].index(target) + 1:]:
-                        store.attempt(remaining, False, f"skipped_after_{code}", 0)
+                    for remaining_target in config["targets"][config["targets"].index(target) + 1:]:
+                        store.attempt(remaining_target, False, f"skipped_after_{code}", 0)
                         summary["failed"] += 1
-                        summary["errors"][remaining["id"]] = f"skipped_after_{code}"
+                        summary["errors"][remaining_target["id"]] = f"skipped_after_{code}"
                     break
+        if cap:
+            used = store.total_requests()
+            summary["budget"] = {"cap": cap, "used": used, "exhausted": used >= cap}
     summary["requests"] = client.requests
     return summary
+
+
+QUERY_RETRY_PAUSE_SECONDS = 30
+
+
+def record_attempt(store: Store, client: SearchApi, target: dict, ledger: dict, code: str, success: bool = True) -> None:
+    """Each attempt row carries only the requests spent since the previous row, so retries are never counted twice."""
+    store.attempt(target, success, code, client.requests - ledger["since"])
+    ledger["since"] = client.requests
+
+
+def capture(client: SearchApi, store: Store, config: dict, target: dict, page: dict | None, labeler=None, *, history: list[dict] | None = None,
+            retries: int = 0, on_retry=None) -> dict:
+    """One capture of record: search, a local query check, optional AI Overview expansion, normalization, labels, storage.
+
+    When the organic results miss the query terms (observed live: results for one query word), that response is stored as an
+    observation without spending an Overview expansion, and after a short pause the search is repeated, at most `retries` times."""
+    settings = config["settings"]
+    history = list(history or [])
+    params = request_params(target["search"], resolve_links=settings["resolve_links"])
+    response = client.search(params)
+    while retries:
+        preview = normalize(response, target["search"], utc_now(), page, settings["min_results"])
+        if not retry_suspected(history, preview):
+            break
+        store.add(target, preview | {"observation": json.loads(json.dumps(preview))}, response)
+        if on_retry:
+            on_retry()
+        retries -= 1
+        history.append(preview)
+        client.sleep(QUERY_RETRY_PAUSE_SECONDS)
+        response = client.search(params)
+    expand_ai_overview(client, response, target["search"], settings)
+    snapshot = normalize(response, target["search"], utc_now(), page, settings["min_results"])
+    observation = json.loads(json.dumps(snapshot))
+    if labeler is not None:
+        from . import labeling
+        labeling.apply(snapshot, labeler, store)
+        snapshot["analysis_version"] = config.get("analysis_version", snapshot["analysis_version"])
+    snapshot["observation"] = observation
+    store.add(target, snapshot, response)
+    return snapshot
 
 
 def expand_ai_overview(client: SearchApi, response: dict, search: dict, settings: dict) -> bool:

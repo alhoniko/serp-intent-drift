@@ -10,7 +10,9 @@ from .config import minimum_spacing_seconds
 from .normalize import canonical_url, dominant
 from .storage import parse_time
 
-ANALYSIS_VERSION = "drift-v3"
+ANALYSIS_VERSION = "drift-v4"
+# States that describe something other than this panel's SERP. Sparse captures ("insufficient") are real observations and stay samples.
+INVALID_STATES = {"quarantined", "excluded", "query_mismatch"}
 
 WEIGHTS = {"intent": 0.35, "url_turnover": 0.25, "result_types": 0.20, "rank_movement": 0.10, "features": 0.10}
 
@@ -105,12 +107,16 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
             result["status"] = "collection_error"
             result["reasons"] = [f"Latest collection failed: {last_attempt['code']}."]
         return explain(result, snapshots, settings)
-    # Forced same-day runs cannot manufacture independent confirmation samples.
+    # Forced same-day runs cannot manufacture independent confirmation samples. Invalid observations (another query or market,
+    # a human exclusion) are not samples of this panel, so they neither count nor block the next valid capture in the interval.
     sampled = []
     interval = settings["interval_hours"] * 3600
     for snapshot in snapshots:
+        if snapshot.get("quality", {}).get("state") in INVALID_STATES:
+            continue
         if not sampled or (parse_time(snapshot["captured_at"]) - parse_time(sampled[-1]["captured_at"])).total_seconds() >= minimum_spacing_seconds(settings):
             sampled.append(snapshot)
+    invalid = [snapshot for snapshot in snapshots if snapshot.get("quality", {}).get("state") in INVALID_STATES]
     eligible = [snapshot for snapshot in sampled if snapshot["quality_ok"]]
     baseline = eligible[:settings["baseline_size"]]
     result["baseline"] = baseline
@@ -123,11 +129,12 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
         result["baseline_intent"] = base_intent
         anchor_time = parse_time(baseline[-1]["captured_at"])
         post_baseline = [snapshot for snapshot in sampled if parse_time(snapshot["captured_at"]) > anchor_time]
-        for snapshot in sampled:
+        for snapshot in sorted([*sampled, *invalid], key=lambda item: item["captured_at"]):
             after_baseline = parse_time(snapshot["captured_at"]) > anchor_time
             result["timeline"].append({"captured_at": snapshot["captured_at"], "intent": snapshot["dominant_intent"],
                                        "score": compare(baseline, snapshot)["score"] if after_baseline and snapshot["quality_ok"] else None,
-                                       "quality_ok": snapshot["quality_ok"], "phase": "monitoring" if after_baseline else "baseline"})
+                                       "quality_ok": snapshot["quality_ok"], "quality_state": snapshot.get("quality", {}).get("state"),
+                                       "phase": "monitoring" if after_baseline else "baseline"})
         if post_baseline and latest["quality_ok"]:
             comparison = compare(baseline, latest)
             result["comparison"] = comparison
@@ -168,11 +175,13 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
             result["status"] = "baseline_ready"
             result["reasons"].append("Baseline is ready. The next spaced capture starts change detection.")
     if not result["timeline"]:
-        result["timeline"] = [{"captured_at": snapshot["captured_at"], "intent": snapshot["dominant_intent"], "score": None, "quality_ok": snapshot["quality_ok"], "phase": "baseline"} for snapshot in sampled]
+        result["timeline"] = [{"captured_at": snapshot["captured_at"], "intent": snapshot["dominant_intent"], "score": None, "quality_ok": snapshot["quality_ok"],
+                               "quality_state": snapshot.get("quality", {}).get("state"), "phase": "baseline"}
+                              for snapshot in sorted([*sampled, *invalid], key=lambda item: item["captured_at"])]
     if not latest["quality_ok"]:
         result["status"] = "insufficient_data"
         result["reasons"].append("The latest capture has too few usable results. Alerts are suppressed.")
-    if latest.get("quality", {}).get("state") in {"quarantined", "excluded"}:
+    if latest.get("quality", {}).get("state") in INVALID_STATES:
         result["status"] = "data_quality"
         result["reasons"] = latest["quality"].get("reasons", []) or ["This observation is excluded from comparisons."]
     if latest["source"] != "synthetic" and (now - parse_time(latest["captured_at"])).total_seconds() > interval * 1.75:
@@ -184,21 +193,25 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
     if result["status"] in {"stale", "collection_error", "insufficient_data", "data_quality"}:
         result["confirmed_mismatch"] = result["confirmed_intent_shift"] = False
         result["confirmed_recovery"] = False
-    if latest.get("page"):
-        page_url = canonical_url(latest["page"]["url"])
-        result["page_position"] = next((item["position"] for item in latest["results"] if item["url"] == page_url), None)
+    # Position evidence comes from the newest valid capture; a capture of another query says nothing about this page.
+    shown = latest if latest.get("quality", {}).get("state") not in INVALID_STATES else next(
+        (snapshot for snapshot in reversed(snapshots) if snapshot.get("quality", {}).get("state") not in INVALID_STATES), latest)
+    if shown.get("page"):
+        page_url = canonical_url(shown["page"]["url"])
+        result["page_position"] = next((item["position"] for item in shown["results"] if item["url"] == page_url), None)
     if site:
         from .history import site_cited, site_hit
-        hit = site_hit(latest, site)
+        hit = site_hit(shown, site)
         result["site"] = {"position": hit["position"] if hit else None, "url": hit["url"] if hit else None, "hits": hit["count"] if hit else 0,
-                          "cited": site_cited(latest, site)}
-        previous = next((snapshot for snapshot in reversed(snapshots[:-1]) if snapshot["quality_ok"]), None)
+                          "cited": site_cited(shown, site), "captured_at": shown["captured_at"]}
+        earlier = snapshots[:snapshots.index(shown)]
+        previous = next((snapshot for snapshot in reversed(earlier) if snapshot["quality_ok"]), None)
         if previous is not None:
             before = site_hit(previous, site)
             result["site"]["previous_url"] = before["url"] if before else None
             result["site"]["previous_position"] = before["position"] if before else None
             result["site"]["ranking_url_changed"] = bool(before and hit and before["url"] != hit["url"])
-        if result.get("page_position") is None and not latest.get("page"):
+        if result.get("page_position") is None and not shown.get("page"):
             result["page_position"] = result["site"]["position"]
     return explain(result, all_snapshots, settings)
 
@@ -232,7 +245,9 @@ def explain(result: dict, snapshots: list[dict], settings: dict) -> dict:
     intent_state = "confirmed" if result["confirmed_intent_shift"] else "unresolved" if not usable else "no_confirmed_shift"
     fit = "mismatch" if result["confirmed_mismatch"] else "not_configured" if not latest.get("page") else "unresolved" if not usable else "no_confirmed_mismatch"
     result["dimensions"] = {"serp_change": result["score"], "intent": intent_state, "page_fit": fit, "data": quality.get("state", "legacy")}
-    if health:
+    if status == "data_quality" and quality.get("state") == "query_mismatch":
+        title, action = "Latest capture did not match the query", "Treat it as a failed collection. The next valid capture replaces it; no content decision follows from it."
+    elif health:
         title, action = "Check collection evidence", "Inspect the observation and fix collection before making a content decision."
     elif status in {"building_baseline", "baseline_ready"}:
         title, action = "Building a reliable comparison", "Keep the same search context and wait for spaced observations."
