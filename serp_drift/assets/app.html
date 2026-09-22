@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <title>SERP Intent Drift Monitor</title>
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="shell" id="shell">
+    <header class="topbar" id="topbar">
+      <button class="icon-btn" id="menu-toggle" type="button" aria-label="Open navigation">≡</button>
+      <div id="topbar-project"></div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </header>
+    <aside class="sidebar" id="sidebar" aria-label="Navigation"></aside>
+    <main class="main" id="main" tabindex="-1"><p class="muted">Loading…</p></main>
+  </div>
+  <div class="scrim" id="scrim" hidden></div>
+  <dialog class="palette" id="palette" hidden aria-label="Jump to"><div class="palette-box"><input id="palette-input" type="search" aria-label="Search projects and keywords" role="combobox" aria-controls="palette-list" aria-expanded="true" placeholder="Jump to a project or panel…" autocomplete="off"><ul id="palette-list" role="listbox"></ul></div></dialog>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="/assets/labeling.js"></script>
+  <script src="/assets/setup.js"></script>
+  <script src="/assets/review.js"></script>
+  <script src="/assets/app.js"></script>
+</body>
+</html>

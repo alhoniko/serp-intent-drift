@@ -1,0 +1,46 @@
+version = 1
+
+[settings]
+interval_hours = 24
+baseline_size = 3
+confirmations = 2
+min_results = 5
+drift_threshold = 35
+max_requests_per_run = 30
+request_delay_seconds = 1
+timeout_seconds = 45
+max_retries = 2
+
+[search]
+gl = "us"
+hl = "en"
+device = "desktop"
+# Optional canonical location, from https://www.searchapi.io/docs/locations-api
+# location = "New York,New York,United States"
+
+[[targets]]
+id = "serp-analysis"
+query = "automated serp analysis"
+[targets.page]
+url = "https://nikoalho.fi/writing/serp-analysis-python/"
+intent = "informational"
+# Or fetch the public page on each scheduled collection (no JavaScript rendering).
+# Remove intent above to infer it entirely from the fetched HTML.
+# fetch = true
+# Optional: current Markdown, plain text, or HTML export. Paths resolve relative to this config.
+# content_file = "my-page.md"
+
+[[targets]]
+id = "content-decay"
+query = "content decay"
+[targets.page]
+url = "https://nikoalho.fi/writing/content-decay/"
+intent = "informational"
+
+[[targets]]
+id = "seo-tyokalut-fi"
+query = "seo työkalut"
+[targets.search]
+gl = "fi"
+hl = "fi"
+device = "mobile"

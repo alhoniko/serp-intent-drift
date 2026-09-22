@@ -1,0 +1,24 @@
+# Built-in English intent rules. Patterns are Python regular expressions matched case-insensitively
+# against the title (3 points), snippet (2 points), and URL slug words (2 points).
+language = "en"
+version = 2
+name = "English"
+
+[rules]
+commercial = [
+  '\bbest\b(?! practices?\b)', '\btop \d+\b', '\bcompar(?:e|ed|ison|isons)\b', '\breviews?\b', '\brated\b', '\bvs\.?\b', '\balternatives?\b',
+]
+transactional = [
+  '\bpricing\b', '\bprices?\b', '\bbuy\b', '\bshop\b', '\border (?:now|online|today)\b', '\bbook (?:a )?demo\b', '\bfree trial\b', '\bsign[ -]?up\b', '\bdiscount\b', '\bcoupons?\b',
+]
+informational = [
+  '\bwhat (?:is|are)\b', '\bhow[ -](?:to|does|do)\b', '\bwhy\b', '\bguides?\b', '\btutorials?\b', '\bexplained\b', '\bdefinition\b', '\bdocumentation\b',
+  '\bstep[- ]by[- ]step\b', '\bexamples?\b', '\bintroduction\b', '\blearn\b', '\busing\b', '\bscripts?\b', '\bautomating\b', '\bchecklist\b', '\btemplates?\b', '\btips\b',
+]
+navigational = ['\blog[ -]?in\b', '\bsign[ -]?in\b', '\bofficial (?:site|website)\b']
+
+# Leading URL path segments that describe a site section rather than a topic (2 points, any language).
+[sections]
+informational = ['blog', 'writing', 'articles?', 'posts?', 'news', 'learn', 'guides?', 'tutorials?', 'docs', 'documentation', 'help(?:-center)?', 'support', 'knowledge(?:-base)?', 'resources', 'academy', 'how-to', 'wiki']
+transactional = ['pricing', 'plans', 'shop', 'store', 'products?', 'buy', 'cart', 'checkout', 'order']
+navigational = ['login', 'log-in', 'signin', 'sign-in', 'account', 'my-account']

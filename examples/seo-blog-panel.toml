@@ -1,0 +1,125 @@
+# Example panel: SEO queries where a well-ranking publisher (ahrefs.com) stands in for "your page".
+# Copy this next to your own workspace config, or run: serp-drift init --dir ~/serp-drift-example # Example workspace: SEO queries where a well-ranking publisher (ahrefs.com) stands in for "your page".# Example workspace: SEO queries where a well-ranking publisher (ahrefs.com) stands in for "your page". cp examples/seo-blog-panel.toml ~/serp-drift-example/monitor.toml
+# Ten of the fourteen panels ranked in the top ten and eleven were cited by an AI Overview on 16 September 2026.
+# Two panels (link-building, seo-audit) are cited by AI Overviews without ranking in the top ten; one page (domain-rating)
+# is a tool declared transactional against an informational SERP, so page-fit has something to say.
+version = 1
+
+[project]
+name = "Example: ahrefs.com"
+site = "ahrefs.com"
+
+[settings]
+interval_hours = 24
+baseline_size = 3
+confirmations = 2
+min_results = 5
+drift_threshold = 35
+max_requests_per_run = 60
+
+[search]
+gl = "us"
+hl = "en"
+device = "desktop"
+
+[[targets]]
+id = "topical-authority"
+query = "topical authority"
+[targets.page]
+url = "https://ahrefs.com/blog/topical-authority/"
+intent = "informational"
+
+[[targets]]
+id = "canonical-tags"
+query = "canonical tags"
+[targets.page]
+url = "https://ahrefs.com/blog/canonical-tags/"
+intent = "informational"
+
+[[targets]]
+id = "keyword-clustering"
+query = "keyword clustering"
+[targets.page]
+url = "https://ahrefs.com/blog/keyword-clustering/"
+intent = "informational"
+
+[[targets]]
+id = "domain-rating"
+query = "domain rating"
+[targets.page]
+url = "https://ahrefs.com/website-authority-checker"
+intent = "transactional"
+
+[[targets]]
+id = "link-building"
+query = "link building"
+[targets.page]
+url = "https://ahrefs.com/seo/link-building"
+intent = "informational"
+
+[[targets]]
+id = "seo-audit"
+query = "seo audit"
+[targets.page]
+url = "https://ahrefs.com/seo/glossary/seo-audit"
+intent = "informational"
+
+[[targets]]
+id = "search-intent"
+query = "search intent"
+[targets.page]
+url = "https://ahrefs.com/blog/search-intent/"
+intent = "informational"
+
+[[targets]]
+id = "topical-authority-bing"
+query = "topical authority"
+[targets.search]
+engine = "bing"
+[targets.page]
+url = "https://ahrefs.com/blog/topical-authority/"
+intent = "informational"
+
+[[targets]]
+id = "topical-authority-mobile"
+query = "topical authority"
+[targets.search]
+device = "mobile"
+[targets.page]
+url = "https://ahrefs.com/blog/topical-authority/"
+intent = "informational"
+
+[[targets]]
+id = "keyword-research"
+query = "keyword research"
+[targets.page]
+url = "https://ahrefs.com/seo/keyword-research"
+intent = "informational"
+
+[[targets]]
+id = "long-tail-keywords"
+query = "long tail keywords"
+[targets.page]
+url = "https://ahrefs.com/blog/long-tail-keywords/"
+intent = "informational"
+
+[[targets]]
+id = "google-search-operators"
+query = "google search operators"
+[targets.page]
+url = "https://ahrefs.com/blog/google-advanced-search-operators/"
+intent = "informational"
+
+[[targets]]
+id = "what-are-backlinks"
+query = "what are backlinks"
+[targets.page]
+url = "https://ahrefs.com/blog/what-are-backlinks/"
+intent = "informational"
+
+[[targets]]
+id = "seo-checklist"
+query = "seo checklist"
+[targets.page]
+url = "https://ahrefs.com/blog/seo-checklist/"
+intent = "informational"

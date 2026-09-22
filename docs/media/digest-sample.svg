@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="SERP drift digest">
+<rect width="1200" height="630" fill="#f3efe6"/>
+<style>text{font-family:Outfit,"Avenir Next","Segoe UI",sans-serif;fill:#0b0b0f}.eyebrow{font-size:14px;letter-spacing:2px;font-weight:600;fill:#605e55}.h1{font-size:54px;font-weight:600;letter-spacing:-2px}.metric{font-size:44px;font-weight:500;letter-spacing:-2px}.label{font-size:12px;letter-spacing:1.5px;font-weight:600;fill:#605e55}.row{font-size:18px}.muted{fill:#605e55;font-size:14px}</style>
+<text x="72" y="84" class="eyebrow">SERP INTENT DRIFT MONITOR · LAST 7 DAYS</text>
+<text x="72" y="150" class="h1">The query stayed.</text>
+<rect x="72" y="175" width="298" height="18" fill="#d8ff2e"/>
+<text x="72" y="200" class="h1">The intent moved.</text>
+<text x="72" y="270" class="label">PANELS</text>
+<text x="72" y="318" class="metric">40</text>
+<line x1="263" y1="250" x2="263" y2="330" stroke="#c9c5bb"/>
+<text x="287" y="270" class="label">CAPTURES</text>
+<text x="287" y="318" class="metric">40</text>
+<line x1="478" y1="250" x2="478" y2="330" stroke="#c9c5bb"/>
+<text x="502" y="270" class="label">REVIEW</text>
+<text x="502" y="318" class="metric">0</text>
+<line x1="693" y1="250" x2="693" y2="330" stroke="#c9c5bb"/>
+<text x="717" y="270" class="label">WATCH</text>
+<text x="717" y="318" class="metric">0</text>
+<line x1="908" y1="250" x2="908" y2="330" stroke="#c9c5bb"/>
+<text x="932" y="270" class="label">AI OVERVIEW</text>
+<text x="932" y="318" class="metric">0%</text>
+<text x="72" y="392" class="label">BIGGEST CHANGES VS BASELINE</text>
+<text x="72" y="422" class="muted">No comparisons yet; baselines are still building.</text>
+<text x="660" y="392" class="label">MOST CITED IN AI OVERVIEWS</text>
+<text x="660" y="422" class="muted">No AI Overview citations stored in this period.</text>
+<text x="72" y="596" class="muted">Generated 2026-09-16 12:32 UTC · serp-drift 0.2.0 · built with SearchApi</text>
+</svg>

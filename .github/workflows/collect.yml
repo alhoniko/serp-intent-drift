@@ -1,0 +1,63 @@
+# Fork-and-run collection without a server.
+# 1. Add a workspace to your fork: workspace/monitor.toml (serp-drift init --dir workspace --no-prompt, then edit).
+# 2. Add the repository secret SEARCHAPI_API_KEY.
+# 3. Optional: enable GitHub Pages with "GitHub Actions" as the source to publish the report.
+# The job is a no-op in the upstream repository, where no workspace exists.
+name: Collect
+on:
+  schedule:
+    - cron: "17 8 * * *"   # daily, UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: serp-drift-collect
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.gate.outputs.ready }}
+    env:
+      SEARCHAPI_API_KEY: ${{ secrets.SEARCHAPI_API_KEY }}
+      SERP_DRIFT_DIR: ${{ github.workspace }}/workspace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check for a workspace and a key
+        id: gate
+        run: |
+          if [ -f workspace/monitor.toml ] && [ -n "$SEARCHAPI_API_KEY" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"; else echo "ready=false" >> "$GITHUB_OUTPUT"; echo "No workspace/monitor.toml or no SEARCHAPI_API_KEY secret; nothing to do."; fi
+      - name: Install
+        if: steps.gate.outputs.ready == 'true'
+        run: pip install --no-cache-dir .
+      - name: Collect and rebuild the report
+        if: steps.gate.outputs.ready == 'true'
+        run: serp-drift run
+      - name: Commit the database and report
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          git config user.name "serp-drift"
+          git config user.email "serp-drift@users.noreply.github.com"
+          git add -f workspace/data workspace/reports workspace/logs
+          git diff --cached --quiet || git commit -m "Collect $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push
+      - name: Upload the report for Pages
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: workspace/reports/live
+  publish:
+    needs: collect
+    if: needs.collect.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy the report to GitHub Pages
+        uses: actions/deploy-pages@v4
+        continue-on-error: true   # fails harmlessly until Pages is enabled with "GitHub Actions" as the source

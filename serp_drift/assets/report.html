@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,follow">
+  <meta name="description" content="Inspect changes in search results, estimated intent, and page fit with the open-source SERP Intent Drift Monitor.">
+  <meta name="color-scheme" content="light">
+  <title>SERP Intent Drift Monitor · Niko Alho</title>
+  <style>/* REPORT_STYLES */</style>
+</head>
+<body>
+  <a class="skip-link" href="#panel">Skip to the report</a>
+  <header class="masthead"><a class="wordmark" href="https://nikoalho.fi/">niko alho<span>Search systems / open source</span></a><span class="edition">FIELD TOOL 01 <span aria-hidden="true">↗</span></span></header>
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">SERP INTENT DRIFT MONITOR <span class="version">v0.4</span></p><h1>The query stayed.<br>The intent <span>moved.</span></h1><p class="lede">Catch changes in what search results reward.<br>Inspect the evidence before you rewrite the page.</p></div>
+      <aside class="intro-note"><span class="crosshair" aria-hidden="true">+</span><p>From snapshot<br>to a useful decision.</p><p class="muted">Google results → intent signals → page review</p><a href="#method">Read the method <span aria-hidden="true">↗</span></a></aside>
+    </section>
+    <div id="data-banner" class="data-banner" role="note"></div>
+    <section id="summary" class="summary" aria-label="Panel summary"></section>
+    <section class="workspace" id="panel" aria-label="Query monitoring panel">
+      <aside class="query-panel"><div class="section-label"><h2>Your query panel</h2><span id="query-count"></span></div><label class="sr-only" for="query-search">Filter queries</label><input id="query-search" type="search" placeholder="Find a query…"><label for="status-filter" class="sr-only">Filter by status</label><select id="status-filter"><option value="all">All statuses</option><option value="review">Review page</option><option value="watch">Watch changes</option><option value="stable">Stable</option><option value="health">Collection / baseline</option></select><div id="query-list" class="query-list"></div><p class="panel-note">One query, one market, one device.<br>Each panel keeps its own baseline.</p></aside>
+      <section id="detail" class="detail" aria-label="Selected query evidence" aria-live="polite"></section>
+    </section>
+    <section id="method" class="method"><div><p class="eyebrow">HOW TO READ THIS</p><h2>A review queue.<br>With the working shown.</h2><p>A changed results page is a reason to look closer. It does not prove why rankings changed or tell you to rewrite everything.</p><div class="download-actions"><button id="download-json" type="button">Download JSON <span aria-hidden="true">↓</span></button><button id="download-csv" type="button">Download CSV <span aria-hidden="true">↓</span></button><button id="print-report" type="button">Print selected query</button></div></div><ol><li><strong>Hold the context still.</strong><p>The default baseline uses three eligible captures. Country, language, location, device, and rule version must match.</p></li><li><strong>Separate the signals.</strong><p>Intent 35%, URL turnover 25%, result types 20%, rank movement 10%, and feature changes 10%. This is a prioritization score, not a probability.</p></li><li><strong>Require repeated evidence.</strong><p>The default alert needs two spaced captures. English and Finnish lexical rules infer intent; ambiguous results remain unknown. A page match uses a declared profile, a local export, or an optional public-page fetch.</p></li><li><strong>Keep a human in the loop.</strong><p>Review current pages, classification evidence, and collection health. AI Overview presence is observed separately; no citation benchmark or click-impact claim is implied.</p></li></ol></section>
+  </main>
+  <footer><span>Built by <a href="https://nikoalho.fi/">Niko Alho</a> · MIT-licensed software</span><span>Developed for a paid collaboration with <a href="https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=nikoalho.fi">SearchApi</a>.</span></footer>
+  <noscript><p class="data-banner">Enable JavaScript to explore the report. The report.json and report.csv files contain the same observations.</p></noscript>
+  <script id="report-data" type="application/json">REPORT_DATA_JSON</script>
+  <script>/* RENDER_SCRIPT */</script>
+  <script>/* REPORT_SCRIPT */</script>
+</body>
+</html>
+

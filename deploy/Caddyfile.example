@@ -1,0 +1,4 @@
+# Reverse proxy with automatic TLS. The app's own token still applies; this adds encryption and a hostname.
+serp.example.com {
+    reverse_proxy 127.0.0.1:8765
+}

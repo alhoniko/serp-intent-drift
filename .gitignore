@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+searchapi.key
+logs/
+.env.*
+!.env.example
+monitor.toml
+data/
+reports/
+dist/
+*.sqlite*
+*.lock
+.DS_Store
+
+
+# Private integration keys and local acceptance workspaces
+ahrefs.key
+labeling.key
+review-workspaces/

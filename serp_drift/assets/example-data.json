@@ -1,0 +1,1922 @@
+{
+  "schema_version": 1,
+  "source": "synthetic",
+  "license": "MIT",
+  "description": "Entirely invented test fixtures. Not collected from Google or SearchApi. Reserved .example domains are intentional.",
+  "targets": [
+    {
+      "id": "crm-automation",
+      "query": "crm automation",
+      "search": {
+        "engine": "google",
+        "q": "crm automation",
+        "gl": "us",
+        "hl": "en",
+        "device": "desktop",
+        "page": 1
+      },
+      "page": {
+        "url": "https://publisher.example/crm-automation/",
+        "intent": "informational"
+      }
+    },
+    {
+      "id": "technical-seo",
+      "query": "technical seo audit",
+      "search": {
+        "engine": "google",
+        "q": "technical seo audit",
+        "gl": "us",
+        "hl": "en",
+        "device": "desktop",
+        "page": 1
+      },
+      "page": {
+        "url": "https://publisher.example/technical-seo/",
+        "intent": "informational"
+      }
+    },
+    {
+      "id": "ai-tools",
+      "query": "ai research tools",
+      "search": {
+        "engine": "google",
+        "q": "ai research tools",
+        "gl": "us",
+        "hl": "en",
+        "device": "desktop",
+        "page": 1
+      },
+      "page": {
+        "url": "https://publisher.example/ai-tools/",
+        "intent": "commercial"
+      }
+    },
+    {
+      "id": "thin-serp",
+      "query": "search workflow templates",
+      "search": {
+        "engine": "google",
+        "q": "search workflow templates",
+        "gl": "us",
+        "hl": "en",
+        "device": "desktop",
+        "page": 1
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "target_id": "crm-automation",
+      "captured_at": "2026-08-24T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is CRM automation? A practical guide | Source 1",
+            "link": "https://source-1.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is CRM automation? A practical guide | Source 2",
+            "link": "https://source-2.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is CRM automation? A practical guide | Source 3",
+            "link": "https://source-3.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is CRM automation? A practical guide | Source 4",
+            "link": "https://source-4.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is CRM automation? A practical guide | Source 5",
+            "link": "https://source-5.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is CRM automation? A practical guide | Source 6",
+            "link": "https://source-6.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is CRM automation? A practical guide | Source 7",
+            "link": "https://source-7.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is CRM automation? A practical guide | Source 8",
+            "link": "https://source-8.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is CRM automation? A practical guide | Source 9",
+            "link": "https://source-9.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is CRM automation? A practical guide | Source 10",
+            "link": "https://source-10.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does CRM automation work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "crm-automation",
+      "captured_at": "2026-08-25T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is CRM automation? A practical guide | Source 1",
+            "link": "https://source-1.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is CRM automation? A practical guide | Source 2",
+            "link": "https://source-2.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is CRM automation? A practical guide | Source 3",
+            "link": "https://source-3.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is CRM automation? A practical guide | Source 4",
+            "link": "https://source-4.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is CRM automation? A practical guide | Source 5",
+            "link": "https://source-5.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is CRM automation? A practical guide | Source 6",
+            "link": "https://source-6.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is CRM automation? A practical guide | Source 7",
+            "link": "https://source-7.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is CRM automation? A practical guide | Source 8",
+            "link": "https://source-8.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is CRM automation? A practical guide | Source 9",
+            "link": "https://source-9.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is CRM automation? A practical guide | Source 10",
+            "link": "https://source-10.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does CRM automation work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "crm-automation",
+      "captured_at": "2026-08-26T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is CRM automation? A practical guide | Source 1",
+            "link": "https://source-1.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is CRM automation? A practical guide | Source 2",
+            "link": "https://source-2.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is CRM automation? A practical guide | Source 3",
+            "link": "https://source-3.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is CRM automation? A practical guide | Source 4",
+            "link": "https://source-4.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is CRM automation? A practical guide | Source 5",
+            "link": "https://source-5.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is CRM automation? A practical guide | Source 6",
+            "link": "https://source-6.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is CRM automation? A practical guide | Source 7",
+            "link": "https://source-7.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is CRM automation? A practical guide | Source 8",
+            "link": "https://source-8.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is CRM automation? A practical guide | Source 9",
+            "link": "https://source-9.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is CRM automation? A practical guide | Source 10",
+            "link": "https://source-10.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does CRM automation work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "crm-automation",
+      "captured_at": "2026-08-27T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best CRM automation: tools compared and reviewed | Source 1",
+            "link": "https://source-1.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best CRM automation: tools compared and reviewed | Source 2",
+            "link": "https://source-2.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best CRM automation: tools compared and reviewed | Source 3",
+            "link": "https://source-3.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best CRM automation: tools compared and reviewed | Source 4",
+            "link": "https://source-4.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best CRM automation: tools compared and reviewed | Source 5",
+            "link": "https://source-5.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best CRM automation: tools compared and reviewed | Source 6",
+            "link": "https://source-6.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best CRM automation: tools compared and reviewed | Source 7",
+            "link": "https://source-7.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best CRM automation: tools compared and reviewed | Source 8",
+            "link": "https://source-8.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "What is CRM automation? A practical guide | Source 9",
+            "link": "https://source-9.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is CRM automation? A practical guide | Source 10",
+            "link": "https://source-10.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does CRM automation work?"
+          }
+        ],
+        "ai_overview": {
+          "text_blocks": [
+            {
+              "type": "paragraph",
+              "answer": "Synthetic overview for demonstration."
+            }
+          ]
+        },
+        "inline_videos": [
+          {
+            "title": "Synthetic comparison video",
+            "link": "https://video.example/demo"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "crm-automation",
+      "captured_at": "2026-08-28T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best CRM automation: tools compared and reviewed | Source 1",
+            "link": "https://source-1.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best CRM automation: tools compared and reviewed | Source 2",
+            "link": "https://source-2.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best CRM automation: tools compared and reviewed | Source 3",
+            "link": "https://source-3.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best CRM automation: tools compared and reviewed | Source 4",
+            "link": "https://source-4.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best CRM automation: tools compared and reviewed | Source 5",
+            "link": "https://source-5.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best CRM automation: tools compared and reviewed | Source 6",
+            "link": "https://source-6.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best CRM automation: tools compared and reviewed | Source 7",
+            "link": "https://source-7.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best CRM automation: tools compared and reviewed | Source 8",
+            "link": "https://source-8.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "What is CRM automation? A practical guide | Source 9",
+            "link": "https://source-9.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is CRM automation? A practical guide | Source 10",
+            "link": "https://source-10.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does CRM automation work?"
+          }
+        ],
+        "ai_overview": {
+          "text_blocks": [
+            {
+              "type": "paragraph",
+              "answer": "Synthetic overview for demonstration."
+            }
+          ]
+        },
+        "inline_videos": [
+          {
+            "title": "Synthetic comparison video",
+            "link": "https://video.example/demo"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "crm-automation",
+      "captured_at": "2026-08-29T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best CRM automation: tools compared and reviewed | Source 1",
+            "link": "https://source-1.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best CRM automation: tools compared and reviewed | Source 2",
+            "link": "https://source-2.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best CRM automation: tools compared and reviewed | Source 3",
+            "link": "https://source-3.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best CRM automation: tools compared and reviewed | Source 4",
+            "link": "https://source-4.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best CRM automation: tools compared and reviewed | Source 5",
+            "link": "https://source-5.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best CRM automation: tools compared and reviewed | Source 6",
+            "link": "https://source-6.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best CRM automation: tools compared and reviewed | Source 7",
+            "link": "https://source-7.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best CRM automation: tools compared and reviewed | Source 8",
+            "link": "https://source-8.example/CRM-automation/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "What is CRM automation? A practical guide | Source 9",
+            "link": "https://source-9.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is CRM automation? A practical guide | Source 10",
+            "link": "https://source-10.example/CRM-automation/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does CRM automation work?"
+          }
+        ],
+        "ai_overview": {
+          "text_blocks": [
+            {
+              "type": "paragraph",
+              "answer": "Synthetic overview for demonstration."
+            }
+          ]
+        },
+        "inline_videos": [
+          {
+            "title": "Synthetic comparison video",
+            "link": "https://video.example/demo"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "technical-seo",
+      "captured_at": "2026-08-24T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is technical SEO? A practical guide | Source 1",
+            "link": "https://source-1.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is technical SEO? A practical guide | Source 2",
+            "link": "https://source-2.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is technical SEO? A practical guide | Source 3",
+            "link": "https://source-3.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is technical SEO? A practical guide | Source 4",
+            "link": "https://source-4.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is technical SEO? A practical guide | Source 5",
+            "link": "https://source-5.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is technical SEO? A practical guide | Source 6",
+            "link": "https://source-6.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is technical SEO? A practical guide | Source 7",
+            "link": "https://source-7.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is technical SEO? A practical guide | Source 8",
+            "link": "https://source-8.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is technical SEO? A practical guide | Source 9",
+            "link": "https://source-9.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is technical SEO? A practical guide | Source 10",
+            "link": "https://source-10.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does technical SEO work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "technical-seo",
+      "captured_at": "2026-08-25T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is technical SEO? A practical guide | Source 1",
+            "link": "https://source-1.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is technical SEO? A practical guide | Source 2",
+            "link": "https://source-2.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is technical SEO? A practical guide | Source 3",
+            "link": "https://source-3.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is technical SEO? A practical guide | Source 4",
+            "link": "https://source-4.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is technical SEO? A practical guide | Source 5",
+            "link": "https://source-5.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is technical SEO? A practical guide | Source 6",
+            "link": "https://source-6.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is technical SEO? A practical guide | Source 7",
+            "link": "https://source-7.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is technical SEO? A practical guide | Source 8",
+            "link": "https://source-8.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is technical SEO? A practical guide | Source 9",
+            "link": "https://source-9.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is technical SEO? A practical guide | Source 10",
+            "link": "https://source-10.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does technical SEO work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "technical-seo",
+      "captured_at": "2026-08-26T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is technical SEO? A practical guide | Source 1",
+            "link": "https://source-1.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is technical SEO? A practical guide | Source 2",
+            "link": "https://source-2.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is technical SEO? A practical guide | Source 3",
+            "link": "https://source-3.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is technical SEO? A practical guide | Source 4",
+            "link": "https://source-4.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is technical SEO? A practical guide | Source 5",
+            "link": "https://source-5.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is technical SEO? A practical guide | Source 6",
+            "link": "https://source-6.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is technical SEO? A practical guide | Source 7",
+            "link": "https://source-7.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is technical SEO? A practical guide | Source 8",
+            "link": "https://source-8.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is technical SEO? A practical guide | Source 9",
+            "link": "https://source-9.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is technical SEO? A practical guide | Source 10",
+            "link": "https://source-10.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does technical SEO work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "technical-seo",
+      "captured_at": "2026-08-27T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is technical SEO? A practical guide | Source 1",
+            "link": "https://source-1.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is technical SEO? A practical guide | Source 2",
+            "link": "https://source-2.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is technical SEO? A practical guide | Source 3",
+            "link": "https://source-3.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is technical SEO? A practical guide | Source 5",
+            "link": "https://source-5.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is technical SEO? A practical guide | Source 4",
+            "link": "https://source-4.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is technical SEO? A practical guide | Source 6",
+            "link": "https://source-6.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is technical SEO? A practical guide | Source 7",
+            "link": "https://source-7.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is technical SEO? A practical guide | Source 8",
+            "link": "https://source-8.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is technical SEO? A practical guide | Source 9",
+            "link": "https://source-9.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is technical SEO? A practical guide | Source 10",
+            "link": "https://source-10.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does technical SEO work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "technical-seo",
+      "captured_at": "2026-08-28T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is technical SEO? A practical guide | Source 1",
+            "link": "https://source-1.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is technical SEO? A practical guide | Source 2",
+            "link": "https://source-2.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is technical SEO? A practical guide | Source 3",
+            "link": "https://source-3.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is technical SEO? A practical guide | Source 5",
+            "link": "https://source-5.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is technical SEO? A practical guide | Source 4",
+            "link": "https://source-4.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is technical SEO? A practical guide | Source 6",
+            "link": "https://source-6.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is technical SEO? A practical guide | Source 7",
+            "link": "https://source-7.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is technical SEO? A practical guide | Source 8",
+            "link": "https://source-8.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is technical SEO? A practical guide | Source 9",
+            "link": "https://source-9.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is technical SEO? A practical guide | Source 10",
+            "link": "https://source-10.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does technical SEO work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "technical-seo",
+      "captured_at": "2026-08-29T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is technical SEO? A practical guide | Source 1",
+            "link": "https://source-1.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is technical SEO? A practical guide | Source 2",
+            "link": "https://source-2.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is technical SEO? A practical guide | Source 3",
+            "link": "https://source-3.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is technical SEO? A practical guide | Source 5",
+            "link": "https://source-5.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is technical SEO? A practical guide | Source 4",
+            "link": "https://source-4.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is technical SEO? A practical guide | Source 6",
+            "link": "https://source-6.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is technical SEO? A practical guide | Source 7",
+            "link": "https://source-7.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is technical SEO? A practical guide | Source 8",
+            "link": "https://source-8.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is technical SEO? A practical guide | Source 9",
+            "link": "https://source-9.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is technical SEO? A practical guide | Source 10",
+            "link": "https://source-10.example/technical-SEO/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does technical SEO work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "ai-tools",
+      "captured_at": "2026-08-24T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best AI research tools: tools compared and reviewed | Source 1",
+            "link": "https://source-1.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best AI research tools: tools compared and reviewed | Source 2",
+            "link": "https://source-2.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best AI research tools: tools compared and reviewed | Source 3",
+            "link": "https://source-3.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best AI research tools: tools compared and reviewed | Source 4",
+            "link": "https://source-4.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best AI research tools: tools compared and reviewed | Source 5",
+            "link": "https://source-5.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best AI research tools: tools compared and reviewed | Source 6",
+            "link": "https://source-6.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best AI research tools: tools compared and reviewed | Source 7",
+            "link": "https://source-7.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best AI research tools: tools compared and reviewed | Source 8",
+            "link": "https://source-8.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "Best AI research tools: tools compared and reviewed | Source 9",
+            "link": "https://source-9.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 10,
+            "title": "Best AI research tools: tools compared and reviewed | Source 10",
+            "link": "https://source-10.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does AI research tools work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "ai-tools",
+      "captured_at": "2026-08-25T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best AI research tools: tools compared and reviewed | Source 1",
+            "link": "https://source-1.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best AI research tools: tools compared and reviewed | Source 2",
+            "link": "https://source-2.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best AI research tools: tools compared and reviewed | Source 3",
+            "link": "https://source-3.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best AI research tools: tools compared and reviewed | Source 4",
+            "link": "https://source-4.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best AI research tools: tools compared and reviewed | Source 5",
+            "link": "https://source-5.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best AI research tools: tools compared and reviewed | Source 6",
+            "link": "https://source-6.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best AI research tools: tools compared and reviewed | Source 7",
+            "link": "https://source-7.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best AI research tools: tools compared and reviewed | Source 8",
+            "link": "https://source-8.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "Best AI research tools: tools compared and reviewed | Source 9",
+            "link": "https://source-9.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 10,
+            "title": "Best AI research tools: tools compared and reviewed | Source 10",
+            "link": "https://source-10.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does AI research tools work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "ai-tools",
+      "captured_at": "2026-08-26T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best AI research tools: tools compared and reviewed | Source 1",
+            "link": "https://source-1.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best AI research tools: tools compared and reviewed | Source 2",
+            "link": "https://source-2.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best AI research tools: tools compared and reviewed | Source 3",
+            "link": "https://source-3.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best AI research tools: tools compared and reviewed | Source 4",
+            "link": "https://source-4.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best AI research tools: tools compared and reviewed | Source 5",
+            "link": "https://source-5.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best AI research tools: tools compared and reviewed | Source 6",
+            "link": "https://source-6.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best AI research tools: tools compared and reviewed | Source 7",
+            "link": "https://source-7.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best AI research tools: tools compared and reviewed | Source 8",
+            "link": "https://source-8.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "Best AI research tools: tools compared and reviewed | Source 9",
+            "link": "https://source-9.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 10,
+            "title": "Best AI research tools: tools compared and reviewed | Source 10",
+            "link": "https://source-10.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does AI research tools work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "ai-tools",
+      "captured_at": "2026-08-27T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best AI research tools: tools compared and reviewed | Source 1",
+            "link": "https://source-1.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best AI research tools: tools compared and reviewed | Source 2",
+            "link": "https://source-2.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best AI research tools: tools compared and reviewed | Source 3",
+            "link": "https://source-3.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best AI research tools: tools compared and reviewed | Source 4",
+            "link": "https://source-4.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best AI research tools: tools compared and reviewed | Source 5",
+            "link": "https://source-5.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best AI research tools: tools compared and reviewed | Source 6",
+            "link": "https://source-6.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best AI research tools: tools compared and reviewed | Source 7",
+            "link": "https://source-7.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best AI research tools: tools compared and reviewed | Source 8",
+            "link": "https://source-8.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "Best AI research tools: tools compared and reviewed | Source 9",
+            "link": "https://source-9.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 10,
+            "title": "Best AI research tools: tools compared and reviewed | Source 10",
+            "link": "https://source-10.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does AI research tools work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "ai-tools",
+      "captured_at": "2026-08-28T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best AI research tools: tools compared and reviewed | Source 1",
+            "link": "https://source-new-1.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best AI research tools: tools compared and reviewed | Source 2",
+            "link": "https://source-new-2.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best AI research tools: tools compared and reviewed | Source 3",
+            "link": "https://source-new-3.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best AI research tools: tools compared and reviewed | Source 4",
+            "link": "https://source-new-4.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best AI research tools: tools compared and reviewed | Source 5",
+            "link": "https://source-new-5.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best AI research tools: tools compared and reviewed | Source 6",
+            "link": "https://source-new-6.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best AI research tools: tools compared and reviewed | Source 7",
+            "link": "https://source-new-7.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best AI research tools: tools compared and reviewed | Source 8",
+            "link": "https://source-new-8.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "Best AI research tools: tools compared and reviewed | Source 9",
+            "link": "https://source-new-9.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 10,
+            "title": "Best AI research tools: tools compared and reviewed | Source 10",
+            "link": "https://source-new-10.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          }
+        ],
+        "inline_shopping": [
+          {
+            "title": "Synthetic listing"
+          }
+        ],
+        "ads": [
+          {
+            "title": "Synthetic ad"
+          }
+        ],
+        "inline_videos": [
+          {
+            "title": "Synthetic video"
+          }
+        ],
+        "ai_overview": {
+          "text_blocks": [
+            {
+              "answer": "Synthetic overview."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target_id": "ai-tools",
+      "captured_at": "2026-08-29T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "Best AI research tools: tools compared and reviewed | Source 1",
+            "link": "https://source-new-1.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 2,
+            "title": "Best AI research tools: tools compared and reviewed | Source 2",
+            "link": "https://source-new-2.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 3,
+            "title": "Best AI research tools: tools compared and reviewed | Source 3",
+            "link": "https://source-new-3.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 4,
+            "title": "Best AI research tools: tools compared and reviewed | Source 4",
+            "link": "https://source-new-4.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 5,
+            "title": "Best AI research tools: tools compared and reviewed | Source 5",
+            "link": "https://source-new-5.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 6,
+            "title": "Best AI research tools: tools compared and reviewed | Source 6",
+            "link": "https://source-new-6.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 7,
+            "title": "Best AI research tools: tools compared and reviewed | Source 7",
+            "link": "https://source-new-7.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 8,
+            "title": "Best AI research tools: tools compared and reviewed | Source 8",
+            "link": "https://source-new-8.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 9,
+            "title": "Best AI research tools: tools compared and reviewed | Source 9",
+            "link": "https://source-new-9.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          },
+          {
+            "position": 10,
+            "title": "Best AI research tools: tools compared and reviewed | Source 10",
+            "link": "https://source-new-10.example/AI-research-tools/comparison",
+            "snippet": "Compare alternatives and read our software comparison."
+          }
+        ],
+        "inline_shopping": [
+          {
+            "title": "Synthetic listing"
+          }
+        ],
+        "ads": [
+          {
+            "title": "Synthetic ad"
+          }
+        ],
+        "inline_videos": [
+          {
+            "title": "Synthetic video"
+          }
+        ],
+        "ai_overview": {
+          "text_blocks": [
+            {
+              "answer": "Synthetic overview."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target_id": "thin-serp",
+      "captured_at": "2026-08-24T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is search workflow templates? A practical guide | Source 1",
+            "link": "https://source-1.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is search workflow templates? A practical guide | Source 2",
+            "link": "https://source-2.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is search workflow templates? A practical guide | Source 3",
+            "link": "https://source-3.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is search workflow templates? A practical guide | Source 4",
+            "link": "https://source-4.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is search workflow templates? A practical guide | Source 5",
+            "link": "https://source-5.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is search workflow templates? A practical guide | Source 6",
+            "link": "https://source-6.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is search workflow templates? A practical guide | Source 7",
+            "link": "https://source-7.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is search workflow templates? A practical guide | Source 8",
+            "link": "https://source-8.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is search workflow templates? A practical guide | Source 9",
+            "link": "https://source-9.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is search workflow templates? A practical guide | Source 10",
+            "link": "https://source-10.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does search workflow templates work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "thin-serp",
+      "captured_at": "2026-08-25T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is search workflow templates? A practical guide | Source 1",
+            "link": "https://source-1.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is search workflow templates? A practical guide | Source 2",
+            "link": "https://source-2.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is search workflow templates? A practical guide | Source 3",
+            "link": "https://source-3.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is search workflow templates? A practical guide | Source 4",
+            "link": "https://source-4.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is search workflow templates? A practical guide | Source 5",
+            "link": "https://source-5.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is search workflow templates? A practical guide | Source 6",
+            "link": "https://source-6.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is search workflow templates? A practical guide | Source 7",
+            "link": "https://source-7.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is search workflow templates? A practical guide | Source 8",
+            "link": "https://source-8.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is search workflow templates? A practical guide | Source 9",
+            "link": "https://source-9.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is search workflow templates? A practical guide | Source 10",
+            "link": "https://source-10.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does search workflow templates work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "thin-serp",
+      "captured_at": "2026-08-26T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is search workflow templates? A practical guide | Source 1",
+            "link": "https://source-1.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is search workflow templates? A practical guide | Source 2",
+            "link": "https://source-2.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is search workflow templates? A practical guide | Source 3",
+            "link": "https://source-3.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is search workflow templates? A practical guide | Source 4",
+            "link": "https://source-4.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is search workflow templates? A practical guide | Source 5",
+            "link": "https://source-5.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is search workflow templates? A practical guide | Source 6",
+            "link": "https://source-6.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is search workflow templates? A practical guide | Source 7",
+            "link": "https://source-7.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is search workflow templates? A practical guide | Source 8",
+            "link": "https://source-8.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is search workflow templates? A practical guide | Source 9",
+            "link": "https://source-9.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is search workflow templates? A practical guide | Source 10",
+            "link": "https://source-10.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does search workflow templates work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "thin-serp",
+      "captured_at": "2026-08-27T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is search workflow templates? A practical guide | Source 1",
+            "link": "https://source-1.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is search workflow templates? A practical guide | Source 2",
+            "link": "https://source-2.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is search workflow templates? A practical guide | Source 3",
+            "link": "https://source-3.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is search workflow templates? A practical guide | Source 4",
+            "link": "https://source-4.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is search workflow templates? A practical guide | Source 5",
+            "link": "https://source-5.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is search workflow templates? A practical guide | Source 6",
+            "link": "https://source-6.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is search workflow templates? A practical guide | Source 7",
+            "link": "https://source-7.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is search workflow templates? A practical guide | Source 8",
+            "link": "https://source-8.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is search workflow templates? A practical guide | Source 9",
+            "link": "https://source-9.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is search workflow templates? A practical guide | Source 10",
+            "link": "https://source-10.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does search workflow templates work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "thin-serp",
+      "captured_at": "2026-08-28T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is search workflow templates? A practical guide | Source 1",
+            "link": "https://source-1.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is search workflow templates? A practical guide | Source 2",
+            "link": "https://source-2.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 3,
+            "title": "What is search workflow templates? A practical guide | Source 3",
+            "link": "https://source-3.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 4,
+            "title": "What is search workflow templates? A practical guide | Source 4",
+            "link": "https://source-4.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 5,
+            "title": "What is search workflow templates? A practical guide | Source 5",
+            "link": "https://source-5.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 6,
+            "title": "What is search workflow templates? A practical guide | Source 6",
+            "link": "https://source-6.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 7,
+            "title": "What is search workflow templates? A practical guide | Source 7",
+            "link": "https://source-7.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 8,
+            "title": "What is search workflow templates? A practical guide | Source 8",
+            "link": "https://source-8.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 9,
+            "title": "What is search workflow templates? A practical guide | Source 9",
+            "link": "https://source-9.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 10,
+            "title": "What is search workflow templates? A practical guide | Source 10",
+            "link": "https://source-10.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does search workflow templates work?"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "thin-serp",
+      "captured_at": "2026-08-29T08:00:00Z",
+      "response": {
+        "search_metadata": {
+          "status": "Success"
+        },
+        "organic_results": [
+          {
+            "position": 1,
+            "title": "What is search workflow templates? A practical guide | Source 1",
+            "link": "https://source-1.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          },
+          {
+            "position": 2,
+            "title": "What is search workflow templates? A practical guide | Source 2",
+            "link": "https://source-2.example/search-workflow-templates/guide",
+            "snippet": "Learn the fundamentals with this tutorial and definition."
+          }
+        ],
+        "related_questions": [
+          {
+            "question": "How does search workflow templates work?"
+          }
+        ]
+      }
+    }
+  ]
+}

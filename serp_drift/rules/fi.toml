@@ -1,0 +1,15 @@
+# Built-in Finnish intent rules. Word stems (\w*) cover inflected forms such as oppaan, ohjeet, hinnat.
+language = "fi"
+version = 2
+name = "Suomi"
+
+[rules]
+commercial = ['\bparha\w*', '\bvertail\w*', '\bkokemu\w*', '\barvostel\w*']
+transactional = ['\bhinn\w*', '\bost(?:a|aa|aminen)\b', '\btila(?:a|us|ukset)\b', '\btarjou\w*', '\balennu\w*', '\bverkkokaup\w*']
+informational = ['\bop(?:as|pa\w*)\b', '\bohje\w*', '\bmikä on\b', '\bmiten\b', '\bkuinka\b', '\bvinki\w*', '\besimerk\w*', '\bnäin\b']
+navigational = ['\bkirjaudu\b', '\bkirjautu\w*', '\bomat sivut\b']
+
+[sections]
+transactional = ['tuotteet', 'hinnasto', 'kauppa', 'verkkokauppa']
+navigational = ['kirjaudu']
+informational = ['blogi', 'artikkelit', 'oppaat', 'ohjeet']

@@ -1,0 +1,12 @@
+services:
+  serp-drift:
+    build: .
+    image: serp-drift:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8765:8765"   # keep it on localhost and put a TLS proxy (Caddy, nginx) in front for remote access
+    environment:
+      SERP_DRIFT_TOKEN: ${SERP_DRIFT_TOKEN:?set a token in .env}
+      SEARCHAPI_API_KEY: ${SEARCHAPI_API_KEY:-}   # or place searchapi.key (0600) inside the volume
+    volumes:
+      - ./workspace:/workspace   # monitor.toml, data/, reports/, logs/, searchapi.key
