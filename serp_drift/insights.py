@@ -104,7 +104,7 @@ def dataset(config: dict, store: Store, *, days: int | None = None, now: datetim
     since = now - timedelta(days=days) if days else None
     captures, results, citations, panels = io.StringIO(newline=""), io.StringIO(newline=""), io.StringIO(newline=""), []
     c_writer, r_writer, ci_writer = csv.writer(captures), csv.writer(results), csv.writer(citations)
-    c_writer.writerow(["panel", "query", "engine", "gl", "hl", "device", "location", "captured_at", "results", "dominant_intent", "classified_coverage", "features", "ai_overview_status", "ai_references", "ai_cited_hosts", "page_position", "page_cited", "quality_ok"])
+    c_writer.writerow(["panel", "query", "engine", "gl", "hl", "device", "location", "captured_at", "results", "dominant_intent", "classified_coverage", "features", "ai_overview_status", "ai_references", "ai_cited_hosts", "page_position", "page_cited", "quality_ok", "quality_state"])
     r_writer.writerow(["panel", "captured_at", "position", "url", "host", "title", "intent", "type", "confidence"])
     ci_writer.writerow(["panel", "captured_at", "host", "url"])
     for target in config["targets"]:
@@ -119,7 +119,8 @@ def dataset(config: dict, store: Store, *, days: int | None = None, now: datetim
             c_writer.writerow(map(csv_cell, [target["id"], target["query"], search.get("engine"), search.get("gl"), search.get("hl"), search.get("device", ""), search.get("location", ""),
                                              snapshot["captured_at"], len(snapshot["results"]), snapshot["dominant_intent"], snapshot["classified_coverage"], "|".join(snapshot["features"]),
                                              snapshot.get("ai_overview_status"), summary.get("references", ""), "|".join(summary.get("cited_hosts", [])),
-                                             page_position(snapshot, page_url) or "", summary.get("page_cited", ""), snapshot["quality_ok"]]))
+                                             page_position(snapshot, page_url) or "", summary.get("page_cited", ""), snapshot["quality_ok"],
+                                             (snapshot.get("quality") or {}).get("state", "legacy")]))
             for result in snapshot["results"]:
                 r_writer.writerow(map(csv_cell, [target["id"], snapshot["captured_at"], result["position"], result["url"], result["url"].split("/")[2].removeprefix("www."), result["title"], result["intent"], result["type"], result.get("confidence", "")]))
             for url in summary.get("cited_urls", []):

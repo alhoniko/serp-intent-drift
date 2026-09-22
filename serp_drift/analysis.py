@@ -120,7 +120,14 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
     eligible = [snapshot for snapshot in sampled if snapshot["quality_ok"]]
     baseline = eligible[:settings["baseline_size"]]
     result["baseline"] = baseline
-    latest = snapshots[-1]
+    # A capture of another query is a failed collection: status comes from the newest capture that describes this panel,
+    # and wall-clock staleness from that capture's age. Quarantined or excluded captures still stop the analysis for review.
+    rejected = []
+    while len(snapshots) > len(rejected) + 1 and snapshots[-1 - len(rejected)].get("quality", {}).get("state") == "query_mismatch":
+        rejected.insert(0, snapshots[-1 - len(rejected)])
+    latest = snapshots[-1 - len(rejected)]
+    result["latest"] = latest
+    result["rejected_after_latest"] = [snapshot["captured_at"] for snapshot in rejected]
     if len(baseline) < settings["baseline_size"]:
         result["status"] = "building_baseline"
         result["reasons"].append(f"Baseline: {len(baseline)}/{settings['baseline_size']} eligible, spaced captures.")
@@ -178,6 +185,9 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
         result["timeline"] = [{"captured_at": snapshot["captured_at"], "intent": snapshot["dominant_intent"], "score": None, "quality_ok": snapshot["quality_ok"],
                                "quality_state": snapshot.get("quality", {}).get("state"), "phase": "baseline"}
                               for snapshot in sorted([*sampled, *invalid], key=lambda item: item["captured_at"])]
+    if rejected:
+        result["reasons"].append(f"{len(rejected)} newer capture{'s' if len(rejected) > 1 else ''} returned results for a different query and "
+                                 f"{'were' if len(rejected) > 1 else 'was'} not used; this status comes from the capture of {latest['captured_at'][:16].replace('T', ' ')} UTC.")
     if not latest["quality_ok"]:
         result["status"] = "insufficient_data"
         result["reasons"].append("The latest capture has too few usable results. Alerts are suppressed.")
@@ -186,7 +196,8 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
         result["reasons"] = latest["quality"].get("reasons", []) or ["This observation is excluded from comparisons."]
     if latest["source"] != "synthetic" and (now - parse_time(latest["captured_at"])).total_seconds() > interval * 1.75:
         result["status"] = "stale"
-        result["reasons"].append("Collection is overdue. Previous observations cannot describe the current SERP.")
+        result["reasons"].append("No valid capture within 1.75 collection intervals: recent captures did not match the query. Check collection before interpreting this panel."
+                                 if rejected else "Collection is overdue. Previous observations cannot describe the current SERP.")
     if last_attempt and not last_attempt["success"] and parse_time(last_attempt["attempted_at"]) > parse_time(latest["captured_at"]):
         result["status"] = "collection_error"
         result["reasons"].append(f"Latest collection failed: {last_attempt['code']}. The displayed SERP is the last successful capture.")

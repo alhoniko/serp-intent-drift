@@ -26,7 +26,7 @@ from .importing import candidates as import_candidates
 from .importing import candidates_from_rows
 from .normalize import canonical_url
 from .report import build_report, write_report
-from .scheduler import Scheduler
+from .scheduler import Scheduler, budget_exhausted
 from .sources import AHREFS_LIMITS, ahrefs_keywords, ahrefs_units_per_row
 from .storage import Store, parse_time, utc_now
 from .workspace import Workspace
@@ -148,6 +148,15 @@ class ProjectState:
         import math
         return math.ceil(sum(2 if expand and ENGINES[target["search"]["engine"]]["ai_overview"] else 1 for target in active) * 24 / config["settings"]["interval_hours"])
 
+    def budget(self) -> dict:
+        """Requests recorded by this workspace against its optional cap and collection end date."""
+        config = self.current_config()
+        settings = config["settings"] if config else {}
+        with Store(self.workspace.database) as store:
+            used = store.total_requests()
+            stopped = bool(config) and budget_exhausted(config, store)
+        return {"used": used, "cap": settings.get("max_total_requests", 0), "until": settings.get("collect_until") or None, "stopped": stopped}
+
     def summary(self) -> dict:
         """One row for the portfolio: counts, health, cost. Cheap enough to compute per request."""
         config = self.current_config()
@@ -165,6 +174,7 @@ class ProjectState:
             counts[query["status"]] = counts.get(query["status"], 0) + 1
         row["counts"] = counts
         row["attention"] = len(self.attention(report))
+        row["budget"] = self.budget()
         with Store(self.workspace.database) as store:
             runs = store.runs(20)
         today = datetime.now(UTC).date()
@@ -174,6 +184,8 @@ class ProjectState:
             row["health"], row["health_kind"] = runs[0]["error"][:60], "error"
         elif runs and runs[0]["failed"]:
             row["health"], row["health_kind"] = f"{runs[0]['failed']} failed in the last run", "error"
+        elif (budget := self.budget())["stopped"]:
+            row["health"], row["health_kind"] = f"Collection ended · {budget['used']} requests", "muted"
         elif counts.get("stale"):
             row["health"], row["health_kind"] = f"Stale · {counts['stale']} panels", "stale"
         elif runs and parse_time(runs[0]["finished_at"]).date() == today:
@@ -196,7 +208,7 @@ class ProjectState:
             "config_error": self.config_error, "panels": len(config["targets"]) if config else 0, "credits_per_day": self.credits_per_day(),
             "labeling": config["labeling"] if config else None,
             "settings": config["settings"] if config else None, "search": config.get("search") if config else None, "snapshots": snapshots, "ai_overviews": overviews,
-            "run": self.run_state, "recent_runs": runs, "scheduler": self.scheduler.describe() if self.scheduler else {"enabled": False},
+            "run": self.run_state, "recent_runs": runs, "budget": self.budget() if config else None, "scheduler": self.scheduler.describe() if self.scheduler else {"enabled": False},
             "account": self.account, "packs": packs.registry().describe(), "engines": {name: spec["label"] for name, spec in ENGINES.items()},
             "intents": list(INTENTS), "auth": {"required": self.require_token},
             "notify": {**config["notify"], "webhook_url": "", "webhook_configured": bool(config["notify"]["webhook_url"])} if config else None,
@@ -218,6 +230,13 @@ class ProjectState:
         if not self.workspace.api_key():
             items.append({"kind": "config", "panel": None, "title": "No SearchApi key", "why": "Collection cannot run. Add the key on the Settings page or with `serp-drift key set`.", "action": "settings"})
         report = report or self.report()
+        budget = self.budget()
+        if budget["stopped"]:
+            # Deliberately ended collection is one fact, not one overdue warning per panel.
+            used = f"{budget['used']} of {budget['cap']}" if budget["cap"] else str(budget["used"])
+            end = f", end {budget['until']}" if budget["until"] else ""
+            items.append({"kind": "config", "panel": None, "title": "Collection ended", "action": "settings",
+                          "why": f"The workspace request cap or end date was reached ({used} requests{end}). Panels show their last observations."})
         for query in report["queries"]:
             latest = query["latest"] or {}
             followup = next((case for case in query.get("reviews", []) if case["status"] in {"decided", "monitoring"}
@@ -232,7 +251,7 @@ class ProjectState:
                 items.append({"kind": "review", "panel": query["id"], "title": query["query"], "why": " ".join(query["reasons"]), "score": query["score"], "action": "open", "at": latest.get("captured_at")})
             elif query["status"] in {"collection_error", "data_quality", "insufficient_data"}:
                 items.append({"kind": "error", "panel": query["id"], "title": query["query"], "why": " ".join(query["reasons"]), "action": "open" if query["status"] == "data_quality" else "retry", "at": (query.get("last_attempt") or {}).get("attempted_at")})
-            elif query["status"] == "stale":
+            elif query["status"] == "stale" and not budget["stopped"]:
                 items.append({"kind": "stale", "panel": query["id"], "title": query["query"], "why": " ".join(query["reasons"]), "action": "collect", "at": latest.get("captured_at")})
         items.sort(key=lambda item: (ATTENTION_ORDER[item["kind"]], -(item.get("score") or 0), item["title"]))
         return items
@@ -250,13 +269,15 @@ class ProjectState:
             analysis["paused"] = settings.get("paused") == "1"
             analysis["acknowledged_at"] = settings.get("acknowledged_at")
             page_url = (target.get("page") or {}).get("url")
+            described = [snapshot for snapshot in snapshots if (snapshot.get("quality") or {}).get("state") != "query_mismatch"]
             # Scores only make sense against a complete baseline; while it builds, the timeline shows captures without scores.
             scored_baseline = analysis["baseline"] if analysis["status"] not in {"building_baseline", "awaiting_data"} else []
             return {
                 "project": {"id": self.id, "name": self.name, "site": site},
                 "target": {key: target[key] for key in ("id", "query", "search", "identity", "page") if key in target},
-                "analysis": analysis, "timeline": timeline(snapshots, scored_baseline, page_url, site), "trajectories": url_trajectories(snapshots, site),
-                "changes": change_log(snapshots, page_url, site), "citations": citations(snapshots, site), "stability": intent_stability(snapshots),
+                # Captures of another query stay visible in the timeline and the data-quality view, never in URL or citation history.
+                "analysis": analysis, "timeline": timeline(snapshots, scored_baseline, page_url, site), "trajectories": url_trajectories(described, site),
+                "changes": change_log(described, page_url, site), "citations": citations(described, site), "stability": intent_stability(described),
                 "attempts": store.attempts(target, 30), "events": store.events(target, 30), "settings": settings,
                 "observations": [{"captured_at": s["captured_at"], "quality": s.get("quality"), "review": s.get("observation_review"), "results": len(s["results"]), "intent": s["dominant_intent"]} for s in reversed(snapshots)],
                 "captures": [snapshot["captured_at"] for snapshot in snapshots], "weights": config and __import__("serp_drift.analysis", fromlist=["WEIGHTS"]).WEIGHTS,

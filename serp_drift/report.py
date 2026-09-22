@@ -13,7 +13,9 @@ from .storage import Store, utc_now
 
 
 def build_report(config: dict, store: Store, source: str = "searchapi") -> dict:
+    from .scheduler import budget_exhausted
     site = (config.get("project") or {}).get("site") or None
+    ended = source == "searchapi" and budget_exhausted(config, store)
     queries = []
     for target in config["targets"]:
         settings = store.panel_settings(target) if source == "searchapi" else {}
@@ -23,6 +25,11 @@ def build_report(config: dict, store: Store, source: str = "searchapi") -> dict:
         query["group"] = settings.get("group", "")
         query["paused"] = settings.get("paused") == "1"
         query["acknowledged_at"] = settings.get("acknowledged_at")
+        if ended and query["status"] == "stale":
+            # Collection stopped on purpose (request cap or end date): the last observations are final, not overdue.
+            query["reasons"] = [reason for reason in query["reasons"] if "overdue" not in reason and "No valid capture" not in reason]
+            query["reasons"].append("Collection ended (request cap or end date reached); these are the final observations.")
+            query["decision"] = query["decision"] | {"title": "Collection ended", "next_action": "Read the final observations; no new capture will arrive.", "reasons": query["reasons"]}
         queries.append(query)
     return {"schema_version": 1, "version": __version__, "analysis_version": config.get("analysis_version") or analysis_version(),
             "generated_at": utc_now(), "source": source, "synthetic": source == "synthetic", "weights": WEIGHTS,

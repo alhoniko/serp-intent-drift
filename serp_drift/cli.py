@@ -269,6 +269,8 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("action", choices=["export", "score"])
     command.add_argument("--out", type=Path)
     command.add_argument("--holdout-after", help="YYYY-MM-DD; reserve later captures as temporal holdout.")
+    command.add_argument("--sample-results", type=int, help="Keep a fixed, hash-ordered subset of this many result rows.")
+    command.add_argument("--latest-windows", action="store_true", help="One window per panel (its newest capture) instead of every capture.")
     command.add_argument("--predictions", type=Path)
     command.add_argument("--labels", type=Path)
 
@@ -416,7 +418,7 @@ def main(argv: list[str] | None = None) -> int:
                     raise ValueError("benchmark export requires --out <new-directory>.")
                 config = load_config(workspace.config)
                 with Store(workspace.database) as store:
-                    result = export_annotation(config, store, args.out, args.holdout_after)
+                    result = export_annotation(config, store, args.out, args.holdout_after, sample_results=args.sample_results, latest_windows=args.latest_windows)
             else:
                 if not args.predictions or not args.labels:
                     raise ValueError("benchmark score requires --predictions and --labels.")

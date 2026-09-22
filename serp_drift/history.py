@@ -52,7 +52,8 @@ def timeline(snapshots: list[dict], baseline: list[dict], page_url: str | None =
         hit = site_hit(snapshot, site)
         rows.append({
             "captured_at": snapshot["captured_at"], "intent": snapshot["dominant_intent"], "coverage": snapshot["classified_coverage"],
-            "quality_ok": snapshot["quality_ok"], "results": len(snapshot["results"]), "features": snapshot["features"],
+            "quality_ok": snapshot["quality_ok"], "quality_state": (snapshot.get("quality") or {}).get("state"),
+            "query_match": (snapshot.get("query_check") or {}).get("share"), "results": len(snapshot["results"]), "features": snapshot["features"],
             "ai_overview_status": snapshot.get("ai_overview_status"), "page_position": page_position(snapshot, page_url),
             "site_position": hit["position"] if hit else None, "site_url": hit["url"] if hit else None,
             "site_cited": site_cited(snapshot, site), "ai_references": (snapshot.get("ai_overview") or {}).get("references"),

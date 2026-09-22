@@ -256,9 +256,17 @@ class QueryCheckTests(unittest.TestCase):
         self.assertEqual(report['status'], 'stable')
         self.assertEqual(report['latest']['captured_at'], retry['captured_at'])
         self.assertIn('query_mismatch', [point.get('quality_state') for point in report['timeline']])
+        # A rejected newest capture is a failed collection: status comes from the newest valid capture, with the rejection disclosed.
         latest_bad = analyze(DECAY_TARGET, apply_query_check([*rows, bad]), DEFAULTS, now=START + timedelta(hours=73))
-        self.assertEqual(latest_bad['status'], 'data_quality')
-        self.assertEqual(latest_bad['decision']['title'], 'Latest capture did not match the query')
+        self.assertEqual(latest_bad['status'], 'baseline_ready')
+        self.assertEqual(latest_bad['latest']['captured_at'], rows[-1]['captured_at'])
+        self.assertEqual(latest_bad['rejected_after_latest'], [bad['captured_at']])
+        self.assertTrue(any('different query' in reason for reason in latest_bad['reasons']))
+        overdue = analyze(DECAY_TARGET, apply_query_check([*rows, bad]), DEFAULTS, now=START + timedelta(hours=100))
+        self.assertEqual(overdue['status'], 'stale')
+        only_bad = analyze(DECAY_TARGET, apply_query_check([rows[0], bad])[1:], DEFAULTS, now=START + timedelta(hours=73))
+        self.assertEqual(only_bad['status'], 'data_quality')
+        self.assertEqual(only_bad['decision']['title'], 'Latest capture did not match the query')
 
     def test_collector_retries_a_mismatched_capture_once_and_records_both(self):
         from serp_drift.cli import collect
@@ -349,3 +357,32 @@ class QueryCheckTests(unittest.TestCase):
             Store(db).connection.close()
             self.assertEqual(due_panels(config, db), [])
             self.assertEqual(len(due_panels(config | {'settings': DEFAULTS}, db)), 1)
+
+    def test_ended_collection_is_one_notice_not_overdue_panels(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'monitor.toml').write_text('version = 1\n[settings]\ncollect_until = "2026-08-02T00:00:00Z"\n[[targets]]\nid = "content-decay"\nquery = "content decay"\n', encoding='utf-8')
+            project = ProjectState(Workspace(root))
+            target = project.target('content-decay')
+            with Store(root / 'data' / 'monitor.sqlite') as store:
+                for hours in (0, 24, 48, 72):
+                    store.add(target, decay_snapshot(hours), decay_payload())
+            query = project.report()['queries'][0]
+            self.assertEqual(query['status'], 'stale')
+            self.assertEqual(query['decision']['title'], 'Collection ended')
+            attention = project.attention()
+            self.assertEqual([item['title'] for item in attention if item['kind'] != 'config' or item['title'] == 'Collection ended'], ['Collection ended'])
+            self.assertTrue(project.budget()['stopped'])
+
+    def test_annotation_sample_is_fixed_and_skips_mismatched_captures(self):
+        from serp_drift import evaluation
+        with tempfile.TemporaryDirectory() as temporary, Store(Path(temporary) / 'm.sqlite') as store:
+            for hours, bad in ((0, False), (24, True), (48, False), (72, False)):
+                store.add(DECAY_TARGET, decay_snapshot(hours, degraded=bad), decay_payload(bad))
+            config = {'settings': DEFAULTS, 'targets': [DECAY_TARGET]}
+            first = evaluation.export_annotation(config, store, Path(temporary) / 'a', sample_results=5, latest_windows=True)
+            second = evaluation.export_annotation(config, store, Path(temporary) / 'b', sample_results=5, latest_windows=True)
+            self.assertEqual((first['windows'], first['results'], first['skipped_query_mismatch_captures']), (1, 5, 1))
+            self.assertEqual((Path(temporary) / 'a/predictions.jsonl').read_text(), (Path(temporary) / 'b/predictions.jsonl').read_text())
+            observed = evaluation.read_jsonl(Path(temporary) / 'a/observations.jsonl')
+            self.assertNotIn('content-hub', json.dumps(observed))
