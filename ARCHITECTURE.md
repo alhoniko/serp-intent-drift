@@ -73,7 +73,7 @@ The baseline is the first `baseline_size` usable, interval-spaced captures after
 - **Language:** add `rules/<lang>.toml`; see `docs/language-packs.md`.
 - **Notification format:** add a branch to `notify.payload_for`.
 - **Storage:** bump `SCHEMA_VERSION` and add `CREATE TABLE IF NOT EXISTS`; migrations run once on open.
-- **UI view:** add a renderer in `assets/app.js` and a route in `render()`; the API is in `server.py`.
+- **UI view:** add a renderer in `assets/app.js` (project and portfolio views), `assets/panel.js` (panel tabs) or `assets/manage.js` (settings, adding keywords, agent setup) and a route in `render()`; shared marks live in `assets/ui.js`, every icon in `assets/icons.js`, the evidence tab in `assets/review.js`. The API is in `server.py`.
 
 ## Decisions
 

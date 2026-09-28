@@ -1192,6 +1192,11 @@ class ProjectTests(unittest.TestCase):
         self.assertTrue(body["trajectories"]["urls"][1]["mine"] or any(url["mine"] for url in body["trajectories"]["urls"]))
         self.assertEqual(body["citations"]["site_cited"], 5)
         self.assertEqual(body["timeline"][-1]["site_position"], 2)
+        # The report timeline carries the same per-capture position, so lists can show a page leaving the top ten.
+        report_timeline = body["analysis"]["timeline"]
+        self.assertIsNone(report_timeline[0]["site_position"])
+        self.assertEqual(report_timeline[-1]["site_position"], 2)
+        self.assertTrue(report_timeline[-1]["site_url"].endswith("/blog"))
         status, body = self.request("GET", "/api/portfolio")
         self.assertEqual([row["id"] for row in body["projects"]], ["alpha", "beta"])
         self.assertEqual(body["projects"][0]["site"], "publisher.example")

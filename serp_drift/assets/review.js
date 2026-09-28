@@ -1,60 +1,72 @@
 /* Evidence and review UI. Uses the same decision contract as exports and agent tools. */
 window.SerpReview = (() => {
-  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const pct = (v) => `${Math.round((v || 0) * 100)}%`;
-  const date = (v) => v ? new Date(v).toLocaleString('en-GB', {timeZone:'UTC'}) + ' UTC' : 'Not available';
-  const words = (v) => String(v || 'unknown').replaceAll('_', ' ');
-  const option = (values, selected) => values.map(([v,l]) => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(l)}</option>`).join('');
-  function dimensions(q) {
-    const d = q.dimensions || {}, e = q.evidence || {};
-    return `<div class="evidence-grid" aria-label="Separate measures"><div><span>SERP change</span><b>${d.serp_change == null ? 'Not ready' : Math.round(d.serp_change) + ' / 100'}</b><small>Change index, not a probability</small></div><div><span>Intent</span><b>${esc(words(d.intent))}</b><small>${pct(e.classified_coverage)} of rank weight classified</small></div><div><span>Page fit</span><b>${esc(words(d.page_fit))}</b><small>Based on your declared page profile</small></div><div><span>Data quality</span><b>${esc(words(d.data))}</b><small>Search context ${esc(e.quality?.provenance || 'unverified')}</small></div></div>`;
-  }
-  function hero(q, base) {
-    const d = q.decision || {}; const reasons = (d.reasons || []).filter((r) => r !== 'Inspect the observed changes.');
-    return `<section class="decision-hero"><div class="eyebrow">${esc(words(q.status))} · ${esc(q.method || '')}</div><h2>${esc(d.title || 'Inspect the evidence')}</h2><p>${esc(d.next_action)}</p>${reasons.length ? `<ul>${reasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}<div class="decision-links"><a class="btn primary" href="${esc(base)}?tab=compare" data-act="compare">Compare observations</a><a class="btn" href="${esc(base)}?tab=review" data-act="review">${q.status === 'review' ? 'Record a decision' : 'Review history'}</a><a href="${esc(base)}?tab=evidence" data-act="evidence">Check data quality</a></div></section>`;
-  }
-  function aligned(q) {
-    const before = q.baseline?.at(-1), after = q.latest;
-    if (!before || !after) return '';
-    const old = new Map(before.results.map((r) => [r.url, r]));
-    const current = new Map(after.results.map((r) => [r.url, r]));
-    const urls = [...current.keys(), ...[...old.keys()].filter((u) => !current.has(u))];
-    return `<details class="section"><summary class="section-head"><h2>Before & after</h2><span class="secondary">Last baseline capture → latest · exact URL matching</span></summary><div class="table-scroll" tabindex="0" role="region" aria-label="Aligned result comparison"><table class="evidence-table"><caption class="sr-only">${esc(date(before.captured_at))} compared with ${esc(date(after.captured_at))}</caption><thead><tr><th>Result</th><th>Before</th><th>Latest</th><th>Intent before → latest</th></tr></thead><tbody>${urls.map((u) => { const a = old.get(u), b = current.get(u); return `<tr><th scope="row"><span>${esc(b?.title || a?.title)}</span><small>${esc(u)}</small></th><td>${a ? '#' + a.position : 'Not observed'}</td><td>${b ? '#' + b.position : 'Not observed'}</td><td>${esc(a?.intent || '—')} → ${esc(b?.intent || '—')}</td></tr>`; }).join('')}</tbody></table></div><p class="small muted">The change index uses every eligible capture in the baseline, not only the single capture shown here.</p></details>`;
-  }
+  'use strict';
+  const U = window.SerpUI;
+  const { I, esc, DT, pct, plural } = U;
+  const words = (v) => U.cap(String(v || 'unknown').replace(/_/g, ' '));
+  const option = (values, selected) => values.map(([v, l]) => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(l)}</option>`).join('');
   // The query check is a heuristic: a reviewer who confirms the results are right for the query can keep the observation.
   const keepable = (o) => o.quality?.state === 'query_mismatch' && !o.review;
-  function mismatched(panel) {
-    const all = panel.observations || [], bad = all.filter((o) => o.quality?.state === 'query_mismatch');
-    return bad.length ? `<div class="notice"><strong>${bad.length} of ${all.length} captures returned results for a different query.</strong> Their organic results miss the query terms (often matching one word of it), so they are kept as observations but not used as samples. Inspect one below if you doubt the check.</div>` : '';
+  const STATUSES = [['investigating', 'Investigating'], ['decided', 'Decision recorded'], ['monitoring', 'Monitoring outcome'], ['closed', 'Closed']];
+  const DECISIONS = [['', 'Choose a decision'], ['update_page', 'Update the current page'], ['create_page', 'Create a separate page'], ['wait', 'Wait for more evidence'], ['no_action', 'No content change needed'], ['incorrect_observation', 'Observation is incorrect'], ['incorrect_label', 'Classification is incorrect']];
+
+  function statePill(o) {
+    const st = o.quality?.state;
+    if (o.review?.excluded) return `<span class="pill idle">${I('x')}Excluded by you</span>`;
+    if (st === 'query_mismatch') return `<span class="pill issue">${I('x')}Rejected · another query</span>`;
+    if (st === 'quarantined') return `<span class="pill issue">${I('alert')}Quarantined</span>`;
+    if (st === 'accepted') return `<span class="pill idle">${I('ok')}Accepted${o.review && o.review.excluded === false ? ' · kept by you' : ''}</span>`;
+    return `<span class="pill idle">${esc(words(st || 'legacy · unverified'))}</span>`;
   }
-  function evidence(panel) {
-    const q = panel.analysis, e = q.evidence || {}, topic = q.topic_check;
-    return `${dimensions(q)}<section class="card pad vstack"><h2>What this evidence can tell you</h2><p>${esc(e.accuracy)}</p><p>Baseline: ${e.baseline_captures || 0} / ${e.baseline_required || 3} captures. Confirmation requires ${e.confirmation_required || 2} spaced observations. Classifier: ${esc(e.classifier)}.</p><p>Baseline variation: ${e.baseline_variation == null ? 'not available' : pct(e.baseline_variation)} intent distance. Recent comparison: ${q.recent_comparison ? Math.round(q.recent_comparison.score) + ' / 100 against up to seven previous eligible captures' : 'not enough data'}. These are descriptive context, not confidence estimates.</p>${mismatched(panel)}${topic?.inspection_suggested ? `<div class="notice"><strong>Inspect query relevance.</strong> Result titles differ substantially between captures${topic.unusual_baseline_captures?.length ? ' (including ' + topic.unusual_baseline_captures.length + ' baseline captures)' : ''}. This can be a real shift or a collection problem; it is not automatically excluded.</div>` : ''}<p class="muted">Legacy observations have no returned search parameters. Their original request context cannot be reconstructed. Exclusions preserve the original observation and record your reason.</p></section><section class="section"><h2>Observation audit</h2><div class="observation-list">${(panel.observations || []).map((o, index) => `<details class="card pad"><summary>${esc(date(o.captured_at))} <span class="status">${esc(o.quality?.state || 'legacy / unverified')} · ${o.results} results</span></summary><div class="vstack mt8"><p>${esc((o.quality?.reasons || []).join(' ') || 'No collection-quality issue recorded.')}</p><pre class="trace">${esc(JSON.stringify(o.quality?.trace || {note:'Search response provenance was not retained.'}, null, 2))}</pre><form data-observation="${index}" class="vstack"><label class="field">Reason for ${keepable(o) ? 'keeping' : o.review?.excluded ? 'restoring' : 'excluding'} this observation<textarea name="reason" required maxlength="2000" rows="2" placeholder="Describe the evidence for this decision"></textarea></label><p class="inline-error" role="alert"></p><button class="btn" type="submit">${keepable(o) ? 'Keep in analysis' : o.review?.excluded ? 'Restore to analysis' : 'Exclude from analysis'}</button></form></div></details>`).join('') || '<p>No observations yet.</p>'}</div></section>`;
+
+  function decisionCard(q) {
+    const cases = q.reviews || []; const active = cases.find((r) => r.active) || cases.find((r) => ['decided', 'monitoring'].includes(r.status));
+    if (!(q.status === 'review' || active)) return '';
+    return `<section class="card pad" id="decision"><div class="card-head">${I('checks')}<h3>${active ? esc(words(active.status)) : 'New confirmed change'}</h3><span class="meta">Your rationale stays attached to this change</span></div>
+      <form id="review-decision" class="stack" style="gap:14px"><div class="form-grid"><label class="field">Review status<select name="status">${option(STATUSES, active?.status || 'investigating')}</select></label><label class="field">Decision<select name="decision">${option(DECISIONS, active?.decision || '')}</select></label><label class="field">Check again on<input name="review_on" type="date" value="${esc(active?.review_on || '')}"></label></div>
+      <label class="field">Rationale<textarea name="note" rows="4" maxlength="4000" placeholder="What changed, what you checked, and why this action fits">${esc(active?.note || '')}</textarea></label><p class="inline-error" role="alert"></p><div class="form-actions"><button type="submit" class="btn primary">Save decision</button><span class="note">Inspect the original results and your page before deciding.</span></div></form></section>`;
   }
-  function review(panel) {
-    const q = panel.analysis, cases = q.reviews || [], active = cases.find((r) => r.active) || cases.find((r) => ['decided','monitoring'].includes(r.status));
-    const editable = q.status === 'review' || active;
-    const statuses = [['investigating','Investigating'],['decided','Decision recorded'],['monitoring','Monitoring outcome'],['closed','Closed']];
-    const decisions = [['','Choose a decision'],['update_page','Update the current page'],['create_page','Create a separate page'],['wait','Wait for more evidence'],['no_action','No content change needed'],['incorrect_observation','Observation is incorrect'],['incorrect_label','Classification is incorrect']];
-    return `<section class="card pad vstack"><div class="eyebrow">Review workflow</div><h2>${active ? esc(words(active.status)) : editable ? 'New confirmed change' : 'No confirmed change to decide on'}</h2><p>Inspect the original results and your page before making a content decision. Your rationale stays attached to this change.</p>${editable ? `<form id="review-decision" class="vstack"><div class="form-grid"><label class="field">Review status<select name="status">${option(statuses, active?.status || 'investigating')}</select></label><label class="field">Decision<select name="decision">${option(decisions, active?.decision || '')}</select></label><label class="field">Check again on<input name="review_on" type="date" value="${esc(active?.review_on || '')}"></label></div><label class="field">Rationale<textarea name="note" rows="4" maxlength="4000" placeholder="What changed, what you checked, and why this action fits">${esc(active?.note || '')}</textarea></label><p class="inline-error" role="alert"></p><div><button type="submit" class="btn primary">Save review</button></div></form>` : '<p class="muted">A high SERP change index alone is not a confirmed intent change. You can still inspect comparisons and data quality.</p>'}</section><section class="section"><h2>Decision history</h2><div class="observation-list">${cases.map((c) => `<article class="card pad vstack"><div class="row-between"><strong>${esc(words(c.status))} · ${esc(words(c.decision || 'No decision yet'))}</strong><span class="secondary">${c.active ? 'Active signal' : 'Signal ended'}</span></div><p>${esc(c.note || 'No rationale recorded yet.')}</p><small class="muted">Opened ${esc(date(c.opened_at))}${c.review_on ? ' · review on ' + esc(c.review_on) : ''}</small></article>`).join('') || '<p class="muted">Decisions will appear here.</p>'}</div></section><section class="section"><h2>Audit trail</h2><div class="observation-list">${(panel.events || []).filter((e) => e.kind.startsWith('review_') || e.kind === 'observation_review').map((e) => `<details class="card pad"><summary>${esc(words(e.kind))} · ${esc(date(e.at))}</summary><pre class="trace">${esc(JSON.stringify(e.payload, null, 2))}</pre></details>`).join('') || '<p class="muted">No review actions recorded.</p>'}</div></section>`;
+
+  function evidence(ctx, panel, q, body) {
+    const obs = panel.observations || []; const e = q.evidence || {}; const topic = q.topic_check; const id = panel.target.id;
+    const accepted = obs.filter((o) => o.quality?.state === 'accepted' && !o.review?.excluded).length;
+    const rejected = obs.filter((o) => U.REJECTED.includes(o.quality?.state) && !o.review?.excluded).length;
+    const excluded = obs.filter((o) => o.review?.excluded).length;
+    const mismatch = obs.filter((o) => o.quality?.state === 'query_mismatch');
+    const cases = q.reviews || [];
+    const trail = [...(panel.events || []).filter((ev) => ev.kind === 'status_change' || ev.kind.startsWith('review_') || ev.kind === 'observation_review' || ev.kind === 'acknowledged' || ev.kind === 'baseline_moved')].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 12);
+    let limit = 12;
+    const row = (o, i) => `<div class="obs"><button class="trow" type="button" data-i="${i}" aria-expanded="false" style="width:100%;border:0;background:none;text-align:left;cursor:pointer;grid-template-columns:130px minmax(0,1fr) 64px 150px 110px"><span class="dim num">${esc(DT(o.captured_at))}</span><span>${statePill(o)}</span><span class="right dim num">${o.results ?? '—'}</span><span class="hide-sm ${o.quality?.state === 'query_mismatch' ? '' : 'muted'}" style="${o.quality?.state === 'query_mismatch' ? 'color:var(--review-text)' : ''}">${o.quality?.state === 'query_mismatch' ? 'misses the query terms' : o.quality?.state === 'accepted' ? 'passes' : o.quality ? words(o.quality.state) : 'unverified'}</span><span class="right ${keepable(o) ? 'link' : 'muted'}">${keepable(o) ? 'Keep as evidence' : o.review?.excluded ? 'Restore…' : 'Exclude…'}</span></button>
+      <div style="padding:4px 18px 16px 18px;display:none"></div></div>`;
+    const detail = (o, i) => `<div class="stack" style="gap:10px;padding:4px 0 6px"><p class="note" style="color:var(--text-2)">${esc((o.quality?.reasons || []).join(' ') || 'No collection-quality issue recorded.')}${o.intent ? ` Dominant intent: ${esc(o.intent)}.` : ''}</p><details><summary class="note" style="cursor:pointer">Search trace${o.quality?.trace?.request_id ? ` · ${esc(o.quality.trace.request_id)}` : ''}</summary><pre class="code" style="margin-top:8px;max-height:220px;overflow:auto">${esc(JSON.stringify(o.quality?.trace || { note: 'Search response provenance was not retained.' }, null, 2))}</pre></details><form data-observation="${i}" class="stack" style="gap:8px"><label class="field">Reason for ${keepable(o) ? 'keeping' : o.review?.excluded ? 'restoring' : 'excluding'} this observation<textarea name="reason" required maxlength="2000" rows="2" placeholder="Describe the evidence for this decision"></textarea></label><p class="inline-error" role="alert"></p><div><button class="btn small" type="submit">${keepable(o) ? 'Keep in analysis' : o.review?.excluded ? 'Restore to analysis' : 'Exclude from analysis'}</button></div></form></div>`;
+    const draw = () => {
+      body.innerHTML = `${decisionCard(q)}
+        <div class="stats"><div><b>${obs.length}</b><span>captures stored</span></div><div><b>${accepted}</b><span>accepted as evidence</span></div><div><b>${rejected}</b><span>rejected: another query or quarantined</span></div><div><b>${excluded}</b><span>excluded by you</span></div></div>
+        ${mismatch.length ? `<div class="notice"><span class="ib">${I('rejected')}</span><div class="t"><b>${plural(mismatch.length, 'capture')} returned results for another query</b><p>Their organic results miss the query terms, often matching only one word of it. They are kept as observations and never counted as evidence${q.settings && ctx.state.status?.settings?.retry_query_mismatch ? '; each was retried after a short pause' : ''}. If you think the check is wrong for a capture, keep it as evidence below.</p></div></div>` : ''}
+        ${topic?.inspection_suggested ? `<div class="notice"><span class="ib">${I('alert')}</span><div class="t"><b>Inspect query relevance</b><p>Result titles differ substantially between captures${topic.unusual_baseline_captures?.length ? `, including ${plural(topic.unusual_baseline_captures.length, 'baseline capture')}` : ''}. This can be a real shift or a collection problem; it is not excluded automatically.</p></div></div>` : ''}
+        <div class="with-rail wide"><div class="card clip"><div class="card-head" style="padding:16px 18px 10px"><h3>Observation ledger</h3><span class="meta">every capture, newest first · nothing is ever deleted</span></div><div class="table"><div class="thead" style="grid-template-columns:130px minmax(0,1fr) 64px 150px 110px"><span>Captured (UTC)</span><span>State</span><span class="right">Results</span><span class="hide-sm">Query check</span><span></span></div>${obs.slice(0, limit).map(row).join('') || '<div class="empty">No observations yet.</div>'}</div>${obs.length > limit ? `<button class="more-link" type="button" id="obs-more">Show ${plural(obs.length - limit, 'more capture')}</button>` : ''}</div>
+          <div class="rail"><div class="card pad"><div class="card-head">${I('scale')}<h3>What this evidence can tell you</h3></div><dl class="kv"><dt>Classifier</dt><dd>${esc(e.classifier || 'rules')}</dd><dt>Coverage</dt><dd>${pct(e.classified_coverage)} of rank weight (latest)</dd><dt>Search context</dt><dd>${esc(e.quality?.provenance || 'unverified')}${e.quality?.trace?.verified_fields ? `: ${esc(e.quality.trace.verified_fields.join(', '))}` : ''}</dd><dt>Baseline</dt><dd>${e.baseline_captures || 0} / ${e.baseline_required || 3} captures · ${plural(e.confirmation_required || 2, 'confirmation')}</dd><dt>Baseline variation</dt><dd>${e.baseline_variation == null ? 'not available' : `${pct(e.baseline_variation)} intent distance`}</dd><dt>Recent comparison</dt><dd>${q.recent_comparison ? `${Math.round(q.recent_comparison.score)} / 100 against up to seven earlier captures` : 'not enough data'}</dd></dl><p class="note">${esc(e.accuracy || 'Not independently benchmarked. Coverage is not accuracy.')} Treat intent labels as estimates and read the evidence before changing a page.</p></div>
+            <div class="card pad"><div class="card-head">${I('checks')}<h3>Decisions and status</h3></div>${cases.length ? `<div class="stack">${cases.map((c) => `<div class="stack" style="gap:3px;padding-bottom:8px;border-bottom:1px solid var(--line)"><b style="font-weight:500">${esc(words(c.status))} · ${esc(words(c.decision || 'no decision yet'))}</b><span class="note">${esc(c.note || 'No rationale recorded yet.')}</span><span class="note">Opened ${esc(DT(c.opened_at))}${c.review_on ? ` · check again ${esc(c.review_on)}` : ''}${c.active ? ' · active signal' : ''}</span></div>`).join('')}</div>` : ''}
+              <div class="stack" style="gap:0">${trail.map((ev, i) => { const p = ev.payload || {}; const title = ev.kind === 'status_change' ? `${U.word(p.before)} → ${U.word(p.after)}` : words(ev.kind); const sub = ev.kind === 'status_change' && p.score != null ? `score ${Math.round(p.score)}` : ev.kind === 'observation_review' ? (p.reason || '') : ev.kind === 'acknowledged' ? 'marked as seen' : ''; return `<div class="row" style="align-items:flex-start;gap:12px;padding:8px 0"><i class="dot ${i === 0 ? (U.kind(p.after) === 'watch' ? 'watch' : U.kind(p.after) === 'review' ? 'review' : 'stable') : 'hollow'}" style="margin-top:5px"></i><span class="stack" style="gap:2px"><b style="font-weight:500;${i ? 'color:var(--text-2)' : ''}">${esc(title)}</b><span class="note">${esc(DT(ev.at))} UTC${sub ? ` · ${esc(sub)}` : ''}</span></span></div>`; }).join('') || '<p class="note">No status changes yet.</p>'}</div>
+              ${q.status !== 'review' && !cases.length ? '<p class="note">No decisions yet. A decision form appears when a review is confirmed; watches can be marked as seen.</p>' : ''}</div></div></div>`;
+      body.querySelectorAll('.obs > button').forEach((b) => b.addEventListener('click', () => { const open = b.getAttribute('aria-expanded') === 'true'; const box = b.nextElementSibling; b.setAttribute('aria-expanded', String(!open)); if (!open && !box.innerHTML) box.innerHTML = detail(obs[Number(b.dataset.i)], Number(b.dataset.i)); box.style.display = open ? 'none' : 'block'; bindForms(); }));
+      ctx.$('obs-more')?.addEventListener('click', () => { limit = obs.length; draw(); });
+      const refresh = async () => { ctx.invalidate(); await ctx.loadStatus(); await ctx.render(); };
+      ctx.$('review-decision')?.addEventListener('submit', async (event) => {
+        event.preventDefault(); const form = event.target; const button = form.querySelector('button'); button.disabled = true;
+        const current = cases.find((r) => r.active) || cases.find((r) => ['decided', 'monitoring'].includes(r.status));
+        try { await ctx.api(ctx.P(`/panels/${encodeURIComponent(id)}/decision`), { method: 'POST', body: { ...Object.fromEntries(new FormData(form)), case_id: current?.id } }); ctx.toast('Decision saved.'); await refresh(); }
+        catch (error) { form.querySelector('[role="alert"]').textContent = error.message; button.disabled = false; }
+      });
+      function bindForms() {
+        body.querySelectorAll('form[data-observation]:not([data-bound])').forEach((form) => { form.dataset.bound = '1'; form.addEventListener('submit', async (event) => {
+          event.preventDefault(); const o = obs[Number(form.dataset.observation)]; const button = form.querySelector('button'); button.disabled = true;
+          try { await ctx.api(ctx.P(`/panels/${encodeURIComponent(id)}/observation-review`), { method: 'POST', body: { captured_at: o.captured_at, excluded: keepable(o) ? false : !o.review?.excluded, reason: form.elements.reason.value } }); ctx.toast('Observation updated.'); await refresh(); }
+          catch (error) { form.querySelector('[role="alert"]').textContent = error.message; button.disabled = false; }
+        }); });
+      }
+    };
+    draw();
   }
-  function bind(root, panel, post, refresh) {
-    root.querySelectorAll('[data-observation]').forEach((form) => form.addEventListener('submit', async (event) => {
-      event.preventDefault(); const o = panel.observations[Number(form.dataset.observation)]; const button = form.querySelector('button'); button.disabled = true;
-      try { await post('observation-review', {captured_at:o.captured_at, excluded:keepable(o) ? false : !o.review?.excluded, reason:form.elements.reason.value}); await refresh(); }
-      catch(error) { form.querySelector('[role="alert"]').textContent = error.message; button.disabled = false; }
-    }));
-    root.querySelector('#review-decision')?.addEventListener('submit', async (event) => {
-      event.preventDefault(); const form = event.target, button = form.querySelector('button'); button.disabled = true;
-      const current = (panel.analysis.reviews || []).find((r) => r.active) || (panel.analysis.reviews || []).find((r) => ['decided','monitoring'].includes(r.status));
-      try { await post('decision', {...Object.fromEntries(new FormData(form)), case_id:current?.id}); await refresh(); }
-      catch(error) { form.querySelector('[role="alert"]').textContent = error.message; button.disabled = false; }
-    });
-  }
-  function overview(queries) {
-    const measured = queries.filter((q) => q.latest), known = measured.filter((q) => q.evidence?.support === 'available');
-    const problems = queries.filter((q) => ['data_quality','insufficient_data','collection_error','stale'].includes(q.status));
-    return `<div class="evidence-grid project-metrics"><div><span>Confirmed changes</span><b>${queries.filter((q) => q.status === 'review').length}</b><small>Open the evidence before deciding</small></div><div><span>Changes to watch</span><b>${queries.filter((q) => q.status === 'watch').length}</b><small>Intent shift not confirmed</small></div><div><span>Usable intent evidence</span><b>${known.length} / ${measured.length}</b><small>Coverage and freshness, not accuracy</small></div><div><span>Collection issues</span><b>${problems.length}</b><small>Resolve these before content decisions</small></div></div>`;
-  }
-  return {hero, dimensions, aligned, evidence, review, bind, overview};
+  return { evidence, keepable };
 })();

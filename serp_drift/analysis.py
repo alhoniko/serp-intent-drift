@@ -226,6 +226,12 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
             result["site"]["ranking_url_changed"] = bool(before and hit and before["url"] != hit["url"])
         if result.get("page_position") is None and not shown.get("page"):
             result["page_position"] = result["site"]["position"]
+        # Per-capture position of the site, so lists can say when a page left the top ten without loading the panel.
+        by_time = {snapshot["captured_at"]: snapshot for snapshot in snapshots}
+        for point in result["timeline"]:
+            point_hit = site_hit(by_time[point["captured_at"]], site) if point["captured_at"] in by_time else None
+            point["site_position"] = point_hit["position"] if point_hit else None
+            point["site_url"] = point_hit["url"] if point_hit else None
     return explain(result, all_snapshots, settings)
 
 

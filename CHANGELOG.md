@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased · 0.7 · the triage redesign
+
+- **Inbox replaces the dashboard.** One status sentence, a status bar for every panel, and a queue grouped as Needs a decision, Watching, Collection health, Seen and Settled in the last 24 hours, with a preview of the selected panel beside it. Panels where your site moved or left the top 10 sort first; J/K move and Enter opens. *Mark as seen* acknowledges a watch until the next capture. All projects has a merged inbox.
+- **One panel, one story.** The panel page leads with a verdict and the next capture, then SERP change, intent, page fit and data as four measures, the score by capture (baseline window, threshold, rejected captures), the score as its five contributions, the intent mix and the top 10 against the baseline. Seven tabs become six: Review and Data quality merge into Evidence, an observation ledger with exclusions, decisions and the status trail.
+- **Less chrome.** Activity and Runs merge into Log (status changes first, per-event flap counts, requests per day, flapping panels). Settings are split into General, Collection, Notifications, Keys and integrations, Classification and Workspace; the watch threshold previews how many panels it would watch today. Import and *Add a panel by hand* merge into Add keywords, with edge selection, range select and a cost estimate. The sidebar shows the collector, the next run and the request budget.
+- **Tables say which market they mean.** Engine, device, country and location tags tell apart panels that share a query. The panels table adds the last twelve captures and flags flapping panels.
+- ⌘K searches panels, projects, ranking pages and actions. Dark is the default theme; light and system use the same tokens. Geist is bundled (SIL Open Font License, `serp_drift/assets/OFL-Geist.txt`); the app still loads nothing from other hosts.
+- The report timeline now carries `site_position` and `site_url` for every capture, so lists can show when your page left the top 10 without loading each panel. No change to intent rules, panel identities, scores or the storage schema.
+
 ## 0.6.0 · 2026-09-23 · trustworthy collection (release candidate)
 
 Changes found through real use: 400 live captures across 54 panels and a prospective 23-panel study.

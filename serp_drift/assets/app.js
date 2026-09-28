@@ -1,49 +1,14 @@
-/* serp-drift app · calm redesign. Hash routes over the JSON API; no build step, no dependencies. */
+/* serp-drift app · triage redesign (0.7). Hash routes over the JSON API; no build step, no dependencies. */
 (() => {
   'use strict';
+  const U = window.SerpUI;
+  const { I, esc, D, T, ago, until, pct, n, plural } = U;
   const $ = (id) => document.getElementById(id);
-  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  const safeUrl = (v) => { try { const u = new URL(v); return ['http:', 'https:'].includes(u.protocol) && !u.username ? esc(u.href) : '#'; } catch { return '#'; } };
-  const hostPath = (v) => { try { const u = new URL(v); return (u.hostname.replace(/^www\./, '') + u.pathname.replace(/\/$/, '') + (u.search || '')); } catch { return v || ''; } };
-  const host = (v) => { try { return new URL(v).hostname.replace(/^www\./, ''); } catch { return ''; } };
-  const D = (v, o = {}) => v ? new Date(v).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(o.year ? { year: 'numeric' } : {}), timeZone: 'UTC' }) : '—';
-  const DT = (v) => v ? new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : '—';
-  const T = (v) => v ? new Date(v).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : '—';
-  const ago = (v) => { if (!v) return '—'; const days = Math.floor((Date.now() - new Date(v).getTime()) / 86400000); return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days`; };
-  const pct = (v) => v == null ? '—' : `${Math.round(v * 100)}%`;
-  const n = (v) => v == null ? '—' : Number(v).toLocaleString('en-GB');
-  const plural = (c, w) => `${c} ${w}${c === 1 ? '' : 's'}`;
-  const addDays = (iso, days) => new Date(new Date(iso).getTime() + days * 86400000).toISOString(); // fractional days: 12 h intervals
-  const INTENTS = ['informational', 'commercial', 'transactional', 'navigational', 'unknown'];
-  const DEVICES = ['desktop', 'mobile', 'tablet'];
-  // One select component: options are strings or [value, label] pairs; the chevron and colours come from app.css.
-  const select = (attrs, options, value) => `<select ${attrs}>${options.map((o) => { const [v, label] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}"${String(v) === String(value ?? '') ? ' selected' : ''}>${esc(label)}</option>`; }).join('')}</select>`;
-  const healthKind = (p) => p ? ({ ok: 'ok', error: 'err', stale: 'hollow', muted: 'hollow' }[p.health_kind] || 'hollow') : 'hollow';
-  const MOD = /mac|iphone|ipad/i.test(navigator.userAgentData?.platform || navigator.platform || '') ? '⌘' : 'Ctrl';
-  const AGENT_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="11" height="8" rx="2"/><path d="M8 5V2.5M5.5 13v1.5M10.5 13v1.5M2.5 8.5h-1M14.5 8.5h-1"/><circle cx="6" cy="9" r=".7" fill="currentColor" stroke="none"/><circle cx="10" cy="9" r=".7" fill="currentColor" stroke="none"/></svg>';
-  const SEARCH_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3.5 3.5"/></svg>';
-  const FEATURES = { ai_overview: 'AI Overview', answer_box: 'Answer box', related_questions: 'People also ask', knowledge_graph: 'Knowledge graph', local_results: 'Local results', inline_videos: 'Videos', inline_shorts: 'Short videos', inline_images: 'Images', inline_shopping: 'Shopping', top_stories: 'Top stories', ads: 'Ads', discussions_and_forums: 'Discussions' };
-  const COMPONENTS = [['intent', 'Intent mix'], ['url_turnover', 'URL turnover'], ['result_types', 'Result types'], ['rank_movement', 'Rank movement'], ['features', 'SERP features']];
-  const state = { status: null, portfolio: null, project: null, reports: new Map(), panels: new Map(), pollTimer: null, palette: { open: false, index: 0, items: [] } };
+  const enc = encodeURIComponent;
+  const REPO = 'https://github.com/alhoniko/serp-intent-drift';
+  const state = { status: null, project: null, reports: new Map(), panels: new Map(), activity: new Map(), attention: new Map(), pollTimer: null, theme: 'dark', keys: null, palette: { open: false, index: 0, items: [], all: [] } };
 
-  // --- status helpers ------------------------------------------------------------------------------------------------
-  function kind(status) { return { review: 'review', watch: 'watch', stable: 'ok', building_baseline: 'info', baseline_ready: 'info', awaiting_data: 'hollow', insufficient_data: 'hollow', stale: 'hollow', collection_error: 'err', data_quality: 'err' }[status] || 'hollow'; }
-  function word(q) {
-    const s = q.status || q;
-    if (s === 'building_baseline' && q.baseline) return `Building ${q.baseline.length} / ${q.settings?.baseline_size ?? 3}`;
-    return { review: 'Review', watch: 'Watch', stable: 'Stable', building_baseline: 'Building', baseline_ready: 'Baseline ready', awaiting_data: 'Awaiting data', insufficient_data: 'Sparse', stale: 'Stale', collection_error: 'Error', data_quality: 'Check data' }[s] || s;
-  }
-  const dot = (k) => `<i class="dot ${k}"></i>`;
-  const statusHtml = (q) => `<span class="status ${kind(q.status)}">${dot(kind(q.status))}${esc(word(q))}${q.paused ? ' · paused' : ''}</span>`;
-  const marketHtml = (search) => `<span class="market"><b>${esc(engineLabel(search.engine))}</b><span>${esc((search.gl || '').toUpperCase())} · ${esc(search.hl || '')}${search.device ? ` · ${esc(search.device)}` : ''}${search.location ? ` · ${esc(search.location.split(',')[0])}` : ''}</span></span>`;
-  function engineLabel(engine) { return (state.status?.engines || {})[engine || 'google'] || 'Google'; }
-  function scoreDelta(q) { const t = q.timeline || []; const scored = t.filter((p) => p.score != null); if (scored.length < 2) return null; return Math.round(scored[scored.length - 1].score - scored[scored.length - 2].score); }
-  const deltaHtml = (d) => d == null ? '' : `<span class="delta ${d > 0 ? 'up' : d < 0 ? 'down' : 'flat'}">${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d)}</span>`;
-  function position(q) { if (q.site?.position) return { pos: q.site.position, url: q.site.url }; if (q.page_position && q.latest?.page) return { pos: q.page_position, url: q.latest.page.url }; return null; }
-  const priority = { data_quality: 1, review: 0, collection_error: 1, stale: 2, watch: 3, insufficient_data: 4, baseline_ready: 5, building_baseline: 6, awaiting_data: 7, stable: 8 };
-  const sortQueries = (qs) => [...qs].sort((a, b) => (priority[a.status] ?? 9) - (priority[b.status] ?? 9) || (b.score || 0) - (a.score || 0) || a.query.localeCompare(b.query));
-
-  // --- plumbing --------------------------------------------------------------------------------------------------------
+  // --- plumbing ----------------------------------------------------------------------------------------------------
   async function api(path, options = {}) {
     const init = { method: options.method || 'GET', headers: { 'X-Requested-With': 'serp-drift' } };
     if (options.body !== undefined) { init.headers['Content-Type'] = options.raw ? 'text/plain; charset=utf-8' : 'application/json'; init.body = options.raw ? options.body : JSON.stringify(options.body); }
@@ -53,600 +18,454 @@
     if (!response.ok) throw new Error(body?.error || `${response.status} ${response.statusText}`);
     return body;
   }
-  const P = (path) => `/api/p/${encodeURIComponent(state.project)}${path}`;
+  const P = (path, pid = state.project) => `/api/p/${enc(pid)}${path}`;
+  const link = { project: (pid = state.project) => `#/p/${enc(pid)}`, view: (v, pid = state.project) => `#/p/${enc(pid)}/${v}`, panel: (id, tab, pid = state.project) => `#/p/${enc(pid)}/panel/${enc(id)}${tab ? `?tab=${tab}` : ''}` };
   function toast(message, error = false) { const el = document.createElement('div'); el.className = `toast${error ? ' error' : ''}`; el.textContent = message; $('toasts').appendChild(el); setTimeout(() => el.remove(), error ? 7000 : 3500); }
   const fail = (error) => { toast(error.message || String(error), true); console.error(error); };
   const go = (hash) => { location.hash = hash; };
   const route = () => { const [path, query] = location.hash.replace(/^#\/?/, '').split('?'); return { parts: path.split('/').filter(Boolean).map(decodeURIComponent), params: new URLSearchParams(query || '') }; };
   async function loadStatus() { state.status = await api('/api/status'); if (!state.project || !state.status.projects.some((p) => p.id === state.project)) state.project = state.status.project.id; }
-  async function report(pid = state.project, fresh = false) { if (fresh || !state.reports.has(pid)) state.reports.set(pid, await api(`/api/p/${encodeURIComponent(pid)}/report`)); return state.reports.get(pid); }
-  async function panelData(id, fresh = false) { const key = `${state.project}/${id}`; if (fresh || !state.panels.has(key)) state.panels.set(key, await api(P(`/panels/${encodeURIComponent(id)}`))); return state.panels.get(key); }
-  function invalidate() { state.reports.clear(); state.panels.clear(); state.portfolio = null; }
-  const projectRow = (pid = state.project) => (state.status?.projects || []).find((p) => p.id === pid);
+  async function report(pid = state.project, fresh = false) { if (fresh || !state.reports.has(pid)) state.reports.set(pid, await api(P('/report', pid))); return state.reports.get(pid); }
+  async function panelData(id, pid = state.project, fresh = false) { const key = `${pid}/${id}`; if (fresh || !state.panels.has(key)) state.panels.set(key, await api(P(`/panels/${enc(id)}`, pid))); return state.panels.get(key); }
+  async function activity(pid = state.project) { if (!state.activity.has(pid)) state.activity.set(pid, await api(P('/activity', pid)).catch(() => ({ events: [], runs: [] }))); return state.activity.get(pid); }
+  async function attention(pid = state.project) { if (!state.attention.has(pid)) state.attention.set(pid, await api(P('/attention', pid)).catch(() => ({ attention: [] }))); return state.attention.get(pid); }
+  function invalidate() { state.reports.clear(); state.panels.clear(); state.activity.clear(); state.attention.clear(); }
+  const projects = () => state.status?.projects || [];
+  const projectRow = (pid = state.project) => projects().find((p) => p.id === pid);
+  const engines = () => state.status?.engines || {};
+  const isRunning = () => projects().some((p) => p.running);
+  const priority = { review: 0, collection_error: 1, data_quality: 1, stale: 2, watch: 3, insufficient_data: 4, baseline_ready: 5, building_baseline: 6, awaiting_data: 7, stable: 8 };
+  const sortQueries = (qs) => [...qs].sort((a, b) => (priority[a.status] ?? 9) - (priority[b.status] ?? 9) || (b.score || 0) - (a.score || 0) || a.query.localeCompare(b.query));
+  function scoreDelta(q) { const scored = (q.timeline || []).filter((p) => p.score != null && U.capKind(p) === 's'); if (scored.length < 2) return null; return Math.round(scored[scored.length - 1].score - scored[scored.length - 2].score); }
+  const deltaHtml = (d) => d == null ? '<span class="delta"></span>' : `<span class="delta${d > 0 ? ' up' : ''}">${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d)}</span>`;
+  const seen = (q) => Boolean(q.acknowledged_at && q.latest?.captured_at && q.acknowledged_at >= q.latest.captured_at);
+  function siteHit(q) { const s = U.siteTrack(q); return s.dropped || s.moved || s.entered || s.urlChanged ? 1 : 0; }
+  function sitePosition(q) { if (q.site?.position) return { pos: q.site.position, url: q.site.url }; if (q.page_position && q.latest?.page) return { pos: q.page_position, url: q.latest.page.url }; return null; }
+  const cited = (q) => Boolean(q.site?.cited || q.latest?.ai_overview?.page_cited || q.latest?.ai_overview?.host_cited);
 
-  // --- collection + polling ---------------------------------------------------------------------------------------------
-  async function collect(ids, force) {
-    try { const result = await api(P('/collect'), { method: 'POST', body: { ids, force } }); toast(result.started ? (ids ? 'Collecting this panel…' : 'Collecting every due panel…') : 'A collection is already running.'); startPolling(); } catch (error) { fail(error); }
+  // --- collection + polling ----------------------------------------------------------------------------------------
+  async function collect(ids, force, pid = state.project) {
+    try { const result = await api(P('/collect', pid), { method: 'POST', body: { ids, force } }); toast(result.started ? (ids ? 'Collecting this panel…' : 'Collecting every due panel…') : 'A collection is already running.'); startPolling(); } catch (error) { fail(error); }
   }
-  function startPolling() { if (!state.pollTimer) state.pollTimer = setInterval(pollRun, 3000); renderTopActions(); }
+  async function collectAll() { try { await api('/api/collect-all', { method: 'POST', body: {} }); toast('Collecting every due panel in every project…'); startPolling(); } catch (error) { fail(error); } }
+  function startPolling() { if (!state.pollTimer) state.pollTimer = setInterval(pollRun, 3000); renderCollector(); }
   async function pollRun() {
     try { await loadStatus(); } catch (error) { return fail(error); }
-    const running = (state.status.projects || []).some((p) => p.running);
-    renderTopActions();
-    if (!running) { clearInterval(state.pollTimer); state.pollTimer = null; const last = projectRow()?.last_run; if (last) toast(last.error ? `Collection error: ${last.error}` : `${last.collected} collected · ${last.skipped} skipped · ${last.failed} failed`, Boolean(last.error || last.failed)); invalidate(); render(); }
+    renderCollector();
+    if (!isRunning()) { clearInterval(state.pollTimer); state.pollTimer = null; const last = projectRow()?.last_run; if (last) toast(last.error ? `Collection error: ${last.error}` : `${last.collected} collected · ${last.skipped} skipped · ${last.failed} failed`, Boolean(last.error || last.failed)); invalidate(); render(); }
   }
 
-  // --- shell ------------------------------------------------------------------------------------------------------------
-  function switcherHtml(id, current, row) {
-    const label = current.portfolio ? '<span class="nowrap">All projects</span>' : `${dot(healthKind(row))}<span class="nowrap">${esc(row?.name || state.project)}</span>`;
-    return `<div class="switcher-wrap"><button class="switcher" id="${id}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Switch project">${label}<span class="caret">⌄</span></button><div class="menu" id="${id}-menu" role="menu" hidden></div></div>`;
+  // --- theme ---------------------------------------------------------------------------------------------------------
+  const THEMES = ['dark', 'light', 'system'];
+  function applyTheme(theme) { state.theme = THEMES.includes(theme) ? theme : 'dark'; if (state.theme === 'dark') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = state.theme; }
+  function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(state.theme) + 1) % THEMES.length]); try { localStorage.setItem('serp-drift-theme', state.theme); } catch {} const b = $('theme-btn'); if (b) { b.innerHTML = themeIcon(); b.title = `Theme: ${state.theme}`; } toast(`Theme: ${state.theme}`); }
+  const themeIcon = () => I(state.theme === 'light' ? 'sun' : state.theme === 'system' ? 'system' : 'moon');
+  try { applyTheme(new URLSearchParams(location.search).get('theme') || localStorage.getItem('serp-drift-theme') || 'dark'); } catch { applyTheme('dark'); }
+
+  // --- shell ---------------------------------------------------------------------------------------------------------
+  const initial = (name) => (String(name || '?').replace(/^(study:|the )\s*/i, '').trim()[0] || '?').toUpperCase();
+  function inboxCount(row) { if (!row) return 0; return (row.counts?.watch || 0) + (row.attention || 0); }
+  function navItems(view, portfolio) {
+    if (portfolio) return [['#/portfolio', 'projects', 'Projects', view === 'portfolio', projects().length], ['#/portfolio/inbox', 'inbox', 'Inbox', view === 'pinbox', projects().reduce((a, p) => a + inboxCount(p), 0)], ['#/portfolio/insights', 'insights', 'Insights', view === 'pinsights'], ['#/portfolio/log', 'log', 'Log', view === 'plog']];
+    const row = projectRow();
+    return [[link.project(), 'inbox', 'Inbox', view === 'inbox', inboxCount(row), (row?.counts?.review || 0) > 0], [link.view('panels'), 'panels', 'Panels', view === 'panels' || view === 'panel' || view === 'add', row?.panels], [link.view('insights'), 'insights', 'Insights', view === 'insights'], [link.view('log'), 'log', 'Log', view === 'log'], [link.view('settings'), 'settings', 'Settings', view === 'settings']];
   }
-  function projectMenu(current) {
-    const s = state.status; const items = [];
-    if (s.multi_project) items.push({ href: '#/portfolio', label: 'All projects', meta: plural((s.projects || []).length, 'project'), active: current.portfolio, sepAfter: true });
-    (s.projects || []).forEach((p) => items.push({ href: `#/p/${encodeURIComponent(p.id)}`, label: p.name, meta: p.attention ? `${p.attention} to review` : plural(p.panels, 'panel'), active: !current.portfolio && p.id === state.project, dotk: healthKind(p) }));
-    if (s.projects_root) items.push({ href: '#/new-project', label: 'New project', muted: true, sepBefore: true });
-    return items;
+  function switcherMenu(portfolio) {
+    const items = [];
+    if (state.status.multi_project) items.push(`<a role="menuitem" href="#/portfolio"${portfolio ? ' aria-current="true"' : ''}><span class="avatar">∗</span><span class="nowrap">All projects</span><span class="k">${plural(projects().length, 'project')}</span></a><div class="sep"></div>`);
+    projects().forEach((p) => { const dotKind = p.counts?.review ? 'review' : p.health_kind === 'error' ? 'err' : p.counts?.watch ? 'watch' : p.health_kind === 'ok' ? 'ok' : 'hollow'; items.push(`<a role="menuitem" href="${link.project(p.id)}"${!portfolio && p.id === state.project ? ' aria-current="true"' : ''}><span class="avatar">${esc(initial(p.name))}</span><span class="nowrap">${esc(p.name)}</span><span class="k"><i class="dot ${dotKind}"></i> ${p.counts?.watch ? `${p.counts.watch} watching` : plural(p.panels, 'panel')}</span></a>`); });
+    if (state.status.projects_root) items.push(`<div class="sep"></div><a role="menuitem" href="#/new-project">${I('plus')}<span>New project</span></a>`);
+    return items.join('');
   }
-  function bindMenu(id, items) {
-    const button = $(id); const menu = $(`${id}-menu`);
-    menu.innerHTML = items.map((i) => `${i.sepBefore ? '<div class="sep"></div>' : ''}<a role="menuitem" href="${i.href}"${i.active ? ' aria-current="true"' : ''}${i.muted ? ' class="muted"' : ''}>${i.dotk ? dot(i.dotk) : ''}<span class="nowrap">${esc(i.label)}</span>${i.meta ? `<span class="k">${esc(i.meta)}</span>` : ''}${i.active ? '<span class="check">✓</span>' : ''}</a>${i.sepAfter ? '<div class="sep"></div>' : ''}`).join('');
+  function collectorHtml(portfolio) {
+    const sched = state.status.scheduler || {}; const row = portfolio ? null : projectRow(); const running = portfolio ? isRunning() : row?.running;
+    const budget = row?.budget; const stopped = Boolean(budget?.stopped);
+    const nextAt = sched.enabled ? (portfolio ? sched.next_due_at : sched.next_by_project?.[state.project]) : null;
+    const label = running ? 'Collecting now…' : stopped ? 'Collection ended' : sched.enabled ? 'Collecting on schedule' : 'Scheduler off';
+    const perDay = portfolio ? projects().reduce((a, p) => a + (p.credits_per_day || 0), 0) : row?.credits_per_day;
+    const used = portfolio ? projects().reduce((a, p) => a + (p.budget?.used || 0), 0) : budget?.used;
+    const capped = !portfolio && budget?.cap;
+    return `<div class="collector" id="collector"><div class="state"><i class="dot ${running ? 'run' : stopped || !sched.enabled ? 'hollow' : 'ok'}"></i><span>${label}</span></div>
+      ${sched.enabled && !stopped ? `<div class="kv">Next run<b>${nextAt ? `${T(nextAt)} UTC · ${until(nextAt)}` : '—'}</b></div>` : !sched.enabled ? '<div class="kv">Runs<b>on Collect, cron or CI</b></div>' : ''}
+      <div class="kv">Requests<b class="num">${n(used || 0)}${capped ? ` / ${n(budget.cap)}` : ' · no cap'}</b></div>
+      ${capped ? `<div class="track"><i style="width:${Math.min(100, (budget.used / budget.cap) * 100).toFixed(1)}%"></i></div>` : ''}
+      <div class="note">${!portfolio && budget?.until ? `${stopped ? 'Stopped' : 'Stops'} ${D(budget.until)}, ${T(budget.until)} UTC` : `≈ ${n(perDay || 0)} requests a day before retries`}</div>
+      <button class="btn small block" type="button" id="collect-btn" ${running || stopped ? 'disabled' : ''}>${I('collect')}${running ? 'Collecting…' : portfolio ? 'Collect all due' : 'Collect now'}</button>
+      <div class="src">Captures via SearchApi</div></div>`;
+  }
+  function renderCollector() {
+    const box = $('collector'); if (!box || !state.status) return;
+    box.outerHTML = collectorHtml(state.scope === 'portfolio');
+    $('collect-btn')?.addEventListener('click', () => (state.scope === 'portfolio' ? collectAll() : collect(undefined, false)));
+  }
+  function renderSidebar(view, portfolio) {
+    const row = projectRow();
+    const name = portfolio ? 'All projects' : row?.name || state.project;
+    const meta = portfolio ? `${plural(projects().length, 'project')} · ${plural(projects().reduce((a, p) => a + (p.panels || 0), 0), 'panel')}` : `${row?.site || 'no site set'} · ${plural(row?.panels || 0, 'panel')}`;
+    $('sidebar').innerHTML = `<div class="brand"><i class="mark"></i><b>serp-drift</b><span class="ver">${esc((state.status.version || '').replace(/\.0$/, ''))}</span><span class="grow"></span><a class="icon-btn" href="${REPO}" target="_blank" rel="noopener noreferrer" title="Source code" aria-label="Source code">${I('source')}</a><button class="icon-btn" type="button" id="theme-btn" title="Theme: ${state.theme}" aria-label="Switch theme">${themeIcon()}</button></div>
+      <div class="gap-10"></div>
+      <div class="switcher-wrap"><button class="switcher" id="switcher" type="button" aria-haspopup="menu" aria-expanded="false"><span class="avatar">${portfolio ? '∗' : esc(initial(name))}</span><span class="t"><b class="nowrap">${esc(name)}</b><span class="nowrap">${esc(meta)}</span></span>${I('updown')}</button><div class="menu" id="switcher-menu" role="menu" hidden>${switcherMenu(portfolio)}</div></div>
+      <div class="gap-8"></div>
+      <button class="search-btn" type="button" id="search-btn">${I('search')}<span>Search or jump to…</span>${U.kbd(`${U.MOD}K`)}</button>
+      <div class="gap-12"></div>
+      <nav class="nav" aria-label="Sections">${navItems(view, portfolio).map(([href, icon, label, active, count, hot]) => `<a href="${href}"${active ? ' aria-current="page"' : ''}>${I(icon)}<span>${label}</span>${count ? `<span class="count${hot ? ' hot' : ''}">${n(count)}</span>` : ''}</a>`).join('')}</nav>
+      <div class="fill"></div>
+      <nav class="nav secondary" aria-label="More">${portfolio ? '' : `<a href="${link.view('connect')}"${view === 'connect' ? ' aria-current="page"' : ''}>${I('agent')}<span>Agent (MCP)</span></a>`}<a href="${REPO}#readme" target="_blank" rel="noopener noreferrer">${I('docs')}<span>Documentation</span><span class="ext">${I('external')}</span></a></nav>
+      ${collectorHtml(portfolio)}`;
+    const button = $('switcher'); const menu = $('switcher-menu');
     const links = () => [...menu.querySelectorAll('a')];
     const open = (focus) => { menu.hidden = false; button.setAttribute('aria-expanded', 'true'); if (focus) (links().find((a) => a.hasAttribute('aria-current')) || links()[0])?.focus(); };
     const close = () => { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); };
     button.addEventListener('click', () => (menu.hidden ? open(false) : close()));
     button.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); open(true); } });
     menu.addEventListener('keydown', (e) => { const l = links(); const i = l.indexOf(document.activeElement); if (e.key === 'ArrowDown') { e.preventDefault(); l[(i + 1) % l.length]?.focus(); } else if (e.key === 'ArrowUp') { e.preventDefault(); l[(i - 1 + l.length) % l.length]?.focus(); } else if (e.key === 'Escape') { close(); button.focus(); } });
-  }
-  document.addEventListener('click', (e) => { document.querySelectorAll('.switcher-wrap').forEach((w) => { const m = w.querySelector('.menu'); if (m && !m.hidden && !w.contains(e.target)) { m.hidden = true; w.querySelector('.switcher').setAttribute('aria-expanded', 'false'); } }); });
-  function renderSidebar(current) {
-    const s = state.status; const row = projectRow();
-    const attention = row?.attention || 0;
-    const items = current.portfolio ? [['#/portfolio', 'Portfolio', current.view === 'portfolio'], ['#/portfolio/insights', 'Insights', current.view === 'pinsights'], ['#/portfolio/runs', 'Runs', current.view === 'pruns']]
-      : [[`#/p/${state.project}`, 'Overview', current.view === 'dashboard', attention], [`#/p/${state.project}/panels`, 'Panels', current.view === 'panels' || current.view === 'panel'], [`#/p/${state.project}/activity`, 'Activity', current.view === 'activity'], [`#/p/${state.project}/insights`, 'Insights', current.view === 'insights'], [`#/p/${state.project}/runs`, 'Runs', current.view === 'runs'], [`#/p/${state.project}/settings`, 'Settings', current.view === 'settings' || current.view === 'import']];
-    const sched = s.scheduler; const nextAt = sched.enabled ? (current.portfolio ? sched.next_due_at : (sched.next_by_project || {})[state.project]) : null;
-    $('sidebar').innerHTML = `<div class="brand"><i></i>serp-drift</div>
-      ${switcherHtml('switcher', current, row)}
-      <button class="search-btn" id="search-btn" type="button">${SEARCH_ICON}<span>Search panels…</span><kbd>${MOD} K</kbd></button>
-      <nav class="nav">${items.map(([href, label, active, count]) => `<a href="${href}" ${active ? 'aria-current="page"' : ''}>${label}${count ? `<span class="count">${count}</span>` : ''}</a>`).join('')}</nav>
-      <a class="connect" href="#/p/${encodeURIComponent(state.project)}/connect" ${current.view === 'connect' ? 'aria-current="page"' : ''}>${AGENT_ICON}<span>Connect agent</span></a>
-      <div class="sidebar-foot"><span class="status">${dot(sched.enabled ? 'ok' : 'hollow')}${sched.enabled ? `Scheduler on${nextAt ? ` · next ${T(nextAt)} UTC` : ''}` : 'Scheduler off'}</span><span>${current.portfolio ? n((s.projects || []).reduce((a, p) => a + (p.credits_per_day || 0), 0)) : n(row?.credits_per_day)} requests / day, estimated maximum before retries</span><a href="#" id="theme-toggle">Theme: ${document.documentElement.dataset.theme || 'system'}</a></div>`;
-    bindMenu('switcher', projectMenu(current));
+    $('theme-btn').addEventListener('click', cycleTheme);
     $('search-btn').addEventListener('click', openPalette);
-    $('theme-toggle').addEventListener('click', (event) => { event.preventDefault(); cycleTheme(); });
-    $('topbar-project').innerHTML = switcherHtml('switcher-m', current, row);
-    bindMenu('switcher-m', projectMenu(current));
+    $('collect-btn')?.addEventListener('click', () => (portfolio ? collectAll() : collect(undefined, false)));
     $('sidebar').classList.remove('open'); $('scrim').hidden = true;
   }
-  function renderTopActions() {
-    const running = (state.status?.projects || []).some((p) => p.running);
-    $('topbar-actions').innerHTML = `<button class="icon-btn" id="search-m" type="button" aria-label="Search">${SEARCH_ICON}</button><button class="btn primary small" id="collect-m" type="button" ${running ? 'disabled' : ''}>${running ? 'Collecting…' : 'Collect'}</button>`;
+  function renderMobile(view, portfolio) {
+    const row = projectRow(); const name = portfolio ? 'All projects' : row?.name || state.project;
+    $('topbar').innerHTML = `<button class="icon-btn" type="button" id="drawer-btn" aria-label="Open navigation">${I('menu')}</button><button class="proj" type="button" id="drawer-btn-2"><span class="avatar">${portfolio ? '∗' : esc(initial(name))}</span><b>${esc(name)}</b></button><button class="icon-btn boxed" type="button" id="search-m" aria-label="Search">${I('search')}</button>`;
+    const tabs = portfolio ? [['#/portfolio', 'projects', 'Projects', view === 'portfolio'], ['#/portfolio/inbox', 'inbox', 'Inbox', view === 'pinbox'], ['#/portfolio/insights', 'insights', 'Insights', view === 'pinsights'], ['#/portfolio/log', 'log', 'Log', view === 'plog']]
+      : [[link.project(), 'inbox', 'Inbox', view === 'inbox'], [link.view('panels'), 'panels', 'Panels', view === 'panels' || view === 'panel'], [link.view('insights'), 'insights', 'Insights', view === 'insights'], [link.view('log'), 'log', 'Log', view === 'log']];
+    $('tabbar').innerHTML = tabs.map(([href, icon, label, active]) => `<a href="${href}"${active ? ' aria-current="page"' : ''}>${I(icon)}<span>${label}</span></a>`).join('') + `<button type="button" id="more-m">${I('more')}<span>More</span></button>`;
+    const drawer = () => { $('sidebar').classList.add('open'); $('scrim').hidden = false; };
+    ['drawer-btn', 'drawer-btn-2', 'more-m'].forEach((id) => $(id)?.addEventListener('click', drawer));
     $('search-m').addEventListener('click', openPalette);
-    $('collect-m')?.addEventListener('click', () => collect(undefined, false));
-    document.querySelectorAll('[data-collect]').forEach((button) => { button.disabled = running; button.textContent = running ? 'Collecting…' : button.dataset.collect; });
   }
-  function cycleTheme() { const cur = document.documentElement.dataset.theme || 'system'; const next = { system: 'light', light: 'dark', dark: 'system' }[cur]; if (next === 'system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = next; try { localStorage.setItem('serp-drift-theme', next); } catch {} $('theme-toggle').textContent = `Theme: ${next}`; }
-  try { const forced = new URLSearchParams(location.search).get('theme'); const saved = forced || localStorage.getItem('serp-drift-theme'); if (saved && saved !== 'system') document.documentElement.dataset.theme = saved; } catch {}
-  $('menu-toggle').addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('scrim').hidden = !$('sidebar').classList.contains('open'); });
   $('scrim').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('scrim').hidden = true; });
+  document.addEventListener('click', (e) => { [['switcher', 'switcher-menu'], ['p-more', 'p-more-menu']].forEach(([b, m]) => { const button = $(b); const menu = $(m); if (button && menu && !menu.hidden && !menu.contains(e.target) && !button.contains(e.target)) { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); } }); });
 
-  // --- palette (⌘K) ------------------------------------------------------------------------------------------------------
+  // --- command palette -------------------------------------------------------------------------------------------------
+  async function paletteItems() {
+    const items = []; const pid = state.project; const r = route();
+    const panelId = r.parts[0] === 'p' && r.parts[2] === 'panel' ? r.parts[3] : null;
+    let rep = null; try { rep = await report(pid); } catch {}
+    if (rep) sortQueries(rep.queries).forEach((q) => items.push({ group: 'Panels', icon: 'panels', label: q.query, meta: `${U.word(q)}${q.score != null ? ` ${Math.round(q.score)}` : ''} · ${U.marketText(q.search, engines())}`, href: link.panel(q.id), pill: q.status === 'watch' || q.status === 'review' ? q : null, key: 'open' }));
+    if (state.status.multi_project) { items.push({ group: 'Projects', icon: 'projects', label: 'All projects', meta: plural(projects().length, 'project'), href: '#/portfolio' }); projects().forEach((p) => items.push({ group: 'Projects', icon: 'projects', label: p.name, meta: `${plural(p.panels, 'panel')}${p.counts?.watch ? ` · ${p.counts.watch} watching` : ''}`, href: link.project(p.id) })); }
+    if (rep) { const seenUrls = new Map(); rep.queries.forEach((q) => (q.latest?.results || []).forEach((res) => { const hp = U.hostPath(res.url); if (!seenUrls.has(hp)) seenUrls.set(hp, { url: res.url, hits: [] }); seenUrls.get(hp).hits.push({ q, pos: res.position }); })); items.push(...[...seenUrls.entries()].map(([hp, v]) => ({ group: 'Pages and hosts', icon: 'globe', label: hp, meta: v.hits.slice(0, 2).map((h) => `#${h.pos} for ${h.q.query}`).join(' · ') + (v.hits.length > 2 ? ` · +${v.hits.length - 2}` : ''), href: link.panel(v.hits[0].q.id, 'history'), hidden: true }))); }
+    if (panelId && rep) { const q = rep.queries.find((x) => x.id === panelId); if (q) items.push({ group: 'Actions', icon: 'compare', label: `Compare ${q.query}: baseline → latest`, href: link.panel(q.id, 'compare') }, { group: 'Actions', icon: 'log', label: `Open ${q.query} history`, href: link.panel(q.id, 'history') }, { group: 'Actions', icon: 'collect', label: `Collect ${q.query} now`, meta: 'spends credits', act: () => collect([q.id], true) }); }
+    items.push({ group: 'Actions', icon: 'collect', label: 'Collect every due panel now', meta: 'spends credits', act: () => collect(undefined, false) }, { group: 'Actions', icon: 'plus', label: 'Add keywords', href: link.view('add') }, { group: 'Actions', icon: 'settings', label: 'Open settings', href: link.view('settings') }, { group: 'Actions', icon: 'agent', label: 'Connect an agent (MCP)', href: link.view('connect') }, { group: 'Actions', icon: 'download', label: 'Export report JSON', href: `/api/p/${enc(pid)}/export/report.json`, download: true }, { group: 'Actions', icon: 'moon', label: 'Switch theme', meta: `now ${state.theme}`, act: cycleTheme });
+    return items;
+  }
   async function openPalette() {
-    const items = [];
-    (state.status.projects || []).forEach((p) => items.push({ label: p.name, meta: `project · ${p.panels} panels`, href: `#/p/${encodeURIComponent(p.id)}` }));
-    if (state.status.multi_project) items.push({ label: 'Portfolio', meta: 'all projects', href: '#/portfolio' });
-    try { const rep = await report(); sortQueries(rep.queries).forEach((q) => items.push({ label: q.query, meta: `${word(q)} · ${engineLabel(q.search?.engine)} ${(q.search?.gl || '').toUpperCase()} ${q.search?.device || 'desktop'}${state.status.multi_project ? ` · ${projectRow()?.name || ''}` : ''}`, href: `#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(q.id)}` })); } catch {}
-    state.palette = { open: true, index: 0, items, all: items };
-    state.palette.returnFocus = document.activeElement; $('palette').hidden = false; $('palette').showModal(); $('palette-input').value = ''; renderPalette(); $('palette-input').focus();
+    const p = state.palette; p.returnFocus = document.activeElement; p.all = []; p.items = []; p.index = 0; p.open = true;
+    $('palette-icon').innerHTML = I('search'); $('palette-input').value = ''; $('palette').showModal(); $('palette-input').focus(); renderPalette();
+    p.all = await paletteItems(); filterPalette();
   }
-  function renderPalette() { const p = state.palette; $('palette-input').setAttribute('aria-activedescendant', p.items.length ? `jump-${p.index}` : ''); $('palette-list').innerHTML = p.items.slice(0, 40).map((item, i) => `<li id="jump-${i}" role="option" aria-selected="${i === p.index}" data-href="${esc(item.href)}"><span class="nowrap">${esc(item.label)}</span><span class="k">${esc(item.meta)}</span></li>`).join('') || '<li class="muted">No match</li>'; }
-  function closePalette() { state.palette.open = false; $('palette').close(); $('palette').hidden = true; state.palette.returnFocus?.focus(); }
-  $('palette-input').addEventListener('input', () => { const q = $('palette-input').value.trim().toLowerCase(); state.palette.items = state.palette.all.filter((i) => i.label.toLowerCase().includes(q) || i.meta.toLowerCase().includes(q)); state.palette.index = 0; renderPalette(); });
-  $('palette-input').addEventListener('keydown', (event) => { const p = state.palette; if (event.key === 'ArrowDown') { p.index = Math.min(p.index + 1, p.items.length - 1); renderPalette(); event.preventDefault(); } else if (event.key === 'ArrowUp') { p.index = Math.max(p.index - 1, 0); renderPalette(); event.preventDefault(); } else if (event.key === 'Enter') { const item = p.items[p.index]; if (item) { closePalette(); go(item.href); } } else if (event.key === 'Escape') closePalette(); });
-  $('palette-list').addEventListener('click', (event) => { const li = event.target.closest('li[data-href]'); if (li) { closePalette(); go(li.dataset.href); } });
-  $('palette').addEventListener('cancel', (event) => { event.preventDefault(); closePalette(); });
-  $('palette').addEventListener('click', (event) => { if (event.target === $('palette')) closePalette(); });
-  document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); state.palette.open ? closePalette() : openPalette(); } if (event.key === 'Escape' && state.palette.open) closePalette(); if (!state.palette.open && (event.key === 'j' || event.key === 'k')) rowNav(event); });
+  function filterPalette() {
+    const p = state.palette; const q = $('palette-input').value.trim().toLowerCase();
+    const match = (i) => i.label.toLowerCase().includes(q) || (i.meta || '').toLowerCase().includes(q);
+    const pick = (group, limit) => p.all.filter((i) => i.group === group && (q ? match(i) : !i.hidden)).slice(0, limit);
+    p.items = [...pick('Panels', q ? 8 : 6), ...pick('Projects', 5), ...(q.length >= 2 ? pick('Pages and hosts', 5) : []), ...pick('Actions', q ? 6 : 5)];
+    p.index = Math.min(p.index, Math.max(0, p.items.length - 1)); renderPalette();
+  }
+  function renderPalette() {
+    const p = state.palette; let last = '';
+    $('palette-list').innerHTML = p.items.map((i, k) => { const head = i.group !== last ? `<li class="g" role="presentation">${esc(i.group)}</li>` : ''; last = i.group; return `${head}<li class="o" id="pal-${k}" role="option" aria-selected="${k === p.index}" data-k="${k}">${I(i.icon)}<b>${esc(i.label)}</b>${i.pill ? U.pill(i.pill, true) : ''}<span class="m">${esc(i.meta || '')}</span>${k === p.index ? `<span class="k">↵ ${i.act ? 'run' : 'open'}</span>` : ''}</li>`; }).join('') || (p.all.length ? '<li class="none">No match.</li>' : '<li class="none">Loading…</li>');
+    $('palette-input').setAttribute('aria-activedescendant', p.items.length ? `pal-${p.index}` : '');
+    $(`pal-${p.index}`)?.scrollIntoView({ block: 'nearest' });
+  }
+  function closePalette() { const p = state.palette; p.open = false; $('palette').close(); p.returnFocus?.focus?.(); }
+  function runPalette(item) { if (!item) return; closePalette(); if (item.act) return item.act(); if (item.download) { const a = document.createElement('a'); a.href = item.href; a.download = 'serp-drift-report.json'; a.click(); return; } go(item.href); }
+  $('palette-input').addEventListener('input', () => { state.palette.index = 0; filterPalette(); });
+  $('palette-input').addEventListener('keydown', (e) => { const p = state.palette; if (e.key === 'ArrowDown') { p.index = Math.min(p.index + 1, p.items.length - 1); renderPalette(); e.preventDefault(); } else if (e.key === 'ArrowUp') { p.index = Math.max(p.index - 1, 0); renderPalette(); e.preventDefault(); } else if (e.key === 'Enter') { e.preventDefault(); runPalette(p.items[p.index]); } });
+  $('palette-list').addEventListener('click', (e) => { const li = e.target.closest('li[data-k]'); if (li) runPalette(state.palette.items[Number(li.dataset.k)]); });
+  $('palette').addEventListener('close', () => { state.palette.open = false; });
+  $('palette').addEventListener('click', (e) => { if (e.target === $('palette')) closePalette(); });
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); state.palette.open ? closePalette() : openPalette(); return; }
+    if (state.palette.open || e.metaKey || e.ctrlKey || e.altKey || e.target.matches('input, textarea, select, [contenteditable]')) return;
+    if (e.key === '/') { e.preventDefault(); openPalette(); return; }
+    if (state.keys) state.keys(e);
+  });
+  function rowKeys(selector) {
+    return (e) => { if (!['j', 'k', 'Enter'].includes(e.key)) return; const rows = [...document.querySelectorAll(selector)]; if (!rows.length) return; const i = rows.indexOf(document.activeElement); if (e.key === 'Enter') { if (i >= 0) rows[i].click(); return; } e.preventDefault(); const next = e.key === 'j' ? Math.min(i + 1, rows.length - 1) : Math.max(i - 1, 0); rows[next].focus(); rows[next].scrollIntoView({ block: 'nearest' }); };
+  }
 
-  function rowNav(event) { if (event.target.matches('input, textarea, select') || event.metaKey || event.ctrlKey) return; const rows = [...document.querySelectorAll('a.gr')]; if (!rows.length) return; const idx = rows.indexOf(document.activeElement); const next = event.key === 'j' ? Math.min(idx + 1, rows.length - 1) : Math.max(idx - 1, 0); rows[next].focus(); }
-
-  // --- attention list -------------------------------------------------------------------------------------------------
-  function attentionHtml(items, withProject) {
-    if (!items.length) return null;
-    const dotKind = { review: 'review', error: 'err', stale: 'hollow', config: 'err' };
-    const action = (a) => a.kind === 'config' ? { label: 'Fix →', href: `#/p/${encodeURIComponent(a.project || state.project)}/settings` } : a.kind === 'error' ? { label: 'Retry now', act: 'retry' } : a.kind === 'stale' ? { label: 'Collect now', act: 'collect' } : { label: 'Open →', href: `#/p/${encodeURIComponent(a.project || state.project)}/panel/${encodeURIComponent(a.panel)}` };
-    return items.map((a) => { const act = action(a); return `<div class="attn">${dot(dotKind[a.kind] || 'hollow')}<div class="nowrap"><div class="title"><b>${esc(a.title)}</b><span class="secondary">${withProject ? esc(a.project_name || a.project) + ' · ' : ''}${esc(a.kind === 'review' ? 'review' : a.kind)}${a.at ? ` · ${ago(a.at)}` : ''}</span></div><div class="why">${esc(a.why)}</div></div>${act.href ? `<a class="act" href="${act.href}">${act.label}</a>` : `<button class="btn link act" type="button" data-attn-act="${act.act}" data-project="${esc(a.project || state.project)}" data-panel="${esc(a.panel || '')}">${act.label}</button>`}</div>`; }).join('');
-  }
-  function bindAttention(container) {
-    container.querySelectorAll('[data-attn-act]').forEach((button) => button.addEventListener('click', async () => {
-      const pid = button.dataset.project; const panel = button.dataset.panel;
-      try { await api(`/api/p/${encodeURIComponent(pid)}/collect`, { method: 'POST', body: { ids: panel ? [panel] : undefined, force: true } }); toast('Collecting…'); startPolling(); } catch (error) { fail(error); }
-    }));
-  }
-
-  // --- panels table -----------------------------------------------------------------------------------------------------
-  function panelRows(queries, limit) {
-    const cols = 'grid-template-columns:minmax(0,1.6fr) 130px 90px 200px 110px';
-    const rows = queries.slice(0, limit || queries.length).map((q) => { const p = position(q); const d = scoreDelta(q); return `<a class="gr" href="#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(q.id)}" style="${cols}"><span class="q">${esc(q.query)}${q.group ? `<span class="tag">${esc(q.group)}</span>` : ""}<small class="block muted">${esc(q.baseline_intent)} → ${esc(q.latest?.dominant_intent || "pending")} · ${pct(q.latest?.classified_coverage)} classified</small></span>${statusHtml(q)}<span class="num">${q.score == null ? (q.status === 'building_baseline' && q.baseline ? `<span class="muted">${q.baseline.length} / ${q.settings.baseline_size}</span>` : '—') : Math.round(q.score)}${deltaHtml(d)}</span><span class="pos">${p ? `<b>#${p.pos}</b><span class="mono">${esc(hostPath(p.url))}</span>` : '<b>—</b><span class="mono muted">not ranking</span>'}</span><span class="right muted">${esc(ago(q.latest?.captured_at))}</span></a>`; }).join('');
-    return `<div class="card grid-table"><div class="gh" style="${cols}"><span>Query</span><span>Status</span><span class="right">Score ↓</span><span>Your position · URL</span><span class="right">Last capture</span></div>${rows || '<div class="empty-card">No panels match.</div>'}${limit && queries.length > limit ? `<div class="gf"><span>${limit} of ${queries.length}</span><a href="#/p/${encodeURIComponent(state.project)}/panels">Show all</a></div>` : ''}</div>`;
-  }
-  function filterBar(id) { return `<div class="spacer"><span class="seg" id="${id}-seg">${['all', 'review', 'watch', 'quality', 'unknown', 'building', 'cited', 'ranking'].map((k) => `<button type="button" data-f="${k}" aria-pressed="${k === 'all'}">${{ all: 'All', review: 'Review', watch: 'Watch', quality: 'Data issues', unknown: 'Uncertain intent', building: 'Building', cited: 'Cited', ranking: 'Ranking' }[k]}</button>`).join('')}</span><input id="${id}-text" type="search" placeholder="Filter…" aria-label="Filter keywords" style="width:180px"><select id="${id}-group" aria-label="Keyword group"><option value="">All groups</option></select><select id="${id}-sort" aria-label="Sort keywords"><option value="priority">Priority</option><option value="query">Keyword A–Z</option><option value="coverage">Lowest coverage</option><option value="score">Highest change</option></select><button class="btn small" type="button" id="${id}-reset">Reset view</button></div>`; }
-  function applyFilter(queries, filter, text) { return queries.filter((q) => (!text || q.query.toLowerCase().includes(text)) && (filter === 'all' || (filter === 'quality' && ['data_quality', 'insufficient_data', 'collection_error', 'stale'].includes(q.status)) || (filter === 'unknown' && ['unknown', 'mixed'].includes(q.latest?.dominant_intent)) || (filter === 'review' && q.status === 'review') || (filter === 'watch' && q.status === 'watch') || (filter === 'building' && ['building_baseline', 'baseline_ready', 'awaiting_data'].includes(q.status)) || (filter === 'cited' && (q.site?.cited || q.latest?.ai_overview?.page_cited)) || (filter === 'ranking' && position(q)))); }
-  function bindFilters(id, queries, target, limit) {
-    const key = `serp-drift-view:${state.project}:${id}`;
-    let filter = 'all', text = '', sort = 'priority', group = '';
-    try { const saved = JSON.parse(localStorage.getItem(key) || '{}'); filter = saved.filter || filter; text = saved.text || ''; sort = saved.sort || sort; group = saved.group || group; } catch {}
-    $(`${id}-group`).innerHTML += [...new Set(queries.map((q) => q.group).filter(Boolean))].sort().map((g) => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
-    $(`${id}-group`).value = group;
-    const draw = () => {
-      let rows = applyFilter(queries, filter, text).filter((q) => !group || q.group === group);
-      if (sort === 'query') rows.sort((a,b) => a.query.localeCompare(b.query));
-      if (sort === 'coverage') rows.sort((a,b) => (a.latest?.classified_coverage || 0) - (b.latest?.classified_coverage || 0));
-      if (sort === 'score') rows.sort((a,b) => (b.score || 0) - (a.score || 0));
-      $(target).innerHTML = panelRows(rows, limit);
-      $(`${id}-seg`).querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === filter)));
-      try { localStorage.setItem(key, JSON.stringify({filter,text,sort,group})); } catch {}
+  // --- inbox ---------------------------------------------------------------------------------------------------------
+  async function renderInbox(params, portfolio) {
+    const pids = portfolio ? projects().map((p) => p.id) : [state.project];
+    const bundles = await Promise.all(pids.map(async (pid) => { const [rep, att, act] = await Promise.all([report(pid), attention(pid), activity(pid)]); return { pid, name: projectRow(pid)?.name || pid, rep, att: att.attention || [], events: [...(act.events || [])].sort((a, b) => b.at.localeCompare(a.at)) }; }));
+    if (!portfolio && !bundles[0].rep.queries.length) { const status = await api(P('/status')); return window.SerpSetup.mount($('main'), status, (path, body) => api(P(path), { method: 'POST', body }), async () => { invalidate(); await loadStatus(); await render(); }); }
+    const all = bundles.flatMap((b) => b.rep.queries.map((q) => ({ key: `${b.pid}:${q.id}`, pid: b.pid, pname: b.name, q, events: b.events, rep: b.rep })));
+    const byKey = new Map(all.map((e) => [e.key, e]));
+    const reviews = bundles.flatMap((b) => b.att.filter((a) => a.kind === 'review' && a.panel).map((a) => ({ ...byKey.get(`${b.pid}:${a.panel}`), att: a }))).filter((e) => e.q);
+    const reviewKeys = new Set(reviews.map((e) => e.key));
+    const issues = bundles.flatMap((b) => b.att.filter((a) => a.kind !== 'review').map((a, i) => { const base = a.panel ? byKey.get(`${b.pid}:${a.panel}`) : null; return { ...(base || { pid: b.pid, pname: b.name, events: b.events }), key: a.panel ? `${b.pid}:${a.panel}` : `${b.pid}:!${i}`, att: a, issue: true }; }));
+    const watching = all.filter((e) => e.q.status === 'watch' && !reviewKeys.has(e.key)).sort((a, b) => siteHit(b.q) - siteHit(a.q) || (b.q.score || 0) - (a.q.score || 0));
+    const unseen = watching.filter((e) => !seen(e.q)); const seenList = watching.filter((e) => seen(e.q));
+    const since = Date.now() - 86400000;
+    const settled = bundles.flatMap((b) => { const latest = new Map(); b.events.filter((ev) => ev.kind === 'status_change' && new Date(ev.at).getTime() >= since).forEach((ev) => { if (!latest.has(ev.target_id)) latest.set(ev.target_id, ev); }); return [...latest.values()].filter((ev) => ev.payload?.after === 'stable' && ['watch', 'review'].includes(ev.payload?.before)).map((ev) => ({ ...byKey.get(`${b.pid}:${ev.target_id}`), ev })).filter((x) => x.q && x.q.status === 'stable'); });
+    const order = [...reviews, ...unseen, ...issues, ...seenList, ...settled];
+    let sel = params.get('sel'); if (!order.some((e) => e.key === sel)) sel = order[0]?.key || null;
+    const count = (k) => all.filter((e) => U.kind(e.q.status) === k).length;
+    const total = all.length; const nWatch = watching.length; const nReview = reviews.length; const nIssue = issues.length;
+    const today = new Date().toISOString().slice(0, 10);
+    const capturedToday = all.filter((e) => (e.q.latest?.captured_at || '').startsWith(today)).length;
+    const across = portfolio && pids.length > 1 ? ` across ${pids.length} projects` : '';
+    const headline = nReview ? `${nReview === 1 ? 'One change needs' : `${nReview} changes need`} a decision.${nWatch ? ` ${nWatch} more drifting${across}.` : ''}`
+      : nWatch ? `${nWatch} ${nWatch === 1 ? 'panel is' : 'panels are'} drifting${across}. Nothing is confirmed.`
+      : count('building') === total ? 'Building baselines. No scores yet.'
+      : `All quiet${across || ` across ${plural(total, 'panel')}`}.`;
+    const building = all.filter((e) => U.BUILDING.includes(e.q.status));
+    const firstScore = building.map((e) => U.addHours(e.q.latest?.captured_at, ((e.q.settings?.baseline_size ?? 3) - (e.q.baseline?.length ?? 0) + 1) * (e.q.settings?.interval_hours ?? 24))).filter(Boolean).sort()[0];
+    const explainer = [capturedToday === total ? `All ${plural(total, 'panel')} were captured today.` : `${capturedToday} of ${plural(total, 'panel')} were captured today.`, nIssue ? `${plural(nIssue, 'collection issue')} ${nIssue === 1 ? 'needs' : 'need'} a fix.` : '', building.length ? `${plural(building.length, 'panel')} still ${building.length === 1 ? 'builds its' : 'build their'} baseline${firstScore ? `; first scores around ${D(firstScore)}` : ''}.` : '', nWatch && !nReview ? 'A watch becomes a review only when two spaced captures agree on an intent or page-fit change, so a reshuffled top 10 alone never asks you to rewrite a page.' : ''].filter(Boolean).join(' ');
+    const seg = [['review', count('review'), 'Review'], ['watch', count('watch'), 'Watch'], ['stable', count('stable'), 'Stable'], ['building', count('building'), 'Building'], ['issues', count('issue'), 'Collection issues']];
+    const rep0 = bundles[0].rep; const last = all.map((e) => e.q.latest?.captured_at).filter(Boolean).sort().pop();
+    const meta = portfolio ? `${plural(pids.length, 'project')} · ${plural(total, 'panel')}${last ? ` · last capture ${T(last)} UTC` : ''}` : `${U.marketText(rep0.search, engines())} · ${plural(total, 'panel')}${last ? ` · last capture ${T(last)} UTC, ${ago(last)}` : ''}`;
+    const head = (title, n2, extra = '') => `<div class="qhead"><span>${title}</span><span class="n">${n2}</span><span class="grow"></span>${extra}</div>`;
+    const base = (e) => e.rep?.search || rep0.search;
+    const qrow = (e, sub, extraCls = '') => `<div class="qrow${extraCls}" role="option" tabindex="-1" data-key="${esc(e.key)}" aria-selected="${e.key === sel}"><div class="t"><div class="row"><b>${esc(e.q.query)}</b>${U.marketTags(e.q.search, base(e), engines())}${siteHit(e.q) ? '<span class="tag you">your site</span>' : ''}${portfolio ? `<span class="tag">${esc(e.pname)}</span>` : ''}</div><small>${esc(sub)}</small></div>${U.strip(e.q.timeline, { count: 10, threshold: e.q.settings?.drift_threshold ?? 35 })}<div class="s"><b>${U.score(e.q.score)}</b>${deltaHtml(scoreDelta(e.q))}</div></div>`;
+    const compact = (e, text, when) => `<div class="qrow compact" role="option" tabindex="-1" data-key="${esc(e.key)}" aria-selected="${e.key === sel}"><i class="dot stable"></i><div class="t"><span class="grow">${esc(e.q.query)}</span></div><span class="when">${esc(text)}</span><span class="when">${esc(when)}</span></div>`;
+    const queue = [
+      head('Needs a decision', nReview),
+      nReview ? reviews.map((e) => qrow(e, U.cap(e.att.why || U.whyLine(e.q, e.events)))).join('') : `<div class="qempty">${I('ok')}Nothing confirmed. A review needs two spaced captures that agree.</div>`,
+      '<div class="qdiv"></div>', head('Watching', unseen.length, unseen.length > 1 ? '<span class="hint">your site first, then score</span>' : ''),
+      unseen.length ? unseen.map((e) => qrow(e, U.whyLine(e.q, e.events))).join('') : `<div class="qempty">${I('ok')}${nWatch ? 'Every watch is marked as seen.' : 'No panel is over the watch threshold.'}</div>`,
+      nIssue ? `<div class="qdiv"></div>${head('Collection health', nIssue)}${issues.map((e) => e.q ? qrow(e, U.cap(e.att.why || ''), '') : `<div class="qrow" role="option" tabindex="-1" data-key="${esc(e.key)}" aria-selected="${e.key === sel}"><div class="t"><div class="row"><b>${esc(e.att.title)}</b>${portfolio ? `<span class="tag">${esc(e.pname)}</span>` : ''}</div><small>${esc(e.att.why || '')}</small></div>${U.pillFor('collection_error')}</div>`).join('')}` : '',
+      seenList.length ? `<div class="qdiv"></div>${head('Seen', seenList.length, '<span class="hint">returns with the next capture</span>')}${seenList.map((e) => qrow(e, U.whyLine(e.q, e.events), ' seen')).join('')}` : '',
+      settled.length ? `<div class="qdiv"></div>${head('Settled in the last 24 h', settled.length)}${settled.slice(0, 8).map((e) => compact(e, `${U.word(e.ev.payload.before)} → Stable`, T(e.ev.at))).join('')}<div class="gap-8"></div>` : '',
+    ].join('');
+    $('main').innerHTML = `<div class="page">
+      <div class="page-head"><div class="title"><h1>Inbox</h1><span class="meta">${esc(meta)}</span></div>${unseen.length ? '<button class="btn ghost" type="button" id="mark-all">Mark all seen</button>' : ''}</div>
+      <div class="headline"><h2>${esc(headline)}</h2>${explainer ? `<p>${esc(explainer)}</p>` : ''}</div>
+      <div class="spectrum"><div class="bar" role="img" aria-label="${esc(seg.map(([, c, l]) => `${l} ${c}`).join(', '))}">${seg.filter(([, c]) => c).map(([k, c]) => `<i class="${k}" style="flex:${c}" title="${c} ${k}"></i>`).join('')}</div>
+        <div class="legend">${seg.map(([k, c, l]) => `<span>${k === 'issues' ? I('alert') : `<i class="dot ${k === 'review' ? 'review' : k === 'watch' ? 'watch' : k === 'stable' ? 'stable' : 'hollow'}"></i>`}${l}<b class="${c ? '' : 'zero'}">${c}</b></span>`).join('')}</div></div>
+      ${order.length ? `<div class="split"><div class="card clip queue" id="queue" role="listbox" aria-label="Inbox">${queue}</div><div class="card preview-pane" id="preview"></div></div>` : `<div class="card empty"><b>Nothing needs you.</b>${plural(total, 'panel')} are stable. <a class="link" href="${portfolio ? '#/portfolio' : link.view('panels')}">Open ${portfolio ? 'projects' : 'panels'}</a></div>`}
+    </div>`;
+    const select = (key, push = true) => {
+      sel = key; document.querySelectorAll('#queue .qrow').forEach((r) => r.setAttribute('aria-selected', String(r.dataset.key === key)));
+      const e = order.find((x) => x.key === key); if (e) renderPreview(e, portfolio);
+      if (push) { const r = route(); r.params.set('sel', key); history.replaceState(null, '', `${location.pathname}#/${r.parts.map(enc).join('/')}?${r.params}`); }
     };
-    $(`${id}-text`).value = text; $(`${id}-sort`).value = sort;
-    $(`${id}-seg`).addEventListener('click', (event) => { const b = event.target.closest('button[data-f]'); if (b) { filter = b.dataset.f; draw(); } });
-    $(`${id}-text`).addEventListener('input', (e) => { text = e.target.value.trim().toLowerCase(); draw(); });
-    $(`${id}-group`).addEventListener('change', (e) => { group = e.target.value; draw(); });
-    $(`${id}-sort`).addEventListener('change', (e) => { sort = e.target.value; draw(); });
-    $(`${id}-reset`).addEventListener('click', () => { filter = 'all'; text = ''; sort = 'priority'; group = ''; $(`${id}-group`).value = ''; $(`${id}-text`).value = ''; $(`${id}-sort`).value = sort; draw(); });
-    draw();
+    const rows = () => [...document.querySelectorAll('#queue .qrow')];
+    document.querySelectorAll('#queue .qrow').forEach((row) => { row.addEventListener('click', () => { select(row.dataset.key); row.focus({ preventScroll: true }); }); row.addEventListener('dblclick', () => { const e = order.find((x) => x.key === row.dataset.key); if (e?.q) go(link.panel(e.q.id, '', e.pid)); }); });
+    state.keys = (ev) => {
+      if (!['j', 'k', 'Enter', 'ArrowDown', 'ArrowUp', 'e'].includes(ev.key)) return;
+      const list = rows(); const i = list.findIndex((r) => r.dataset.key === sel);
+      if (ev.key === 'Enter') { const e = order.find((x) => x.key === sel); if (e?.q) go(link.panel(e.q.id, '', e.pid)); return; }
+      if (ev.key === 'e') { const e = order.find((x) => x.key === sel); if (e?.q?.status === 'watch' && !seen(e.q)) markSeen(e); return; }
+      ev.preventDefault(); const next = list[(ev.key === 'j' || ev.key === 'ArrowDown') ? Math.min(i + 1, list.length - 1) : Math.max(i - 1, 0)]; if (next) { select(next.dataset.key); next.focus({ preventScroll: true }); next.scrollIntoView({ block: 'nearest' }); }
+    };
+    $('mark-all')?.addEventListener('click', async () => { try { for (const e of unseen) await api(P(`/panels/${enc(e.q.id)}/acknowledge`, e.pid), { method: 'POST', body: {} }); toast(`${plural(unseen.length, 'watch', 'watches')} marked as seen.`); invalidate(); await loadStatus(); render(); } catch (error) { fail(error); } });
+    if (sel) select(sel, false);
+  }
+  async function markSeen(e) { try { await api(P(`/panels/${enc(e.q.id)}/acknowledge`, e.pid), { method: 'POST', body: {} }); toast('Marked as seen until the next capture.'); invalidate(); await loadStatus(); render(); } catch (error) { fail(error); } }
+  function renderPreview(e, portfolio) {
+    const box = $('preview'); if (!box) return;
+    if (!e.q) {
+      const a = e.att; const act = a.action === 'settings' ? `<a class="btn primary" href="${link.view('settings', e.pid)}">Open settings</a>` : '';
+      box.innerHTML = `<div class="preview"><div class="ph"><h2>${esc(a.title)}</h2>${U.pillFor('collection_error')}</div><p class="verdict-b">${esc(a.why)}</p><div class="form-actions">${act}</div></div>`; return;
+    }
+    const q = e.q; const th = q.settings?.drift_threshold ?? 35; const s = U.siteTrack(q); const lat = q.latest || {};
+    const contribs = q.comparison ? U.contributions(q.comparison.components, e.rep?.weights) : null;
+    const next = U.nextCapture(q); const cov = lat.classified_coverage;
+    const aiPts = (q.timeline || []).filter((p) => U.capKind(p) !== 'x'); const aiSeen = aiPts.filter((p) => p.ai_overview_status === 'observed'); const aiCited = aiSeen.filter((p) => p.site_cited);
+    const actions = e.att?.kind === 'review' ? `<a class="btn" href="${link.panel(q.id, '', e.pid)}">Open panel</a><a class="btn primary" href="${link.panel(q.id, 'evidence', e.pid)}">Record decision</a>`
+      : e.issue ? `<a class="btn" href="${link.panel(q.id, '', e.pid)}">Open panel</a><button class="btn primary" type="button" id="pv-retry">${I('collect')}${e.att.action === 'collect' ? 'Collect now' : 'Retry now'}</button>`
+      : q.status === 'watch' && !seen(q) ? `<button class="btn" type="button" id="pv-seen">Mark as seen</button><a class="btn primary" href="${link.panel(q.id, '', e.pid)}">Open panel</a>`
+      : `<a class="btn primary" href="${link.panel(q.id, '', e.pid)}">Open panel</a>`;
+    const verdict = [U.verdictText(q), q.decision?.next_action && q.status === 'review' ? q.decision.next_action : ''].filter(Boolean).join(' ') || q.decision?.next_action || '';
+    box.innerHTML = `<div class="preview">
+      <div class="ph"><h2>${esc(q.query)}</h2>${U.pill(q, true)}<span class="chip">${esc(U.marketText(q.search, engines()))}</span>${portfolio ? `<span class="tag">${esc(e.pname)}</span>` : ''}<span class="grow"></span>${actions}</div>
+      <div class="stack" style="gap:6px"><div class="verdict-t">${esc(e.issue ? e.att.title : q.decision?.title || U.word(q))}</div>${(e.issue ? e.att.why : verdict) ? `<p class="verdict-b">${esc(e.issue ? e.att.why : verdict)}</p>` : ''}</div>
+      <div class="stack" style="gap:10px"><div class="sub-h"><span>Score by capture</span><span class="grow"></span>${U.chartKey(q.timeline)}</div>${U.chart(q.timeline, q.settings, { height: 112, maxCols: 24, times: false })}</div>
+      ${contribs ? `<div class="stack" style="gap:10px"><div class="sub-h"><span>Why ${U.score(q.score)}</span><span class="meta">· points out of 100, weights are fixed and versioned</span></div>${U.contribBar(contribs, th)}${U.contribLegend(contribs)}</div>` : ''}
+      ${q.baseline?.length && lat.intent_distribution ? `<div class="stack" style="gap:8px"><div class="sub-h"><span>Intent mix</span><span class="meta">· ${pct(cov)} of rank weight classified · lexical estimate, not measured intent</span></div>${U.mixHtml(U.avgMix(q.baseline), lat.intent_distribution)}</div>` : ''}
+      <div class="facts"><div class="fact"><span class="l">${I('globe')}Your site</span><b>${s.now ? `#${s.now}${s.moved ? ` (was #${s.from})` : ''}` : s.dropped ? 'Dropped out of the top 10' : 'Not in the top 10'}</b><p>${esc(s.now ? U.hostPath(s.url) : s.dropped ? `${U.hostPath(s.url)} held #${s.heldFrom}${s.heldTo !== s.heldFrom ? `–#${s.heldTo}` : ''} until ${U.DT(aiPts[aiPts.findIndex((p) => p.captured_at === s.leftAt) - 1]?.captured_at || s.leftAt)} UTC.` : e.rep?.project?.site ? `Tracked automatically for ${e.rep.project.site}.` : 'Set the project site to track your ranking URL.')}</p></div>
+        <div class="fact"><span class="l">${I('quote')}AI Overview</span><b>${aiSeen.length ? `In ${aiSeen.length} of ${aiPts.length} captures` : 'Not observed'}</b><p>${aiSeen.length ? `${esc(e.rep?.project?.site || 'Your site')} cited in ${aiCited.length} of ${aiSeen.length}.` : 'No Overview in the accepted captures.'}</p></div></div>
+      <div class="pfoot">${I('clock')}${next ? `Next capture ${T(next)} UTC, ${until(next)}.` : 'No capture scheduled.'}${q.paused ? ' Collection is paused for this panel.' : ''}</div>
+    </div>`;
+    $('pv-seen')?.addEventListener('click', () => markSeen(e));
+    $('pv-retry')?.addEventListener('click', () => collect([q.id], true, e.pid));
   }
 
-  // --- views: dashboard, panels -----------------------------------------------------------------------------------------
-  async function renderDashboard() {
-    const row = projectRow(); let rep, attention;
-    try { [rep, attention] = await Promise.all([report(), api(P('/attention'))]); } catch (error) { $('main').innerHTML = `<div class="notice">${esc(error.message)}</div><p class="secondary">Fix the configuration on the <a href="#/p/${encodeURIComponent(state.project)}/settings">Settings</a> page.</p>`; return; }
-    const queries = sortQueries(rep.queries); const site = rep.project?.site;
-    if (!queries.length) return SerpSetup.mount($('main'), await api(P('/status')), (path, body) => api(P(path), {method:'POST', body}), async () => { invalidate(); await loadStatus(); await render(); });
-    const counts = (s) => queries.filter((q) => q.status === s).length;
-    const building = queries.filter((q) => ['building_baseline', 'baseline_ready', 'awaiting_data'].includes(q.status));
-    const firstScores = [...new Set(building.map((q) => expectedScoreDate(q)).filter(Boolean).map((d) => d.slice(0, 10)))].sort();
-    const ranking = queries.filter((q) => position(q)); const top3 = queries.filter((q) => (position(q)?.pos || 99) <= 3); const cited = queries.filter((q) => q.site?.cited || q.latest?.ai_overview?.page_cited);
-    const last = row?.last_run;
-    $('main').innerHTML = `
-      <div class="page-head"><h1>${esc(rep.project?.name || site || state.project)}</h1>${rep.search ? marketHtml(rep.search) : ''}<span class="secondary">${plural(queries.length, 'panel')}${last?.finished_at ? ` · collected ${ago(last.finished_at)} ${T(last.finished_at)}` : ''}</span><div class="spacer"><a class="btn" href="#/p/${encodeURIComponent(state.project)}/import">Import keywords</a><button class="btn primary" type="button" id="collect-now" data-collect="Collect now">Collect now</button></div></div>
-      ${SerpReview.overview(queries)}<section class="section"><div class="section-head"><h2>Review queue</h2><span class="secondary">${attention.attention.length || ''}</span></div><div class="card list" id="attention">${attentionHtml(attention.attention) || `<div class="attn-empty">No unhandled confirmed change. ${queries.length ? `${plural(queries.length, 'panel')}${last?.finished_at ? ` collected ${ago(last.finished_at)}` : ''}.` : 'Add panels to start.'}</div>`}</div></section>
-      <div class="summary-line"><span><b>${counts('stable')}</b> stable</span><span><b>${counts('watch')}</b> watch</span>${row?.budget && (row.budget.cap || row.budget.until) ? `<span>${row.budget.stopped ? 'collection ended · ' : ''}<b>${n(row.budget.used)}</b>${row.budget.cap ? ` / ${n(row.budget.cap)}` : ''} requests${row.budget.until && !row.budget.stopped ? ` · until ${esc(D(row.budget.until))}` : ''}</span>` : ''}<span><b>${building.length}</b> building${firstScores.length ? ` · first scores ${D(firstScores[0])}${firstScores.length > 1 && firstScores[firstScores.length - 1] !== firstScores[0] ? `–${D(firstScores[firstScores.length - 1])}` : ''}` : ''}</span>${site ? `<span class="spacer">${esc(site)} ranks in <b>${ranking.length}</b> of ${queries.length} · top 3 in <b>${top3.length}</b> · cited by AI Overview in <b>${cited.length}</b></span>` : `<span class="spacer"><a href="#/p/${encodeURIComponent(state.project)}/settings">Set the project site</a> to track your ranking URLs automatically</span>`}</div>
-      <section class="section"><div class="section-head"><h2>Panels</h2><span class="secondary">${queries.length}</span>${filterBar('dash')}</div><div id="dash-table"></div>${!queries.length ? `<div class="card empty-card">No panels yet. <a href="#/p/${encodeURIComponent(state.project)}/import">Import the keywords ${esc(site || 'your site')} already ranks for</a>, or add one by hand in <a href="#/p/${encodeURIComponent(state.project)}/settings">Settings</a>.</div>` : ''}</section>`;
-    bindAttention($('attention'));
-    bindFilters('dash', queries, 'dash-table', 10);
-    $('collect-now').addEventListener('click', () => collect(undefined, false));
-    renderTopActions();
-  }
+  // --- panels table -------------------------------------------------------------------------------------------------------
   async function renderPanels() {
-    const rep = await report(); const queries = sortQueries(rep.queries);
-    $('main').innerHTML = `<div class="page-head"><h1>Panels</h1><span class="secondary">${plural(queries.length, 'panel')}</span><div class="spacer"><a class="btn" href="#/p/${encodeURIComponent(state.project)}/import">Import keywords</a><a class="btn" href="#/p/${encodeURIComponent(state.project)}/settings#add">Add by hand</a></div></div><section class="section"><div class="section-head">${filterBar('all')}</div><div id="all-table"></div></section>`;
-    bindFilters('all', queries, 'all-table', 0);
-  }
-  function expectedScoreDate(q) {
-    const latest = q.latest?.captured_at; if (!latest) return null;
-    const need = (q.settings?.baseline_size ?? 3) - (q.baseline?.length ?? 0) + 1;
-    return addDays(latest, Math.max(1, need) * ((q.settings?.interval_hours ?? 24) / 24));
-  }
-
-  // --- panel page --------------------------------------------------------------------------------------------------------
-  async function renderPanel(id, tab) {
-    let panel; try { panel = await panelData(id); } catch (error) { $('main').innerHTML = `<div class="notice">${esc(error.message)}</div>`; return; }
-    const rep = await report(); const q = rep.queries.find((x) => x.id === id) || panel.analysis;
-    const a = panel.analysis; const captures = panel.captures.length;
-    const base = `#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(id)}`;
-    const tabs = [['overview', 'Overview'], ['history', `History${captures ? ` · ${captures}` : ''}`], ['compare', 'Compare'], ['evidence', 'Data quality'], ['review', 'Review'], ['ai', 'AI Overview'], ['settings', 'Settings']];
-    $('main').innerHTML = `<div class="crumbs"><a href="#/p/${encodeURIComponent(state.project)}/panels">Panels</a> / ${esc(panel.target.query)}</div>
-      <div class="page-head top"><h1>${esc(panel.target.query)}</h1>${marketHtml(panel.target.search)}${tab !== 'overview' && q.score != null ? `<span class="status ${kind(q.status)} mt4">${dot(kind(q.status))}${esc(word(q))} · ${Math.round(q.score)}</span>` : ''}<div class="spacer"><a class="btn" href="/api/p/${encodeURIComponent(state.project)}/export/report.json" download="serp-drift-report.json">Export JSON</a><button class="btn" type="button" id="collect-one" data-collect="Collect now">Collect now</button></div></div>
-      <nav class="tabs">${tabs.map(([k, l]) => `<a href="${base}?tab=${k}" ${k === tab ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav><div id="tab" class="vstack g16"></div>`;
-    $('collect-one').addEventListener('click', () => collect([id], true));
-    renderTopActions();
-    const body = $('tab');
-    if (tab === 'evidence' || tab === 'review') {
-      body.innerHTML = tab === 'evidence' ? SerpReview.evidence(panel) : SerpReview.review(panel);
-      SerpReview.bind(body, panel, (action, data) => api(P(`/panels/${encodeURIComponent(id)}/${action}`), { method:'POST', body:data }), async () => { invalidate(); await loadStatus(); await render(); });
-    }
-    else if (tab === 'history') renderHistory(panel, q, body);
-    else if (tab === 'compare') renderCompare(panel, q, body);
-    else if (tab === 'ai') renderAi(panel, q, body);
-    else if (tab === 'settings') renderPanelSettings(panel, q, body);
-    else renderOverview(panel, q, body);
-  }
-
-  function summaryText(q, panel) {
-    return { big:q.score == null ? null : String(Math.round(q.score)), phrase:q.decision?.title || word(q),
-      small:deltaText(q), text:[...(q.decision?.reasons || []), q.decision?.next_action || ''].join(' '),
-      actions:[['Compare observations','compare'],['Check data quality','evidence'],['Record a decision','review']] };
-  }
-  function deltaText(q) { const d = scoreDelta(q); return d == null ? '' : `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d)} vs previous`; }
-  function avgMix(list, field = 'intent_distribution') { const out = {}; (list || []).forEach((s) => Object.entries(s[field] || {}).forEach(([k, v]) => { out[k] = (out[k] || 0) + v / list.length; })); return out; }
-  const stackHtml = (mix) => `<span class="stack">${INTENTS.filter((i) => mix[i]).map((i) => `<i class="i-${i}" style="flex:${(mix[i] * 100).toFixed(1)}" title="${i} ${pct(mix[i])}"></i>`).join('')}</span>`;
-
-  function scoreChart(timeline, settings, statusKind, width = 480, height = 140) {
-    const pts = timeline || []; if (!pts.length) return '<div class="secondary">No captures yet.</div>';
-    const th = settings?.drift_threshold ?? 35; const pad = { l: 0, r: 0, t: 8, b: 20 }; const w = width, h = height - pad.b;
-    const x = (i) => pts.length === 1 ? w / 2 : pad.l + i * (w - pad.l - pad.r) / (pts.length - 1); const y = (v) => pad.t + (h - pad.t) - (v / 100) * (h - pad.t);
-    const baseline = pts.filter((p) => p.phase === 'baseline'); const bx = baseline.length ? x(pts.indexOf(baseline[baseline.length - 1])) : null;
-    const scored = pts.map((p, i) => [p, i]).filter(([p]) => p.score != null);
-    const path = scored.map(([p, i], k) => `${k ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.score).toFixed(1)}`).join(' ');
-    const evidence = new Set(scored.slice(-(settings?.confirmations || 2)).map(([, i]) => i));
-    const labelEvery = Math.max(1, Math.ceil(pts.length / 12));
-    return `<svg class="chart" viewBox="0 0 ${w} ${height}" role="img" aria-label="Change score per capture">${bx != null ? `<rect x="0" y="0" width="${Math.max(bx, 8).toFixed(1)}" height="${h}" fill="var(--line-soft)"></rect><text x="6" y="14">baseline${baseline.length > 1 ? ` · ${D(baseline[0].captured_at)}–${D(baseline[baseline.length - 1].captured_at)}` : ''}</text>` : ''}<line x1="0" x2="${w}" y1="${y(th).toFixed(1)}" y2="${y(th).toFixed(1)}" stroke="var(--line)" stroke-dasharray="3 4"></line><text x="${w}" y="${(y(th) - 4).toFixed(1)}" text-anchor="end">watch ${th}</text>${path ? `<path d="${path}" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"></path>` : ''}${pts.map((p, i) => p.score == null ? `<circle cx="${x(i).toFixed(1)}" cy="${y(0).toFixed(1)}" r="3" ${p.quality_state === 'query_mismatch' ? 'fill="none" stroke="var(--review)" stroke-width="1.5"' : 'fill="var(--faint)"'}><title>${esc(D(p.captured_at))} · ${esc(p.phase)}${p.quality_state === 'query_mismatch' ? ' · results for another query, not used' : p.quality_ok ? '' : ' · sparse'}</title></circle>` : `<circle cx="${x(i).toFixed(1)}" cy="${y(p.score).toFixed(1)}" r="${i === pts.length - 1 ? 3.5 : 3}" fill="${evidence.has(i) && (statusKind === 'review' || statusKind === 'watch') ? 'var(--review)' : 'var(--ink)'}"><title>${esc(D(p.captured_at))} · score ${Math.round(p.score)} · ${esc(p.intent)}${p.site_position ? ` · your site #${p.site_position}` : ''}</title></circle>`).join('')}${pts.map((p, i) => i % labelEvery === 0 || i === pts.length - 1 ? `<text x="${x(i).toFixed(1)}" y="${height - 4}" text-anchor="${i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle'}">${esc(D(p.captured_at))}</text>` : '').join('')}</svg>`;
-  }
-
-  function renderOverview(panel, q, body) {
-    const latest = q.latest; const site = q.site;
-    const comps = q.comparison?.components; const weights = panel.weights || {};
-    const moved = `<div class="card pad" style="display:grid;gap:10px;align-content:start"><div class="card-head"><b>What moved</b><span class="muted">weight · score</span></div>${COMPONENTS.map(([k, l]) => { const v = comps ? comps[k] : null; return `<div class="meter-row ${comps ? '' : 'off'}"><span>${l}</span><span class="meter"><i style="width:${v == null ? 0 : Math.round(v * 100)}%"></i></span><span class="muted right">${Math.round((weights[k] || 0) * 100)} %</span><span class="right">${v == null ? (comps ? '—' : 'not yet') : Math.round(v * 100)}</span></div>`; }).join('')}<div style="border-top:1px solid var(--line-soft);padding-top:10px;display:grid;gap:6px">${q.baseline?.length ? `<div class="stack-row"><span>Baseline</span>${stackHtml(avgMix(q.baseline))}</div>` : ''}${latest ? `<div class="stack-row"><span>Latest</span>${stackHtml(latest.intent_distribution || {})}</div>` : ''}<div class="small muted">${latest ? INTENTS.slice(0, 4).map((i) => `${i} ${q.baseline?.length ? pct(avgMix(q.baseline)[i] || 0) + ' → ' : ''}${pct(latest.intent_distribution?.[i] || 0)}`).join(' · ') : ''}${latest ? ` · unknown ${pct(latest.intent_distribution?.unknown || 0)} <a href="#" data-help="unknown">what is unknown?</a>` : ''}</div></div></div>`;
-    const chart = `<div class="card pad vstack"><div class="card-head"><b>Score · ${plural(panel.captures.length, 'capture')}</b><span class="muted">${panel.captures.length ? `${D(panel.captures[0])} – ${D(panel.captures[panel.captures.length - 1])}` : ''}</span></div>${scoreChart(panel.timeline, q.settings, kind(q.status))}<div class="small muted">${q.status === 'review' || q.status === 'watch' ? 'Highlighted points show recent comparisons, not independent proof of a change. ' : ''}Grey dots on the axis are baseline captures without a score${(panel.timeline || []).some((p) => p.quality_state === 'query_mismatch') ? '; hollow dots are captures whose results did not match the query and were not used' : ''}. Hover a point for its breakdown.</div></div>`;
-    const declared = latest?.page; const fit = declared ? fitText(declared, latest) : null;
-    const yourSite = `<div class="card pad" style="display:grid;gap:8px;font-size:13px"><div class="card-head"><b>${panel.project?.site ? 'Your site' : 'Your page'}</b>${site?.ranking_url_changed ? `<span class="c-review">Ranking URL changed ${D(latest?.captured_at)}</span>` : ''}</div>${site?.url || (declared && q.page_position) ? `<div style="display:flex;align-items:baseline;gap:10px"><span class="kpi">#${site?.position || q.page_position}</span><span class="mono">${esc(hostPath(site?.url || declared.url))}</span></div>` : `<div class="kpi muted fs20">Not in the top ten</div>`}<div class="muted pretty">${site?.previous_url && site.ranking_url_changed ? `Previously ${esc(hostPath(site.previous_url))} at #${site.previous_position}. Two of your URLs have held this query — possible cannibalisation.` : site?.hits > 1 ? `${site.hits} of your URLs are in the top ten.` : panel.project?.site ? `Tracked automatically for ${esc(panel.project.site)}.` : 'Set the project site in Settings to track your ranking URL automatically.'}</div>${declared ? `<div class="row-between" style="border-top:1px solid var(--line-soft);padding-top:8px;flex-wrap:wrap"><span class="muted">Declared <span class="mono ink">${esc(hostPath(declared.url))}</span> · ${esc(declared.intent)}</span><span class="${fit.cls} medium">${esc(fit.text)}</span></div>` : `<div class="muted small" style="border-top:1px solid var(--line-soft);padding-top:8px">No declared page. <a href="#" data-act="settings">Declare one</a> to get a page-fit verdict.</div>`}</div>`;
-    const cit = panel.citations; const hostsTop = cit.hosts.slice(0, 4);
-    const aio = `<div class="card pad" style="display:grid;gap:8px;font-size:13px;align-content:start"><div class="card-head"><b>AI Overview · ${cit.observed} of ${cit.total} captures</b>${cit.observed ? `<a href="#" data-act="ai">Read latest →</a>` : ''}</div>${cit.observed ? `<div style="display:flex;gap:16px;flex-wrap:wrap"><span class="${cit.site_cited ? 'c-ok' : 'muted'} medium">Site cited ${cit.site_cited} / ${cit.observed}</span>${declared ? `<span class="muted">Declared page cited ${cit.page_cited} / ${cit.observed}</span>` : ''}</div><div style="display:grid;grid-template-columns:1fr auto;gap:4px 12px" class="muted">${hostsTop.map((h) => `<span class="mono ${h.mine ? 'ink' : ''}">${esc(h.host)}</span><span class="${h.mine ? 'ink' : ''}">${h.citations}</span>`).join('')}</div>` : `<div class="muted">${latest?.ai_overview_status === 'not_available' ? 'Google reports no AI Overview for this query.' : latest?.ai_overview_status === 'requires_followup' ? 'Overview deferred by Google and not expanded (expansion is off or failed).' : latest?.ai_overview_status === 'not_applicable' ? 'This engine has no AI Overview.' : 'No AI Overview observed yet.'}</div>`}</div>`;
-    // Row markers use the same whole-baseline comparison as the score: mean baseline rank, entered = never in the baseline.
-    const anchor = q.comparison; const old = new Map((q.comparison?.rank_changes || []).map((r) => [r.url, Math.round(r.before * 10) / 10]));
-    const results = latest ? `<section class="section" id="results"><div class="section-head"><h2>Results · ${D(latest.captured_at)}</h2><span class="secondary">${q.comparison ? `${(q.comparison.entered || []).length} entered · ${(q.comparison.exited || []).length} exited from baseline window · ` : ''}coverage ${pct(latest.classified_coverage)} <a href="#" data-help="coverage">?</a></span></div><div class="card clip">${latest.results.map((r) => { const mine = panel.project?.site && (host(r.url) === panel.project.site || host(r.url).endsWith('.' + panel.project.site)); const before = old.get(r.url); const move = !anchor ? '' : before == null ? ((anchor.entered || []).includes(r.url) ? '↑ entered' : '') : before === r.position ? '=' : `${before} → ${r.position}`; return `<div class="result ${mine ? 'mine' : ''}"><button class="result-row" type="button" aria-expanded="false"><span class="muted">${r.position}</span><span class="nowrap"><span class="t"><b>${esc(r.title || r.url)}</b>${mine ? '<span class="tag">your site</span>' : ''}${declared && r.url === canonical(declared.url) ? '<span class="tag">declared page</span>' : ''}</span><span class="url">${esc(hostPath(r.url))}</span></span><span class="intent"><i class="sw i-${esc(r.intent)}"></i>${esc(r.intent)}</span><span class="muted move">${esc(move)}</span><span class="faint">›</span></button><div class="result-evidence hidden"><div><b>Evidence</b> · ${r.evidence.length ? esc(r.evidence.join(' · ')) : 'no lexical rule matched the title, snippet, or URL'}${r.basis === 'llm' ? ' · labelled by the model' : ''}</div><div>Type: ${esc(r.type)} · <a href="${safeUrl(r.url)}" target="_blank" rel="noopener noreferrer">open ↗</a></div>${r.semantic_label ? `<div>Task: ${esc(r.semantic_label.task || 'unresolved')} · Semantic evidence: ${esc(r.semantic_label.evidence || 'unavailable')}${r.label_disagreement ? ` · Rule label disagrees: ${esc(r.rule_label?.intent)}` : ''}</div>` : ''}${r.snippet ? `<div>${esc(r.snippet)}</div>` : ''}</div></div>`; }).join('')}</div>${latest.warnings?.length ? `<div class="secondary">${latest.warnings.map(esc).join(' · ')}</div>` : ''}</section>` : '';
-    body.innerHTML = SerpReview.hero(q, `#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(panel.target.id)}`) + SerpReview.dimensions(q) + `<div class="two">${chart}${moved}</div>` + SerpReview.aligned(q) + `<div class="two">${yourSite}${aio}</div>` + results;
-    body.querySelectorAll('.result-row').forEach((row) => row.addEventListener('click', () => { const open = row.getAttribute('aria-expanded') === 'true'; row.setAttribute('aria-expanded', String(!open)); row.nextElementSibling.classList.toggle('hidden', open); row.lastElementChild.textContent = open ? '›' : '⌄'; }));
-    body.querySelectorAll('[data-act]').forEach((el) => el.addEventListener('click', async (event) => {
-      event.preventDefault(); const act = el.dataset.act; const base = `#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(panel.target.id)}`;
-      if (act === 'compare' || act === 'history' || act === 'settings' || act === 'ai' || act === 'evidence' || act === 'review') return go(`${base}?tab=${act}`);
-      if (act === 'results') return $('results')?.scrollIntoView({ behavior: 'smooth' });
-      if (act === 'collect') return collect([panel.target.id], true);
-      if (act === 'ack') { try { await api(P(`/panels/${encodeURIComponent(panel.target.id)}/acknowledge`), { method: 'POST', body: {} }); toast('Marked as reviewed.'); invalidate(); await loadStatus(); render(); } catch (error) { fail(error); } }
-    }));
-    body.querySelectorAll('[data-help]').forEach((el) => el.addEventListener('click', (event) => { event.preventDefault(); toast(el.dataset.help === 'unknown' ? 'Unknown means no rule in the language pack matched the title, snippet, or URL decisively. Unknowns never trigger a page-fit alert.' : 'Coverage is the share of rank weight (position 1 counts most) that received a decisive intent label.'); }));
-  }
-  const canonical = (u) => { try { const x = new URL(u); x.hash = ''; x.hostname = x.hostname.replace(/^www\./, ''); return x.href.replace(/\/$/, '') ; } catch { return u; } };
-  function fitText(page, latest) {
-    const dom = latest?.dominant_intent; const share = latest?.intent_distribution?.[page.intent] || 0;
-    if (!dom || dom === 'unknown') return { cls: 'muted', text: 'Fit: unclear — SERP intent unknown' };
-    if (dom === 'mixed') return { cls: 'c-watch', text: `Fit: mixed SERP · ${page.intent} ${pct(share)} rank weight` };
-    if (dom === page.intent) return { cls: 'c-ok', text: `Latest profile: aligned · ${page.intent} ${pct(share)} rank weight` };
-    return { cls: share < 0.25 ? 'c-review' : 'c-watch', text: `Fit: ${share < 0.25 ? 'possible mismatch' : 'partial'} — latest SERP leans ${dom} ${pct(latest.intent_distribution?.[dom] || 0)} rank weight` };
-  }
-
-  // --- history ------------------------------------------------------------------------------------------------------------
-  function renderHistory(panel, q, body) {
-    const t = panel.timeline; const traj = panel.trajectories; const site = panel.project?.site;
-    let range = 'all';
+    const rep = await report(); const events = (await activity()).events || []; const queries = sortQueries(rep.queries); const site = rep.project?.site; const base = rep.search;
+    const is = { all: () => true, watch: (q) => q.status === 'watch', review: (q) => q.status === 'review', ranking: (q) => Boolean(sitePosition(q)), cited: cited, notranking: (q) => !sitePosition(q), building: (q) => U.BUILDING.includes(q.status), issues: (q) => U.ISSUES.includes(q.status) };
+    const views = [['all', 'All'], ['watch', 'Watch'], ['review', 'Review'], ['ranking', 'Ranking'], ['cited', 'Cited'], ['notranking', 'Not ranking'], ['building', 'Building'], ['issues', 'Issues']].map(([k, l]) => [k, l, queries.filter(is[k]).length]).filter(([k, , c]) => c || ['all', 'watch', 'ranking', 'issues'].includes(k));
+    const key = `serp-drift-view:${state.project}:panels`;
+    let view = 'all', text = '', sort = 'priority', group = '';
+    try { const saved = JSON.parse(localStorage.getItem(key) || '{}'); view = views.some(([k]) => k === saved.view) ? saved.view : view; text = saved.text || ''; sort = saved.sort || sort; group = saved.group || ''; } catch {}
+    const groups = [...new Set(queries.map((q) => q.group).filter(Boolean))].sort();
+    const ranking = queries.filter((q) => sitePosition(q)); const top3 = ranking.filter((q) => sitePosition(q).pos <= 3); const citedN = queries.filter(cited);
+    $('main').innerHTML = `<div class="page">
+      <div class="page-head"><div class="title"><h1>Panels</h1><span class="meta">${plural(queries.length, 'panel')}${site ? ` · ${esc(site)} ranks in ${ranking.length}, top 3 in ${top3.length} · cited by an AI Overview in ${citedN.length}` : ' · set the project site to track your ranking URLs'}</span></div><a class="btn hide-sm" href="/api/p/${enc(state.project)}/export/report.json" download="serp-drift-report.json">${I('download')}Export</a><a class="btn primary" href="${link.view('add')}">${I('plus')}Add keywords</a></div>
+      <div class="toolbar"><input type="search" id="pf-text" placeholder="Filter by query or URL" aria-label="Filter panels" value="${esc(text)}"><div class="seg" id="pf-views">${views.map(([k, l, c]) => `<button type="button" data-v="${k}" aria-pressed="${k === view}">${l}<span class="n">${c}</span></button>`).join('')}</div><span class="grow"></span>${groups.length ? `<select class="input small" id="pf-group" aria-label="Keyword group"><option value="">All groups</option>${groups.map((g) => `<option value="${esc(g)}"${g === group ? ' selected' : ''}>${esc(g)}</option>`).join('')}</select>` : ''}<select class="input small" id="pf-sort" aria-label="Sort panels">${[['priority', 'Sort: priority'], ['score', 'Sort: change score'], ['query', 'Sort: A–Z'], ['coverage', 'Sort: lowest coverage']].map(([v, l]) => `<option value="${v}"${v === sort ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="card clip"><div class="table ptable"><div class="thead"><span>Query</span><span>Status</span><span class="right">Score ${I('down')}</span><span class="c-strip">Last 12 captures</span><span class="c-intent">Intent · coverage</span><span class="c-site">Your site</span><span class="c-aio">AI Overview</span><span class="right c-when">Captured</span></div><div id="pf-rows"></div></div><div class="tfoot" id="pf-foot"></div></div></div>`;
     const draw = () => {
-      const cut = range === 'all' ? 0 : Date.now() - (range === '30' ? 30 : 7) * 86400000;
-      const pts = t.filter((p) => new Date(p.captured_at).getTime() >= cut);
-      $('hist-chart').innerHTML = scoreChart(pts, q.settings, kind(q.status), 1120, 130);
+      let rows = queries.filter(is[view]).filter((q) => !group || q.group === group).filter((q) => !text || q.query.toLowerCase().includes(text) || (q.latest?.results || []).some((r) => r.url.toLowerCase().includes(text)));
+      if (sort === 'score') rows.sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+      if (sort === 'query') rows.sort((a, b) => a.query.localeCompare(b.query));
+      if (sort === 'coverage') rows.sort((a, b) => (a.latest?.classified_coverage ?? 2) - (b.latest?.classified_coverage ?? 2));
+      $('pf-rows').innerHTML = rows.map((q) => {
+        const pos = sitePosition(q); const s = U.siteTrack(q); const lat = q.latest || {}; const dom = lat.dominant_intent;
+        const path = pos ? (site && U.host(pos.url).endsWith(site) ? U.pathOnly(pos.url) : U.hostPath(pos.url)) : '';
+        const ai = lat.ai_overview_status === 'observed' ? (cited(q) ? `${I('quote')}<span>cited</span>` : '<span class="muted">not cited</span>') : '<span class="faint">—</span>';
+        const flap = U.flapInfo(events, q.id);
+        return `<a class="trow" href="${link.panel(q.id)}"><span class="cell-2"><span class="row"><span class="q nowrap">${esc(q.query)}</span>${U.marketTags(q.search, base, engines())}${q.group ? `<span class="tag">${esc(q.group)}</span>` : ''}</span>${flap.recent >= 3 ? `<span class="sub">${I('repeat')} ${flap.recent} status changes in 3 days</span>` : ''}</span><span>${U.pill(q)}</span><span class="right">${deltaHtml(scoreDelta(q))}<span class="score">${q.score == null ? (q.baseline && q.status === 'building_baseline' ? `<span class="muted">${q.baseline.length}/${q.settings?.baseline_size ?? 3}</span>` : '—') : Math.round(q.score)}</span></span><span class="c-strip">${U.strip(q.timeline, { count: 12, threshold: q.settings?.drift_threshold ?? 35, wide: true })}</span><span class="c-intent">${dom ? `<i class="sw ${esc(dom)}"></i><span class="dim">${esc(dom)}</span><span class="muted">${pct(lat.classified_coverage)}</span>` : '<span class="faint">—</span>'}</span><span class="c-site">${pos ? `<b class="num">#${pos.pos}</b><span class="dim nowrap">${esc(path)}</span>` : `<span class="muted nowrap">— ${s.dropped ? `dropped out (was #${s.was})` : 'not in top 10'}</span>`}</span><span class="c-aio">${ai}</span><span class="right muted c-when">${esc(ago(lat.captured_at))}</span></a>`;
+      }).join('') || '<div class="empty">No panels match this view.</div>';
+      $('pf-foot').innerHTML = `<span>${rows.length} of ${plural(queries.length, 'panel')}</span><span class="hints hide-sm"><span>${U.kbd('J')}${U.kbd('K')} move</span><span>${U.kbd('↵')} open</span><span>${U.kbd('/')} search</span></span>`;
+      $('pf-views').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === view)));
+      try { localStorage.setItem(key, JSON.stringify({ view, text, sort, group })); } catch {}
     };
-    const idxByDate = new Map(traj.captures.map((c, i) => [c, i]));
-    const cell = (p, i, positions) => { if (p == null) { const exited = i > 0 && positions[i - 1] != null; return `<div class="cell ${exited ? 'exit' : ''}">${exited ? '×' : ''}</div>`; } const band = p <= 3 ? 'r1' : p <= 6 ? 'r2' : 'r3'; const entered = i > 0 && positions[i - 1] == null && i > 0; return `<div class="cell ${band}" title="#${p} on ${esc(D(traj.captures[i]))}">${entered ? '↑' : ''}${p}</div>`; };
-    const cols = `grid-template-columns:260px repeat(${traj.captures.length},minmax(40px,1fr))`;
-    const every = Math.max(1, Math.ceil(traj.captures.length / 15));
-    const siteChangeIdx = (panel.changes || []).filter((c) => c.ranking_url_changed).map((c) => ({ url: c.site_after?.url, at: c.captured_at }));
-    const matrix = traj.urls.length ? `<div class="card matrix-wrap"><div class="matrix"><div class="mh" style="${cols}"><div>URL</div>${traj.captures.map((c, i) => `<div title="${esc(DT(c))}">${i % every === 0 || i === traj.captures.length - 1 ? esc(D(c)) : ''}</div>`).join('')}</div>${traj.urls.slice(0, 80).map((u) => { const flag = siteChangeIdx.find((c) => c.url === u.url); return `<div class="mr ${u.mine ? 'mine' : ''}" style="${cols}"><div><span class="url" title="${esc(u.url)}">${esc(hostPath(u.url))}</span>${flag ? `<span class="flag">ranking URL · since ${esc(D(flag.at))}</span>` : u.mine && u.current ? `<span class="flag" style="color:var(--muted)">your site · best #${u.best}</span>` : ''}</div>${u.positions.map((p, i) => cell(p, i, u.positions)).join('')}</div>`; }).join('')}</div></div>${traj.urls.length > 80 ? `<p class="secondary">Showing 80 of ${traj.urls.length} URLs.</p>` : ''}` : '<div class="card empty-card">No captures yet.</div>';
-    const rowsC = [...t].reverse().slice(0, 30).map((p) => { const change = (panel.changes || []).find((c) => c.captured_at === p.captured_at); const notes = p.quality_state === 'query_mismatch' ? 'results for another query · not used' : change ? [change.ranking_url_changed ? `ranking URL → ${hostPath(change.site_after?.url || '')}` : '', ...change.entered.slice(0, 2).map((u) => `${host(u)} entered`), ...change.features_added.map((f) => `+ ${FEATURES[f] || f}`), ...change.features_removed.map((f) => `− ${FEATURES[f] || f}`), change.intent_before !== change.intent_after ? `intent ${change.intent_before} → ${change.intent_after}` : ''].filter(Boolean).join(' · ') : (p.phase === 'baseline' ? 'baseline capture' : ''); return `<a class="gr" href="#" data-capture="${esc(p.captured_at)}" style="grid-template-columns:90px 60px 70px 70px 1fr"><span class="ink">${esc(D(p.captured_at))}</span><span class="right ${p.quality_ok ? 'ink' : 'muted'}">${p.score == null ? '—' : Math.round(p.score)}</span><span class="right muted">${p.results}</span><span class="right">${p.site_position ? `#${p.site_position}` : p.page_position ? `#${p.page_position}` : '—'}</span><span class="nowrap muted">${esc(p.quality_state === 'query_mismatch' ? notes : p.quality_state === 'excluded' || p.quality_state === 'quarantined' ? `${p.quality_state} — not used` : !p.quality_ok ? `sparse — ${p.results} results` : notes)}</span></a>`; }).join('');
-    const changes = (panel.changes || []).slice(0, 12).map((c) => { const bits = [c.ranking_url_changed ? `Ranking URL changed ${hostPath(c.site_before?.url || '')} → ${hostPath(c.site_after?.url || '')} (now #${c.site_after?.position}).` : '', ...c.entered.slice(0, 3).map((u) => `${hostPath(u)} entered at #${(c.moved.find((m) => m.url === u) || {}).after || ''}`.replace(/ at #$/, '')), c.exited.length ? `${c.exited.slice(0, 3).map(hostPath).join(', ')} exited.` : '', c.features_added.length ? `+ ${c.features_added.map((f) => FEATURES[f] || f).join(', ')}.` : '', c.features_removed.length ? `− ${c.features_removed.map((f) => FEATURES[f] || f).join(', ')}.` : '', c.intent_before !== c.intent_after ? `Intent ${c.intent_before} → ${c.intent_after}.` : '', c.site_before?.position && c.site_after?.position && c.site_before.position !== c.site_after.position && !c.ranking_url_changed ? `Your URL ${c.site_before.position} → ${c.site_after.position}.` : ''].filter(Boolean).join(' '); return `<div style="display:grid;grid-template-columns:110px 1fr;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line-soft);font-size:13px"><span class="muted">${esc(D(c.previous_at))} → ${esc(D(c.captured_at))}</span><span class="pretty ${c.quiet ? 'muted' : ''}">${c.quiet ? 'No change against the previous capture.' : esc(bits)}</span></div>`; }).join('');
-    body.innerHTML = `<div class="card pad vstack g10"><div class="card-head"><b>Score per capture</b><span class="seg" id="hist-range"><button type="button" data-r="all" aria-pressed="true">All ${t.length}</button><button type="button" data-r="30">30 d</button><button type="button" data-r="7">7 d</button></span></div><div id="hist-chart"></div></div>
-      <section class="section"><div class="section-head"><h2>URL trajectories</h2><span class="secondary">${traj.urls.length} URLs seen · positions per capture</span><span class="legend"><span><i style="background:var(--r1)"></i>1–3</span><span><i style="background:var(--r2)"></i>4–6</span><span><i style="background:var(--r3)"></i>7–10</span><span>↑ entered</span><span>× exited</span>${site ? '<span><i style="background:var(--mine);border:1px solid var(--line)"></i>your site</span>' : ''}</span></div>${matrix}</section>
-      <div class="two"><section class="section"><h2 class="section-title">Captures</h2><div class="card grid-table"><div class="gh" style="grid-template-columns:90px 60px 70px 70px 1fr"><span>Date</span><span class="right">Score</span><span class="right">Results</span><span class="right">Your pos</span><span>Notes</span></div>${rowsC || '<div class="empty-card">No captures.</div>'}</div></section>
-      <section class="section"><h2 class="section-title">Change log</h2><div class="card clip">${changes || '<div class="empty-card">Changes appear from the second capture on.</div>'}</div></section></div>`;
-    $('hist-range').addEventListener('click', (event) => { const b = event.target.closest('button[data-r]'); if (!b) return; range = b.dataset.r; $('hist-range').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); draw(); });
-    body.querySelectorAll('[data-capture]').forEach((row) => row.addEventListener('click', (event) => { event.preventDefault(); go(`#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(panel.target.id)}?tab=ai&at=${encodeURIComponent(row.dataset.capture)}`); }));
+    $('pf-views').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) { view = b.dataset.v; draw(); } });
+    $('pf-text').addEventListener('input', (e) => { text = e.target.value.trim().toLowerCase(); draw(); });
+    $('pf-sort').addEventListener('change', (e) => { sort = e.target.value; draw(); });
+    $('pf-group')?.addEventListener('change', (e) => { group = e.target.value; draw(); });
+    state.keys = rowKeys('#pf-rows a.trow');
     draw();
   }
 
-  // --- compare -----------------------------------------------------------------------------------------------------------
-  function renderCompare(panel, q, body) {
-    const caps = panel.captures; const params = route().params;
-    const presets = [['baseline-latest', 'Baseline → latest', { preset: 'baseline' }, { preset: 'latest' }], ['weeks', 'Last 7 days → previous 7', { preset: 'previous_7_days' }, { preset: 'last_7_days' }], ['date', 'Before / after a date', null, null], ['captures', 'Two captures', null, null]];
-    let mode = params.get('mode') || 'baseline-latest'; let left = { preset: 'baseline' }, right = { preset: 'latest' };
-    if (params.get('a')) { try { left = JSON.parse(params.get('a')); right = JSON.parse(params.get('b')); mode = 'custom'; } catch {} }
-    body.innerHTML = `<div class="chips" id="cmp-presets">${presets.map(([k, l]) => `<button class="chip" type="button" data-mode="${k}" aria-pressed="${k === mode}">${l}</button>`).join('')}</div><div class="sides" id="cmp-sides"></div><div id="cmp-result"><div class="card empty-card">Choose two sides.</div></div>`;
-    const sideCard = (name, spec) => { const label = spec.preset ? ({ baseline: 'Baseline', latest: 'Latest', last_7_days: 'Last 7 days', previous_7_days: 'Previous 7 days', last_30_days: 'Last 30 days', first_week: 'First week' })[spec.preset] : spec.capture ? DT(spec.capture) : `${spec.from || '…'} → ${spec.to || '…'}`; return `<div class="card pad side"><div class="lab"><span>${name} · ${esc(label)}</span><a href="#" data-change="${name}">change</a></div><div class="val" data-val="${name}">…</div><div class="form hidden" data-form="${name}"><label class="field"><span>One capture</span>${select(`data-capture="${name}"`, [['', '—'], ...caps.map((c) => [c, DT(c)])])}</label><div class="form-grid"><label class="field"><span>From</span><input type="date" data-from="${name}"></label><label class="field"><span>To</span><input type="date" data-to="${name}"></label></div><button class="btn small" type="button" data-apply="${name}">Apply</button></div></div>`; };
-    const drawSides = () => { $('cmp-sides').innerHTML = `${sideCard('A', left)}<div class="arrow">→</div>${sideCard('B', right)}`; bindSides(); };
-    const bindSides = () => {
-      $('cmp-sides').querySelectorAll('[data-change]').forEach((a) => a.addEventListener('click', (event) => { event.preventDefault(); const f = $('cmp-sides').querySelector(`[data-form="${a.dataset.change}"]`); f.classList.toggle('hidden'); }));
-      $('cmp-sides').querySelectorAll('[data-apply]').forEach((b) => b.addEventListener('click', () => { const name = b.dataset.apply; const cap = $('cmp-sides').querySelector(`[data-capture="${name}"]`).value; const from = $('cmp-sides').querySelector(`[data-from="${name}"]`).value; const to = $('cmp-sides').querySelector(`[data-to="${name}"]`).value; const spec = cap ? { capture: cap } : { from: from || undefined, to: to || undefined }; if (name === 'A') left = spec; else right = spec; mode = 'custom'; $('cmp-presets').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', 'false')); run(); }));
-    };
-    $('cmp-presets').addEventListener('click', (event) => { const b = event.target.closest('button[data-mode]'); if (!b) return; mode = b.dataset.mode; $('cmp-presets').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); const p = presets.find((x) => x[0] === mode); if (p[2]) { left = p[2]; right = p[3]; run(); } else if (mode === 'date') { const mid = caps[Math.floor(caps.length / 2)] || ''; left = { from: caps[0]?.slice(0, 10), to: mid.slice(0, 10) }; right = { from: mid.slice(0, 10), to: caps[caps.length - 1]?.slice(0, 10) }; run(); } else { left = { capture: caps[Math.max(0, caps.length - 2)] }; right = { capture: caps[caps.length - 1] }; run(); } });
-    async function run() {
-      drawSides(); const result = $('cmp-result'); result.innerHTML = '<div class="card empty-card">Comparing…</div>';
-      try {
-        const data = await api(P(`/panels/${encodeURIComponent(panel.target.id)}/compare`), { method: 'POST', body: { left, right } });
-        history.replaceState(null, '', `${location.pathname}#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(panel.target.id)}?tab=compare&a=${encodeURIComponent(JSON.stringify(left))}&b=${encodeURIComponent(JSON.stringify(right))}`);
-        $('cmp-sides').querySelector('[data-val="A"]').innerHTML = `${esc(D(data.left.from))}${data.left.from !== data.left.to ? ` – ${esc(D(data.left.to))}` : ''} · ${plural(data.left.captures, 'capture')}${data.left.captures > 1 ? ', averaged' : ''}<div class="secondary">intent ${esc(data.left.dominant_intent)}</div>`;
-        $('cmp-sides').querySelector('[data-val="B"]').innerHTML = `${esc(D(data.right.from))}${data.right.from !== data.right.to ? ` – ${esc(D(data.right.to))}` : ''} · ${plural(data.right.captures, 'capture')}${data.right.captures > 1 ? ', averaged' : ''}<div class="secondary">intent ${esc(data.right.dominant_intent)}</div>`;
-        const [capA, capB] = await Promise.all([api(P(`/panels/${encodeURIComponent(panel.target.id)}/captures/${encodeURIComponent(data.left.to)}`)), api(P(`/panels/${encodeURIComponent(panel.target.id)}/captures/${encodeURIComponent(data.right.to)}`))]);
-        const aRes = capA.snapshot.results; const bRes = capB.snapshot.results; const bUrls = new Set(bRes.map((r) => r.url)); const aPos = new Map(aRes.map((r) => [r.url, r.position])); const site = panel.project?.site; const mine = (u) => site && (host(u) === site || host(u).endsWith('.' + site));
-        const weights = panel.weights || {}; const th = q.settings?.drift_threshold ?? 35;
-        result.innerHTML = `<div class="card clip"><div class="cmp-row head"><span>Component</span><span class="right">Weight</span><span class="right">Distance</span><span>Contribution</span><span class="right">Points</span></div>${COMPONENTS.map(([k, l]) => { const v = data.components[k]; const pts = v == null ? 0 : v * (weights[k] || 0) * 100; return `<div class="cmp-row"><span class="ink medium">${l}</span><span class="right muted">${Math.round((weights[k] || 0) * 100)} %</span><span class="right ${v == null ? 'muted' : 'ink'}">${v == null ? '—' : Math.round(v * 100)}</span><span class="bar"><span class="meter"><i style="width:${Math.round(pts / (weights[k] || 1) / 100 * 100)}%;background:${pts >= 15 ? 'var(--review)' : 'var(--ink)'}"></i></span><b>${pts ? '+' + pts.toFixed(1) : '0'}</b></span><span class="right muted">${v == null ? 'n/a' : ''}</span></div>`; }).join('')}<div class="cmp-row"><span class="ink semibold">Change score</span><span></span><span class="right ink semibold fs16">${data.score}</span><span class="muted">watch ≥ ${th} · review with repeated evidence</span><span></span></div></div>
-          <div class="two"><div class="card side-list clip"><div class="row-between card-title"><b class="ink">A · top 10 (${esc(D(data.left.to))})</b><span class="secondary">intent</span></div>${aRes.map((r) => `<div class="lr ${mine(r.url) ? 'mine' : ''}"><span class="muted">${r.position}</span><span class="u ${bUrls.has(r.url) ? '' : 'out'}" title="${esc(r.title)}">${esc(hostPath(r.url))}</span><span></span><i class="sw i-${esc(r.intent)}"></i></div>`).join('')}</div><div class="card side-list clip"><div class="row-between card-title"><b class="ink">B · top 10 (${esc(D(data.right.to))})</b><span class="secondary">move · intent</span></div>${bRes.map((r) => { const before = aPos.get(r.url); const move = before == null ? '↑ new' : before === r.position ? '=' : `${before} → ${r.position}`; return `<div class="lr ${mine(r.url) ? 'mine' : ''}"><span class="muted">${r.position}</span><span class="u" title="${esc(r.title)}">${esc(hostPath(r.url))}</span><span class="right small ${before == null ? 'c-ok' : 'muted'}">${esc(move)}</span><i class="sw i-${esc(r.intent)}"></i></div>`; }).join('')}</div></div>
-          <div class="three"><div class="card pad mini-list"><b class="ink medium">Entered · ${data.entered.length}</b>${data.entered.map((u) => `<span class="mono c-ok">${esc(hostPath(u))} · #${bRes.find((r) => r.url === u)?.position ?? '?'}</span>`).join('') || '<span class="muted">none</span>'}</div><div class="card pad mini-list"><b class="ink medium">Exited · ${data.exited.length}</b>${data.exited.map((u) => `<span class="mono c-review">${esc(hostPath(u))} · was #${aPos.get(u) ?? '?'}</span>`).join('') || '<span class="muted">none</span>'}</div><div class="card pad mini-list"><b class="ink medium">SERP features</b>${data.features_added.map((f) => `<span class="c-ok">+ ${esc(FEATURES[f] || f)}</span>`).join('')}${(capB.snapshot.features || []).filter((f) => !data.features_added.includes(f)).map((f) => `<span class="muted">= ${esc(FEATURES[f] || f)}</span>`).join('')}${data.features_removed.map((f) => `<span class="c-review">− ${esc(FEATURES[f] || f)}</span>`).join('')}</div></div>`;
-      } catch (error) { result.innerHTML = `<div class="notice">${esc(error.message)}</div>`; }
-    }
-    if (!caps.length) { body.innerHTML = '<div class="card empty-card">Nothing to compare until the first capture.</div>'; return; }
-    run();
-  }
-
-  // --- AI overview --------------------------------------------------------------------------------------------------------
-  async function renderAi(panel, q, body) {
-    const c = panel.citations; const site = panel.project?.site; const declared = panel.target.page?.url;
-    const withOverview = c.captures.filter((r) => r.status === 'observed').map((r) => r.captured_at);
-    let at = route().params.get('at') || withOverview[withOverview.length - 1] || null;
-    const max = Math.max(1, ...c.hosts.map((h) => h.citations));
-    body.innerHTML = `<div class="stats-row"><span><b class="kpi">${c.observed}</b>of ${c.total} captures had an overview</span><span><b class="kpi ${c.site_cited ? 'c-ok' : ''}">${c.site_cited}</b>cited ${esc(site || 'your site')}</span>${declared ? `<span><b class="kpi">${c.page_cited}</b>cited the declared page</span>` : ''}<span><b class="kpi">${c.references_per_overview ?? '—'}</b>citations per overview</span></div>
-      ${c.observed ? `<div style="display:grid;grid-template-columns:400px 1fr;gap:16px;align-items:start" class="ai-grid"><div class="vstack g16"><div class="card hosts clip"><div class="row-between card-title"><b class="ink">Cited hosts</b><span class="secondary">captures cited</span></div>${c.hosts.slice(0, 12).map((h) => `<div class="hr ${h.mine ? 'mine' : ''}"><span class="mono ink nowrap">${esc(h.host)}</span><span class="meter"><i style="width:${Math.round(h.citations / max * 100)}%"></i></span><span class="right ink">${h.citations}</span></div>`).join('')}</div><div class="card grid-table"><div class="gh" style="grid-template-columns:70px 1fr 60px 70px"><span>Capture</span><span>Overview</span><span class="right">Cites</span><span class="right">Your site</span></div>${[...c.captures].reverse().slice(0, 20).map((r) => `<a class="gr ${r.captured_at === at ? 'hover' : ''}" href="#" data-at="${esc(r.captured_at)}" style="grid-template-columns:70px 1fr 60px 70px"><span class="ink">${esc(D(r.captured_at))}</span><span class="muted">${r.status === 'observed' ? 'yes' : r.status === 'not_available' ? 'none' : r.status === 'requires_followup' ? 'deferred' : !r.quality_ok ? 'sparse' : '—'}</span><span class="right muted">${r.status === 'observed' ? r.references : '—'}</span><span class="right ${r.site_cited || r.page_cited ? 'c-ok' : 'muted'}">${r.status === 'observed' ? (r.site_cited || r.page_cited ? 'cited' : 'not cited') : '—'}</span></a>`).join('')}</div></div><div class="card pad reader" id="ai-reader"><div class="muted">Loading…</div></div></div>` : `<div class="card empty-card">${c.total ? `No AI Overview in ${plural(c.total, 'capture')}.` : 'No captures yet.'} ${q.settings && state.status.settings?.ai_overview === 'skip' ? 'Overview expansion is off for this project — turn it on in project Settings (1 credit per capture).' : ''}</div>`}`;
-    body.querySelectorAll('[data-at]').forEach((row) => row.addEventListener('click', (event) => { event.preventDefault(); at = row.dataset.at; body.querySelectorAll('[data-at]').forEach((x) => x.classList.toggle('hover', x.dataset.at === at)); loadReader(); }));
-    async function loadReader() {
-      const reader = $('ai-reader'); if (!reader || !at) return;
-      try {
-        const data = await api(P(`/panels/${encodeURIComponent(panel.target.id)}/captures/${encodeURIComponent(at)}`));
-        const ov = data.ai_overview; const results = data.snapshot.results; const idx = withOverview.indexOf(at);
-        const nav = `<span class="seg">${idx > 0 ? `<button type="button" data-nav="${esc(withOverview[idx - 1])}">‹ ${esc(D(withOverview[idx - 1]))}</button>` : ''}<button type="button" disabled>${idx === withOverview.length - 1 ? 'latest' : esc(D(at))}</button>${idx >= 0 && idx < withOverview.length - 1 ? `<button type="button" data-nav="${esc(withOverview[idx + 1])}">${esc(D(withOverview[idx + 1]))} ›</button>` : ''}</span>`;
-        if (!ov) { reader.innerHTML = `<div class="card-head"><b>Overview · ${esc(DT(at))}</b>${nav}</div><p class="muted">${data.snapshot.ai_overview_status === 'observed' ? 'The full text of this overview was not stored.' : 'No overview in this capture.'}</p>`; bindNav(); return; }
-        const refs = ov.reference_links || [];
-        const block = (b) => { const text = b.answer || b.text || b.snippet || ''; const refsOf = (x) => (x.reference_indexes || []).length ? `<sup>${x.reference_indexes.map((i) => i + 1).join(',')}</sup>` : ''; const sup = refsOf(b); if (b.type === 'header') return `<h4>${esc(text)}</h4>`; if ((b.type || '').includes('list')) return `<ul>${(b.items || b.list || []).map((li) => `<li>${typeof li === 'string' ? esc(li) : li.code ? `<code>${esc(li.code)}</code>` : esc(li.answer || li.title || li.text || '')}${typeof li === 'string' ? '' : refsOf(li)}</li>`).join('')}</ul>`; if (b.code) return `<pre><code>${esc(b.code)}</code></pre>`; return `<p>${esc(text)}${sup}</p>`; };
-        const rank = (u) => { const r = results.find((x) => hostPath(x.url) === hostPath(u)); return r ? r.position : null; };
-        reader.innerHTML = `<div class="card-head"><b>Overview text · ${esc(DT(at))}</b>${nav}</div>${ov.text_blocks.map(block).join('')}<div class="refs">${refs.map((ref, i) => { const mine = site && (host(ref.link) === site || host(ref.link).endsWith('.' + site)); const r = rank(ref.link); return `<div class="ref ${mine ? 'mine' : ''}"><span class="n">${i + 1}</span><span><a href="${safeUrl(ref.link)}" target="_blank" rel="noopener noreferrer" class="ink">${esc(ref.title || ref.link)}</a> <span class="u">${esc(hostPath(ref.link))}</span> <span class="${mine ? 'c-ok' : 'muted'}">· ${mine ? 'your site' : esc(ref.source || '')}${r ? `${mine ? ', ranks' : ' · also ranks'} #${r}` : mine ? ', not in top 10' : ' · not in top 10'}</span></span></div>`; }).join('')}</div><div class="small muted" style="border-top:1px solid var(--line-soft);padding-top:10px">Text is stored as captured; references are resolved from Google's redirect URLs to final hosts. Expansion costs one credit per capture.</div>`;
-        bindNav();
-      } catch (error) { reader.innerHTML = `<div class="notice">${esc(error.message)}</div>`; }
-      function bindNav() { reader.querySelectorAll('[data-nav]').forEach((b) => b.addEventListener('click', () => { at = b.dataset.nav; body.querySelectorAll('[data-at]').forEach((x) => x.classList.toggle('hover', x.dataset.at === at)); loadReader(); })); }
-    }
-    if (c.observed) loadReader();
-  }
-
-  // --- panel settings ------------------------------------------------------------------------------------------------------
-  function renderPanelSettings(panel, q, body) {
-    const t = panel.target; const s = panel.settings; const site = panel.project?.site; const attempts = panel.attempts;
-    const failed = attempts.filter((a) => !a.success).length;
-    body.innerHTML = `<form id="ps-form" class="settings">
-      <div class="lbl"><b>Your page</b><p>Optional. ${site ? `Without it the app tracks whichever ${esc(site)} URL ranks.` : 'Set the project site in project Settings to track your ranking URL automatically.'}</p></div>
-      <div class="card pad vstack"><label class="field"><span>Declared page URL</span><input type="url" name="page_url" class="mono" value="${esc(t.page?.url || '')}" placeholder="https://${esc(site || 'example.com')}/page/"></label><div class="field"><span>Intent this page serves</span><div class="chips" id="ps-intents">${INTENTS.slice(0, 4).map((i) => `<button class="chip" type="button" data-intent="${i}" aria-pressed="${(t.page?.intent || '') === i}"><i class="sw i-${i}"></i>${i}</button>`).join('')}</div></div>${q.site?.url ? `<div class="small muted">Currently ranking: <span class="mono">${esc(hostPath(q.site.url))}</span> at #${q.site.position}${t.page?.url && canonical(t.page.url) !== canonical(q.site.url) ? ' — differs from the declared page.' : ''}</div>` : ''}</div>
-      <div class="lbl"><b>Keyword group</b><p>Organize panels by topic, client work or content plan.</p></div><div class="card pad"><label class="field">Group<input name="group" maxlength="80" value="${esc(s.group || '')}" placeholder="e.g. SEO foundations"></label></div>
-      <div class="lbl"><b>Baseline</b><p>Scores are measured against the first ${q.settings?.baseline_size ?? 3} spaced captures after this date.</p></div>
-      <div class="card pad vstack"><div style="display:flex;gap:16px;align-items:end;flex-wrap:wrap"><label class="field" style="width:180px"><span>Anchored from</span><input type="date" name="baseline_from" value="${esc((s.baseline_from || '').slice(0, 10))}"></label><span class="muted pb8">${q.baseline?.length ? `baseline = ${q.baseline.map((b) => D(b.captured_at)).join(', ')}` : 'baseline not complete yet'}</span>${s.baseline_from ? '<button class="btn small push" type="button" id="ps-clear">Use the first captures</button>' : ''}</div><div class="small muted">Re-anchoring keeps all captures; only the reference changes. The status returns to building until ${q.settings?.baseline_size ?? 3} spaced captures pass the new date.</div></div>
-      <div class="lbl"><b>Collection</b></div>
-      <div class="card pad"><div class="row-between"><span><span class="ink medium">Expand AI Overview</span><span class="small muted block">Up to one additional request per capture · provider pricing applies · project-wide setting</span></span><span class="muted small">${state.status.settings?.ai_overview === 'expand' ? 'on' : 'off'} · <a href="#/p/${encodeURIComponent(state.project)}/settings">change</a></span></div><div class="row-between"><span><span class="ink medium">Follow project schedule</span><span class="small muted block">Every ${q.settings?.interval_hours ?? 24} h · pause here without removing the panel</span></span><button class="toggle" type="button" id="ps-pause" role="switch" aria-label="Follow project schedule" aria-checked="${!q.paused}"><i></i></button></div></div>
-      <div class="lbl"><b>Identity</b><p>Fixed after creation — create a new panel to change.</p></div>
-      <div class="card pad identity"><span>Engine<b>${esc(engineLabel(t.search.engine))}</b></span><span>Country · language<b>${esc((t.search.gl || '').toUpperCase())} · ${esc(t.search.hl || '')}</b></span><span>Device · location<b>${esc(t.search.device || '—')} · ${esc(t.search.location || '—')}</b></span><span>Panel id<b class="mono">${esc(t.id)}</b></span><span class="full">${plural(panel.captures.length, 'capture')} · ${plural(attempts.length, 'attempt')}, ${failed} failed${attempts[0] ? ` · last ${esc(DT(attempts[0].attempted_at))} (${esc(attempts[0].code)})` : ''} · identity <span class="mono">${esc(t.identity)}</span></span></div>
-      <div class="lbl danger"><b>Remove panel</b></div>
-      <div class="card pad row-between"><span class="muted pretty">Removes the panel from monitor.toml. Stored captures stay in the database. Type the query to confirm.</span><span style="display:flex;gap:8px;align-items:center"><input type="text" id="ps-confirm" placeholder="${esc(t.query)}" style="width:220px"><button class="btn danger" type="button" id="ps-remove" disabled>Remove…</button></span></div>
-      </form><div class="form-actions end narrow"><button class="btn" type="button" id="ps-discard">Discard</button><button class="btn primary" type="button" id="ps-save">Save changes</button></div>`;
-    let intent = t.page?.intent || '';
-    $('ps-intents').addEventListener('click', (event) => { const b = event.target.closest('button[data-intent]'); if (!b) return; intent = intent === b.dataset.intent ? '' : b.dataset.intent; $('ps-intents').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x.dataset.intent === intent)); });
-    $('ps-confirm').addEventListener('input', () => { $('ps-remove').disabled = $('ps-confirm').value.trim() !== t.query; });
-    $('ps-pause').addEventListener('click', async () => { const on = $('ps-pause').getAttribute('aria-checked') === 'true'; try { await api(P(`/panels/${encodeURIComponent(t.id)}/pause`), { method: 'POST', body: { paused: on } }); $('ps-pause').setAttribute('aria-checked', String(!on)); toast(on ? 'Panel paused.' : 'Panel follows the schedule again.'); invalidate(); } catch (error) { fail(error); } });
-    $('ps-clear')?.addEventListener('click', async () => { try { await api(P(`/panels/${encodeURIComponent(t.id)}/baseline`), { method: 'POST', body: { from: null } }); toast('Baseline reset to the first captures.'); invalidate(); render(); } catch (error) { fail(error); } });
-    $('ps-discard').addEventListener('click', () => { invalidate(); render(); });
-    $('ps-save').addEventListener('click', async () => {
-      const form = $('ps-form'); const url = form.elements.page_url.value.trim(); const from = form.elements.baseline_from.value;
-      try {
-        if (url !== (t.page?.url || '') || intent !== (t.page?.intent || '')) await api(P(`/panels/${encodeURIComponent(t.id)}/page`), { method: 'POST', body: { page_url: url || null, intent: intent || null } });
-        if (from !== (s.baseline_from || '').slice(0, 10)) await api(P(`/panels/${encodeURIComponent(t.id)}/baseline`), { method: 'POST', body: { from: from || null } });
-        if (form.elements.group.value.trim() !== (s.group || '')) await api(P(`/panels/${encodeURIComponent(t.id)}/group`), {method: 'POST', body: {group: form.elements.group.value.trim()}});
-        toast('Saved.'); invalidate(); await loadStatus(); render();
-      } catch (error) { fail(error); }
-    });
-    $('ps-remove').addEventListener('click', async () => { try { await api(P(`/panels/${encodeURIComponent(t.id)}`), { method: 'DELETE' }); toast('Panel removed.'); invalidate(); await loadStatus(); go(`#/p/${encodeURIComponent(state.project)}/panels`); } catch (error) { fail(error); } });
-  }
-
-  // --- activity, runs, insights ----------------------------------------------------------------------------------------------
-  async function renderActivity() {
-    const data = await api(P('/activity'));
-    const items = [...data.events.map((e) => ({ at: e.at, kind: e.kind, panel: e.target_id, text: eventText(e) })), ...data.runs.map((r) => ({ at: r.finished_at, kind: 'run', panel: null, text: `Run (${r.trigger}): ${r.collected} collected, ${r.skipped} skipped, ${r.failed} failed, ${r.requests} requests${r.error ? ` · ${r.error}` : ''}` }))].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 150);
-    $('main').innerHTML = `<div class="page-head"><h1>Activity</h1><span class="secondary">status changes, runs, and configuration events</span></div><div class="card clip">${items.map((i) => `<div style="display:grid;grid-template-columns:130px 110px 1fr;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line-soft);font-size:13px"><span class="muted">${esc(DT(i.at))}</span><span class="${i.kind === 'status_change' ? 'ink' : 'muted'}">${esc(i.kind.replace('_', ' '))}</span><span class="pretty">${i.panel ? `<a href="#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(i.panel)}">${esc(i.panel)}</a> · ` : ''}${esc(i.text)}</span></div>`).join('') || '<div class="empty-card">Nothing yet.</div>'}</div>`;
-  }
-  function eventText(e) { const p = e.payload || {}; if (e.kind === 'import_fetch') return `Fetched ${p.rows} keywords from Ahrefs for ${p.target}${p.units != null ? ` (${p.units} units)` : ''}`; if (e.kind === 'status_change') return `${word(p.before)} → ${word(p.after)}${p.score != null ? ` · score ${Math.round(p.score)}` : ''}`; if (e.kind === 'notification') return `${p.kind} · ${p.ok ? 'delivered' : 'failed'}${p.status ? ` (${p.status})` : ''}`; if (e.kind === 'import') return `${p.source}: ${p.created} created, ${p.skipped} skipped, ${p.errors} errors`; if (e.kind === 'baseline_moved') return `baseline from ${p.to ? D(p.to) : 'first captures'}`; return Object.entries(p).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(', '); }
-  async function renderRuns(portfolio) {
-    const pids = portfolio ? (state.status.projects || []).map((p) => p.id) : [state.project];
-    const all = (await Promise.all(pids.map(async (pid) => (await api(`/api/p/${encodeURIComponent(pid)}/runs`)).runs.map((r) => ({ ...r, pid }))))).flat().sort((a, b) => b.started_at.localeCompare(a.started_at)).slice(0, 100);
-    $('main').innerHTML = `<div class="page-head"><h1>Runs</h1><span class="secondary">scheduler, Collect button, cron, CI, and MCP</span></div><div class="card grid-table"><div class="gh" style="grid-template-columns:130px ${portfolio ? '120px ' : ''}90px 70px 70px 70px 80px 1fr"><span>Started</span>${portfolio ? '<span>Project</span>' : ''}<span>Trigger</span><span class="right">Collected</span><span class="right">Skipped</span><span class="right">Failed</span><span class="right">Requests</span><span>Errors</span></div>${all.map((r) => `<div class="gr" style="grid-template-columns:130px ${portfolio ? '120px ' : ''}90px 70px 70px 70px 80px 1fr"><span>${esc(DT(r.started_at))}</span>${portfolio ? `<span class="nowrap">${esc(r.pid)}</span>` : ''}<span class="muted">${esc(r.trigger)}</span><span class="right">${r.collected}</span><span class="right">${r.skipped}</span><span class="right ${r.failed ? 'c-review' : ''}">${r.failed}</span><span class="right">${r.requests}</span><span class="nowrap muted">${esc(r.error || Object.entries(r.errors || {}).map(([k, v]) => `${k}: ${v}`).join(', ') || '—')}</span></div>`).join('') || '<div class="empty-card">No runs yet.</div>'}</div>`;
-  }
-  async function renderInsights(params, portfolio) {
-    const days = params.get('days') || '';
-    const pids = portfolio ? (state.status.projects || []).map((p) => p.id) : [state.project];
-    const all = await Promise.all(pids.map((pid) => api(`/api/p/${encodeURIComponent(pid)}/insights${days ? `?days=${encodeURIComponent(days)}` : ''}`).then((d) => ({ ...d, pid })).catch(() => null)));
-    const data = all.filter(Boolean); if (!data.length) { $('main').innerHTML = '<div class="card empty-card">No insights yet.</div>'; return; }
-    const d = portfolio ? mergeInsights(data) : data[0];
-    const share = (v) => v == null ? '—' : pct(v);
-    const group = (title, rows) => `<div class="card grid-table"><div class="gh" style="grid-template-columns:1fr 70px 80px 90px 90px 90px 90px"><span>${title}</span><span class="right">Panels</span><span class="right">Captures</span><span class="right">AI Overview</span><span class="right">Turnover</span><span class="right">Intent known</span><span class="right">Coverage</span></div>${Object.entries(rows).map(([k, r]) => `<div class="gr" style="grid-template-columns:1fr 70px 80px 90px 90px 90px 90px"><span class="ink">${esc(k)}</span><span class="right">${r.panels}</span><span class="right">${r.captures}</span><span class="right">${share(r.ai_overview_share)}</span><span class="right">${share(r.turnover)}</span><span class="right">${share(r.intent_known)}</span><span class="right">${share(r.coverage)}</span></div>`).join('')}</div>`;
-    const panelRowsHtml = (items) => `<div class="card grid-table"><div class="gh" style="grid-template-columns:minmax(0,1.5fr) 80px 80px 90px 120px 90px 90px"><span>Panel</span><span class="right">Turnover</span><span class="right">Rank moves</span><span class="right">Volatility</span><span>Intent</span><span class="right">AI Overview</span><span class="right">Your page</span></div>${items.map((i) => `<a class="gr" href="#/p/${encodeURIComponent(i.pid || state.project)}/panel/${encodeURIComponent(i.id)}" style="grid-template-columns:minmax(0,1.5fr) 80px 80px 90px 120px 90px 90px"><span class="q">${esc(i.query)}</span><span class="right">${share(i.turnover)}</span><span class="right">${i.rank_movement ?? '—'}</span><span class="right">${share(i.feature_volatility)}</span><span>${esc(i.intent)} <span class="muted small">${share(i.intent_stability)}</span></span><span class="right">${share(i.ai_overview_share)}</span><span class="right">${i.page_position ? `#${i.page_position}` : '—'}</span></a>`).join('') || '<div class="empty-card">Not enough captures yet.</div>'}</div>`;
-    $('main').innerHTML = `<div class="page-head"><h1>Insights</h1><span class="secondary">${d.days ? `last ${d.days} days` : 'all time'} · rule version ${esc(d.analysis_version)}</span><div class="spacer">${select('id="ins-days" class="auto"', [['', 'All time'], ['7', 'Last 7 days'], ['30', 'Last 30 days'], ['90', 'Last 90 days']], days)}${portfolio ? '' : `<a class="btn" href="/api/p/${encodeURIComponent(state.project)}/export/dataset.zip${days ? `?days=${encodeURIComponent(days)}` : ''}" download="serp-drift-dataset.zip">Download dataset</a>`}</div></div>
-      <div class="stats-row"><span><b class="kpi">${d.panels}</b>panels</span><span><b class="kpi">${n(d.captures)}</b>captures</span><span><b class="kpi">${share(d.overall.ai_overview_share)}</b>with an AI Overview</span><span><b class="kpi">${share(d.overall.turnover)}</b>mean top-10 turnover</span><span><b class="kpi">${share(d.overall.intent_known)}</b>decisive intent</span><span><b class="kpi">${share(d.coverage_median)}</b>median coverage</span><span><b class="kpi">${d.your_pages.in_top_10_now}<span class="muted fs14"> / ${d.your_pages.tracked}</span></b>your pages in top 10</span></div>
-      <div class="two"><div class="card grid-table"><div class="gh" style="grid-template-columns:1fr 80px 120px"><span>SERP feature</span><span class="right">Captures</span><span class="right">Share</span></div>${d.features.map((f) => `<div class="gr" style="grid-template-columns:1fr 80px 120px"><span class="ink">${esc(FEATURES[f.feature] || f.feature)}</span><span class="right">${f.captures}</span><span class="right"><span class="meter" style="display:inline-block;width:60px;vertical-align:middle;margin-right:8px"><i style="width:${Math.round((f.share || 0) * 100)}%"></i></span>${share(f.share)}</span></div>`).join('')}</div><div class="card grid-table"><div class="gh" style="grid-template-columns:1fr 80px 80px"><span>Most cited hosts in AI Overviews</span><span class="right">Citations</span><span class="right">Panels</span></div>${d.hosts.slice(0, 12).map((h) => `<div class="gr" style="grid-template-columns:1fr 80px 80px"><span class="mono ink">${esc(h.host)}</span><span class="right">${h.citations}</span><span class="right">${h.panels}</span></div>`).join('') || '<div class="empty-card">No expanded overviews yet.</div>'}</div></div>
-      ${group('By language', d.by.language)}${group('By device', d.by.device)}${group('By engine', d.by.engine)}
-      <section class="section"><div class="section-head"><h2>Most volatile</h2></div>${panelRowsHtml(d.most_volatile)}</section><section class="section"><div class="section-head"><h2>Most stable</h2></div>${panelRowsHtml(d.most_stable)}</section>`;
-    $('ins-days').addEventListener('change', (e) => go(`${portfolio ? '#/portfolio/insights' : `#/p/${encodeURIComponent(state.project)}/insights`}${e.target.value ? `?days=${e.target.value}` : ''}`));
-  }
+  // --- insights -------------------------------------------------------------------------------------------------------
   function mergeInsights(list) {
     const sum = (k) => list.reduce((a, d) => a + (d[k] || 0), 0);
     const avg = (get) => { const v = list.map(get).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
-    const hosts = {}; list.forEach((d) => d.hosts.forEach((h) => { hosts[h.host] = hosts[h.host] || { host: h.host, citations: 0, panels: 0 }; hosts[h.host].citations += h.citations; hosts[h.host].panels += h.panels; }));
+    const hosts = {}; list.forEach((d) => d.hosts.forEach((h) => { hosts[h.host] = hosts[h.host] || { host: h.host, citations: 0, panels: 0, mine: false }; hosts[h.host].citations += h.citations; hosts[h.host].panels += h.panels; hosts[h.host].mine = hosts[h.host].mine || Boolean(h.mine); }));
     const features = {}; list.forEach((d) => d.features.forEach((f) => { features[f.feature] = features[f.feature] || { feature: f.feature, captures: 0 }; features[f.feature].captures += f.captures; }));
     const captures = sum('captures');
-    const by = {}; ['language', 'device', 'engine'].forEach((g) => { by[g] = {}; list.forEach((d) => Object.entries(d.by[g]).forEach(([k, r]) => { const t = by[g][k] || (by[g][k] = { panels: 0, captures: 0, ai_overview_share: null, turnover: null, intent_known: null, coverage: null, _n: 0 }); t.panels += r.panels; t.captures += r.captures; ['ai_overview_share', 'turnover', 'intent_known', 'coverage'].forEach((f) => { if (r[f] != null) t[f] = ((t[f] || 0) * t._n + r[f]) / (t._n + 1); }); t._n += 1; })); });
+    const by = {}; ['language', 'device', 'engine'].forEach((g) => { by[g] = {}; list.forEach((d) => Object.entries(d.by[g] || {}).forEach(([k, r]) => { const t = by[g][k] || (by[g][k] = { panels: 0, captures: 0, ai_overview_share: null, turnover: null, intent_known: null, coverage: null, _n: 0 }); t.panels += r.panels; t.captures += r.captures; ['ai_overview_share', 'turnover', 'intent_known', 'coverage'].forEach((f) => { if (r[f] != null) t[f] = ((t[f] || 0) * t._n + r[f]) / (t._n + 1); }); t._n += 1; })); });
     const metrics = list.flatMap((d) => d.panel_metrics.map((m) => ({ ...m, pid: d.pid })));
     return { days: list[0].days, analysis_version: list[0].analysis_version, panels: sum('panels'), captures, overall: { ai_overview_share: avg((d) => d.overall.ai_overview_share), turnover: avg((d) => d.overall.turnover), intent_known: avg((d) => d.overall.intent_known) }, coverage_median: avg((d) => d.coverage_median), features: Object.values(features).map((f) => ({ ...f, share: captures ? f.captures / captures : null })).sort((a, b) => b.captures - a.captures), hosts: Object.values(hosts).sort((a, b) => b.citations - a.citations), by, your_pages: { tracked: list.reduce((a, d) => a + d.your_pages.tracked, 0), in_top_10_now: list.reduce((a, d) => a + d.your_pages.in_top_10_now, 0) }, most_volatile: metrics.filter((m) => m.turnover != null).sort((a, b) => b.turnover - a.turnover).slice(0, 10), most_stable: metrics.filter((m) => m.turnover != null).sort((a, b) => a.turnover - b.turnover).slice(0, 10) };
   }
-
-  // --- project settings ----------------------------------------------------------------------------------------------------------
-  async function renderSettings() {
-    const s = await api(P('/status')); const set = s.settings || {}; const notify = s.notify || {}; const engines = Object.entries(s.engines || {}); const row = projectRow();
-    $('main').innerHTML = `<div class="page-head"><h1>Settings</h1><span class="secondary">${esc(row?.name || '')} · ${esc(s.workspace.dir)}</span></div>${s.config_error ? `<div class="notice">Configuration problem: ${esc(s.config_error)}</div>` : ''}
-      <div class="settings">
-        <div class="lbl"><b>Project</b><p>The site lets the app find your ranking URL in every capture without declaring pages.</p></div>
-        <form class="card pad form-grid" id="f-project"><label class="field"><span>Name</span><input type="text" name="name" value="${esc(s.project?.name || '')}"></label><label class="field"><span>Site (hostname)</span><input type="text" name="site" value="${esc(s.project?.site || '')}" placeholder="example.com"></label><div class="form-actions"><button class="btn primary" type="submit">Save</button></div></form>
-        <div class="lbl"><b>SearchApi key</b><p>Stored as a 0600 file in the workspace; never shown again.</p></div>
-        <form class="card pad form-grid" id="f-key"><label class="field"><span>${s.workspace.key === 'missing' ? 'No key yet' : `Key source: ${esc(s.workspace.key)}`}</span><input type="password" name="key" placeholder="paste a new key to replace" autocomplete="off"></label><div class="form-actions"><button class="btn" type="submit">Save key</button><button class="btn" type="button" id="refresh-credits">Check credits</button><span class="secondary" id="credits">${s.account?.data ? `${n(s.account.data.account.remaining_credits)} credits left` : ''}</span></div></form>
-        <div class="lbl"><b>Integrations</b><p>Keyword discovery only; every capture still comes from SearchApi.</p></div>
-        <form class="card pad form-grid" id="f-ahrefs"><label class="field"><span>Ahrefs API token · ${s.integrations?.ahrefs?.key === 'missing' ? 'not set' : `source: ${esc(s.integrations?.ahrefs?.key)}`}</span><input type="password" name="key" placeholder="paste a token to save or replace" autocomplete="off"></label><div class="form-actions"><button class="btn" type="submit">Save token</button><a class="btn link" href="#/p/${encodeURIComponent(state.project)}/import">Import keywords →</a><span class="secondary">Estimated ${s.integrations?.ahrefs?.per_row_units || 19} API units per keyword; check your provider account for current limits.</span></div></form>
-        <div class="lbl"><b>Collection</b><p>Applies to every panel in this project.</p></div>
-        <form class="card pad vstack g14" id="f-settings"><div class="form-grid">${[['interval_hours', 'Interval (hours)'], ['baseline_size', 'Baseline captures'], ['confirmations', 'Confirmations'], ['min_results', 'Minimum results'], ['drift_threshold', 'Watch threshold'], ['raw_retention_days', 'Keep raw responses (days)'], ['max_requests_per_run', 'Max requests per run'], ['request_delay_seconds', 'Delay between requests (s)'], ['max_total_requests', 'Total request cap (0 = none)'], ['retry_query_mismatch', 'Retries when results miss the query']].map(([k, l]) => `<label class="field"><span>${l}</span><input type="number" step="any" name="${k}" value="${esc(set[k] ?? '')}"></label>`).join('')}<label class="field"><span>Stop collecting after (UTC, optional)</span><input type="text" name="collect_until" value="${esc(set.collect_until || '')}" placeholder="2026-09-30T02:00:00Z" pattern="\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?Z"></label></div>${s.budget ? `<p class="small muted">${s.budget.cap ? `${n(s.budget.used)} of ${n(s.budget.cap)} requests used in this workspace.` : `${n(s.budget.used)} requests recorded in this workspace.`}${s.budget.until ? ` Collection stops ${esc(DT(s.budget.until))}.` : ''}${s.budget.stopped ? ' <b>Collection has stopped: cap or end date reached.</b>' : ''}</p>` : ''}<div class="row-between"><span><span class="ink medium">Expand AI Overview</span><span class="small muted block">Up to one additional request per capture · provider pricing applies</span></span><button class="toggle" type="button" id="t-aio" role="switch" aria-label="Expand AI Overview" aria-checked="${set.ai_overview === 'expand'}"><i></i></button></div><div class="row-between"><span><span class="ink medium">Resolve Google redirect links</span><span class="small muted block">Real URLs for AI Overview references · no extra credit</span></span><button class="toggle" type="button" id="t-links" role="switch" aria-label="Resolve Google redirect links" aria-checked="${Boolean(set.resolve_links)}"><i></i></button></div><div class="form-actions"><button class="btn primary" type="submit">Save collection settings</button><span class="estimate">${n(s.credits_per_day)} requests / day, before retries (upper estimate)</span></div></form>
-        <div class="lbl"><b>Notifications</b><p>One message per run listing panels that changed into a chosen state; optional digest.</p></div>
-        <form class="card pad vstack g14" id="f-notify"><div class="form-grid"><label class="field span-all"><span>Webhook URL (Slack, Discord, ntfy, or any JSON endpoint)</span><input type="url" name="webhook_url" value="${esc(notify.webhook_url || '')}"></label><label class="field"><span>Format</span>${select('name="format"', ['json', 'slack', 'discord', 'ntfy'], notify.format)}</label><label class="field"><span>Digest</span>${select('name="digest"', ['none', 'daily', 'weekly'], notify.digest)}</label><label class="field"><span>Digest day</span>${select('name="digest_day"', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'], notify.digest_day)}</label></div><div class="field"><span>Notify when a panel changes to</span><div class="chips">${['review', 'watch', 'stable', 'collection_error', 'stale', 'insufficient_data', 'data_quality'].map((k) => `<button class="chip" type="button" data-on="${k}" aria-pressed="${(notify.on || []).includes(k)}">${word(k)}</button>`).join('')}</div></div><div class="form-actions"><button class="btn primary" type="submit">Save notifications</button><button class="btn" type="button" id="test-webhook" ${notify.webhook_configured ? '' : 'disabled'}>Send a test</button><a class="btn" href="/api/p/${encodeURIComponent(state.project)}/digest.svg?days=7" target="_blank" rel="noopener">Preview digest card</a></div></form>
-        <div class="lbl" id="add"><b>Add a panel by hand</b><p>Or <a href="#/p/${encodeURIComponent(state.project)}/import">import keywords</a> from Search Console or Ahrefs.</p></div>
-        <form class="card pad vstack g14" id="f-add"><div class="form-grid"><label class="field span2"><span>Query</span><input type="text" name="query" required placeholder="e.g. topical authority"></label><label class="field"><span>Engine</span>${select('name="engine"', engines, s.search?.engine || 'google')}</label><label class="field"><span>Country (gl)</span><input type="text" name="gl" value="${esc(s.search?.gl || 'us')}"></label><label class="field"><span>Language (hl)</span><input type="text" name="hl" value="${esc(s.search?.hl || 'en')}"></label><label class="field"><span>Device</span>${select('name="device"', DEVICES, s.search?.device || 'desktop')}</label><label class="field span2"><span>Location (type a city for canonical names)</span><input type="text" name="location" list="loc-opts" autocomplete="off"><datalist id="loc-opts"></datalist></label><label class="field span2"><span>Declared page URL (optional)</span><input type="url" name="page_url" placeholder="https://${esc(s.project?.site || 'example.com')}/page/"></label><label class="field"><span>Declared intent</span>${select('name="intent"', [['', 'none'], ...INTENTS.slice(0, 4)])}</label></div><div class="form-actions"><button class="btn primary" type="submit">Add panel</button></div></form>
-      </div>`;
-    SerpLabeling.mount(document.querySelector('.settings'), s, (path, body) => api(P(path), {method:'POST', body}), () => { invalidate(); return render(); });
-    $('f-project').addEventListener('submit', async (e) => { e.preventDefault(); try { await api(P('/project'), { method: 'POST', body: { name: e.target.elements.name.value, site: e.target.elements.site.value } }); toast('Project saved.'); invalidate(); await loadStatus(); render(); } catch (error) { fail(error); } });
-    $('f-key').addEventListener('submit', async (e) => { e.preventDefault(); const key = e.target.elements.key.value.trim(); if (!key) return toast('Paste a key first.', true); try { await api(P('/key'), { method: 'POST', body: { key } }); e.target.elements.key.value = ''; toast('Key saved.'); await loadStatus(); render(); } catch (error) { fail(error); } });
-    $('f-ahrefs').addEventListener('submit', async (e) => { e.preventDefault(); const key = e.target.elements.key.value.trim(); if (!key) return toast('Paste a token first.', true); try { await api(P('/key'), { method: 'POST', body: { key, service: 'ahrefs' } }); e.target.elements.key.value = ''; toast('Ahrefs token saved.'); await loadStatus(); render(); } catch (error) { fail(error); } });
-    $('refresh-credits').addEventListener('click', async () => { try { const acc = await api(P('/account/refresh'), { method: 'POST', body: {} }); $('credits').textContent = acc.data ? `${n(acc.data.account.remaining_credits)} credits left · ${acc.data.api_usage.searches_this_hour} searches this hour` : acc.error; } catch (error) { fail(error); } });
-    const toggle = (id) => $(id).addEventListener('click', () => $(id).setAttribute('aria-checked', String($(id).getAttribute('aria-checked') !== 'true')));
-    toggle('t-aio'); toggle('t-links');
-    $('f-settings').addEventListener('submit', async (e) => { e.preventDefault(); const body = {}; e.target.querySelectorAll('input[type=number]').forEach((i) => { if (i.value !== '') body[i.name] = Number(i.value); }); body.collect_until = e.target.elements.collect_until.value.trim(); body.ai_overview = $('t-aio').getAttribute('aria-checked') === 'true' ? 'expand' : 'skip'; body.resolve_links = $('t-links').getAttribute('aria-checked') === 'true'; try { await api(P('/settings'), { method: 'POST', body }); toast('Settings saved.'); invalidate(); await loadStatus(); render(); } catch (error) { fail(error); } });
-    $('f-notify').querySelectorAll('[data-on]').forEach((b) => b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))));
-    $('f-notify').addEventListener('submit', async (e) => { e.preventDefault(); const f = e.target; try { await api(P('/notify'), { method: 'POST', body: { ...(f.elements.webhook_url.value.trim() ? {webhook_url:f.elements.webhook_url.value.trim()} : {}), format: f.elements.format.value, digest: f.elements.digest.value, digest_day: f.elements.digest_day.value, on: [...f.querySelectorAll('[data-on][aria-pressed=true]')].map((b) => b.dataset.on) } }); toast('Notifications saved.'); invalidate(); await loadStatus(); render(); } catch (error) { fail(error); } });
-    $('test-webhook').addEventListener('click', async () => { try { const r = await api(P('/notify/test'), { method: 'POST', body: {} }); toast(r.ok ? `Webhook answered ${r.status}.` : `Webhook failed: ${r.status || r.error}`, !r.ok); } catch (error) { fail(error); } });
-    let timer = null; const loc = $('f-add').elements.location;
-    loc.addEventListener('input', () => { clearTimeout(timer); const v = loc.value.trim(); if (v.length < 2 || v.includes(',')) return; timer = setTimeout(async () => { try { const d = await api(P(`/locations?q=${encodeURIComponent(v)}`)); $('loc-opts').innerHTML = d.locations.map((r) => `<option value="${esc(r.canonical_name)}">${esc(r.target_type || '')} · ${esc(r.country_code || '')}</option>`).join(''); } catch {} }, 350); });
-    $('f-add').addEventListener('submit', async (e) => { e.preventDefault(); const f = e.target; const body = Object.fromEntries(['query', 'engine', 'gl', 'hl', 'device', 'location', 'page_url', 'intent'].map((k) => [k, f.elements[k].value.trim()])); try { const added = await api(P('/panels'), { method: 'POST', body }); toast(`Added ${added.id}.`); invalidate(); await loadStatus(); go(`#/p/${encodeURIComponent(state.project)}/panel/${encodeURIComponent(added.id)}`); } catch (error) { fail(error); } });
-    if (location.hash.endsWith('#add')) $('add')?.scrollIntoView();
+  async function renderInsights(params, portfolio) {
+    const days = params.get('days') || ''; const which = params.get('v') || 'volatile';
+    const pids = portfolio ? projects().map((p) => p.id) : [state.project];
+    const all = await Promise.all(pids.map((pid) => api(P(`/insights${days ? `?days=${enc(days)}` : ''}`, pid)).then((d) => ({ ...d, pid })).catch(() => null)));
+    const data = all.filter(Boolean);
+    const base = portfolio ? '#/portfolio/insights' : link.view('insights');
+    const qs = (o) => { const p = new URLSearchParams({ ...(days ? { days } : {}), ...(which !== 'volatile' ? { v: which } : {}), ...o }); [...p.keys()].forEach((k) => { if (!p.get(k)) p.delete(k); }); const s = p.toString(); return s ? `?${s}` : ''; };
+    if (!data.length || !data.some((d) => d.captures)) { $('main').innerHTML = `<div class="page"><div class="page-head"><div class="title"><h1>Insights</h1></div></div><div class="card empty"><b>No captures yet.</b>Insights appear after the first collection.</div></div>`; return; }
+    const d = portfolio ? mergeInsights(data) : data[0];
+    const site = portfolio ? null : (await report()).project?.site;
+    const share = (v) => v == null ? '—' : pct(v);
+    const maxHost = Math.max(1, ...d.hosts.slice(0, 10).map((h) => h.citations));
+    const rowsFor = (items) => items.map((i) => `<a class="trow" href="${link.panel(i.id, '', i.pid || state.project)}"><span class="nowrap q">${esc(i.query)}</span><span class="right num">${share(i.turnover)}</span><span class="right num hide-sm">${i.rank_movement ?? '—'}</span><span class="hide-sm"><i class="sw ${esc(i.intent)}"></i><span class="muted nowrap">${esc(i.intent)} ${share(i.intent_stability)}</span></span><span class="right num hide-sm">${share(i.ai_overview_share)}</span><span class="right"><b class="num">${i.page_position ? `#${i.page_position}` : '<span class="faint">—</span>'}</b></span></a>`).join('') || '<div class="empty">Not enough captures yet.</div>';
+    const slices = [...Object.entries(d.by.engine || {}).map(([k, r]) => [engines()[k] || k, r]), ...Object.entries(d.by.device || {}).map(([k, r]) => [U.cap(k), r]), ...Object.entries(d.by.language || {}).map(([k, r]) => [`Language ${k}`, r])];
+    $('main').innerHTML = `<div class="page">
+      <div class="page-head"><div class="title"><h1>Insights</h1><span class="meta">${days ? `Last ${days} days` : 'All stored captures'} · ${plural(d.captures, 'capture')} · rule version ${esc(d.analysis_version)}</span></div><div class="seg">${[['', 'All time'], ['7', '7 d'], ['30', '30 d'], ['90', '90 d']].map(([v, l]) => `<a href="${base}${qs({ days: v })}"${v === days ? ' aria-current="true"' : ''}>${l}</a>`).join('')}</div>${portfolio ? '' : `<a class="btn" href="/api/p/${enc(state.project)}/export/dataset.zip${days ? `?days=${enc(days)}` : ''}" download="serp-drift-dataset.zip">${I('download')}Download dataset</a>`}</div>
+      <div class="stats"><div><b>${share(d.overall.ai_overview_share)}</b><span>captures with an AI Overview</span></div><div><b>${share(d.features.find((f) => f.feature === 'related_questions')?.share)}</b><span>with People also ask</span></div><div><b>${share(d.overall.turnover)}</b><span>mean top-10 turnover</span></div><div><b>${share(d.overall.intent_known)}</b><span>panels with decisive intent</span></div><div><b>${share(d.coverage_median)}</b><span>median coverage</span></div><div><b>${d.your_pages.in_top_10_now}<small> / ${d.your_pages.tracked}</small></b><span>your pages in the top 10</span></div></div>
+      <div class="two"><div class="card pad"><div class="card-head"><h3>SERP features</h3><span class="meta">share of captures</span></div><div class="stack">${d.features.map((f) => U.hbar(U.FEATURES[f.feature] || f.feature, Math.round((f.share || 0) * 100), 100, { suffix: ' %', extra: n(f.captures) })).join('') || '<div class="note">No features observed yet.</div>'}</div></div>
+        <div class="card pad"><div class="card-head"><h3>Most cited hosts in AI Overviews</h3><span class="meta">citations · panels</span></div><div class="stack">${d.hosts.slice(0, 10).map((h) => U.hbar(h.host, h.citations, maxHost, { mine: Boolean(h.mine || (site && (h.host === site || h.host.endsWith(`.${site}`)))), extra: plural(h.panels, 'panel') })).join('') || '<div class="note">No expanded Overviews yet.</div>'}</div></div></div>
+      <div class="with-rail wide"><div class="card clip"><div class="card-head" style="padding:16px 18px 10px"><h3>${which === 'stable' ? 'Most stable' : 'Most volatile'}</h3><span class="meta">top-10 turnover · rank moves · intent stability</span><span class="grow"></span><div class="seg small">${[['volatile', 'Most volatile'], ['stable', 'Most stable']].map(([v, l]) => `<a href="${base}${qs({ v: v === 'volatile' ? '' : v })}"${v === which ? ' aria-current="true"' : ''}>${l}</a>`).join('')}</div></div><div class="table itable"><div class="thead"><span>Panel</span><span class="right">Turnover</span><span class="right hide-sm">Rank moves</span><span class="hide-sm">Intent · stability</span><span class="right hide-sm">AI Overview</span><span class="right">Your page</span></div>${rowsFor(which === 'stable' ? d.most_stable : d.most_volatile)}</div></div>
+        <div class="card clip"><div class="card-head" style="padding:16px 18px 10px"><h3>By engine, device and language</h3></div><div class="table stable-t"><div class="thead"><span>Slice</span><span class="right">Panels</span><span class="right">AI Overview</span><span class="right">Turnover</span></div>${slices.map(([l, r]) => `<div class="trow"><span class="nowrap">${esc(l)}</span><span class="right num">${r.panels}</span><span class="right num">${share(r.ai_overview_share)}</span><span class="right num">${share(r.turnover)}</span></div>`).join('')}</div>${slices.some(([, r]) => r.panels < 3) ? '<div class="note" style="padding:10px 18px 14px">Slices with one or two panels are anecdotes, not trends.</div>' : ''}</div></div>
+    </div>`;
+    state.keys = rowKeys('.itable a.trow');
   }
 
-  // --- import wizard --------------------------------------------------------------------------------------------------------------
-  async function renderImport() {
-    const s = await api(P('/status')); const site = s.project?.site; const set = s.settings || {}; const perPanel = set.ai_overview === 'expand' ? 2 : 1;
-    const ah = s.integrations?.ahrefs || { key: 'missing', limits: [100, 250, 500, 1000], per_row_units: 19, per_row_units_traffic: 29 };
-    let preview = null; let selected = new Set(); let filters = { min: 0, posMax: 100, hideExisting: true, brand: site ? site.split('.')[0] : '', hideBrand: false, text: '' };
-    const crumbs = `<div class="crumbs"><a href="#/p/${encodeURIComponent(state.project)}">Overview</a> / Import keywords</div>`;
-    const step = (k) => `<div class="stepper"><b>${k === 1 ? '1 Source' : '1 Source ✓'}</b><span>${k === 2 ? '<b>2 Choose queries</b>' : k > 2 ? '2 Choose queries ✓' : '2 Choose queries'}</span><span>${k === 3 ? '<b>3 Confirm</b>' : '3 Confirm'}</span></div>`;
-    // One row model for both sources: CSV rows carry impressions/clicks, Ahrefs rows carry volume/url/source_intent.
-    const isAhrefs = () => preview?.source?.name === 'ahrefs';
-    const metric = (c) => (isAhrefs() ? c.volume : c.impressions);
-    const cols = () => (isAhrefs() ? 'grid-template-columns:24px minmax(0,1.2fr) 80px 70px minmax(0,1fr) 160px' : 'grid-template-columns:24px minmax(0,1fr) 90px 70px 70px 160px');
-    const head = () => `<span></span><span>${isAhrefs() ? 'Keyword' : 'Query'}</span>${isAhrefs() ? '<span class="right">Volume</span><span class="right">Position</span><span>Ranking URL</span>' : '<span class="right">Impressions</span><span class="right">Clicks</span><span class="right">Position</span>'}<span>Suggested intent</span>`;
-    const intentCell = (c) => `<span class="muted nowrap">${esc(c.suggested_intent)}${c.source_intent && c.source_intent !== c.suggested_intent ? ` <span class="small faint">· Ahrefs: ${esc(c.source_intent)}</span>` : ''}</span>`;
-    const cells = (c) => (isAhrefs() ? `<span class="right">${n(c.volume)}</span><span class="right">${c.position ?? '—'}</span><span class="mono nowrap">${esc(c.url ? hostPath(c.url) : '—')}</span>` : `<span class="right">${n(c.impressions)}</span><span class="right">${n(c.clicks)}</span><span class="right">${c.position ?? '—'}</span>`) + intentCell(c);
-    const sourceLine = () => (isAhrefs() ? `Ahrefs · ${esc(preview.source.target)} · ${esc((preview.source.country || '').toUpperCase())}${preview.source.units != null ? ` · ${n(preview.source.units)} units spent` : ''}` : esc(preview.detected.columns));
-    const render1 = () => {
-      $('main').innerHTML = `${crumbs}<div class="page-head"><h1>Import keywords</h1><span class="secondary">turn the queries ${esc(site || 'your site')} already ranks for into panels</span></div>${step(1)}
-        <div class="two"><div class="card pad vstack"><div class="card-head"><b>Search Console export</b><span class="secondary">CSV · free</span></div><div class="drop" id="drop">Drop the Queries CSV here, or <label style="color:var(--accent);cursor:pointer">choose a file<input type="file" id="file" accept=".csv,text/csv" hidden></label>.<div class="small mt8">Search Console → Performance → Export → download the zip → use <span class="mono">Queries.csv</span>. Any CSV with a query column works.</div></div><label class="field"><span>Or paste CSV text</span><textarea id="paste" placeholder="Top queries,Clicks,Impressions,CTR,Position"></textarea></label><div class="form-actions"><button class="btn primary" type="button" id="parse">Read queries</button></div></div>
-        <div class="card pad vstack"><div class="card-head"><b>Ahrefs API</b><span class="secondary">organic keywords · API units</span></div>${ah.key === 'missing' ? `<p class="secondary">No Ahrefs token yet. Add one under <a href="#/p/${encodeURIComponent(state.project)}/settings">Settings → Integrations</a>. Lite plans and up include API units; fetching 500 keywords costs about ${n(500 * ah.per_row_units)}.</p>` : `<div class="form-grid"><label class="field"><span>Target</span><input type="text" id="a-target" value="${esc(site || '')}" placeholder="example.com"></label><label class="field"><span>Country</span><input type="text" id="a-country" value="${esc(s.search?.gl || 'us')}" maxlength="2"></label><label class="field"><span>Keywords to fetch</span>${select('id="a-limit"', ah.limits.map(String), '500')}</label><label class="field"><span>Order by</span>${select('id="a-order"', [['volume', 'Search volume'], ['traffic', 'Traffic estimate (+10 units per row)']], 'volume')}</label></div><div class="row-between"><span class="estimate" id="a-units"></span><button class="btn primary" type="button" id="fetch">Fetch keywords</button></div><p class="small muted">Your Ahrefs plan caps rows per request (Lite 100, Standard 250, Advanced 500). Keyword discovery only: every capture still comes from SearchApi.</p>`}</div></div>`;
-      const drop = $('drop'); const readFile = (file) => { const r = new FileReader(); r.onload = () => { $('paste').value = String(r.result || ''); parse(); }; r.readAsText(file); };
-      drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); }); drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-      drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) readFile(f); });
-      $('file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) readFile(f); });
-      $('parse').addEventListener('click', parse);
-      if (ah.key !== 'missing') {
-        const units = () => { const rows = Number($('a-limit').value) || 0; const per = $('a-order').value === 'traffic' ? ah.per_row_units_traffic : ah.per_row_units; $('a-units').innerHTML = `about <b>${n(Math.max(50, rows * per))}</b> API units for this fetch`; };
-        ['a-limit', 'a-order'].forEach((id) => $(id).addEventListener('change', units)); units();
-        $('fetch').addEventListener('click', fetchAhrefs);
-      }
-    };
-    async function fetchAhrefs() {
-      const body = { source: 'ahrefs', target: $('a-target').value.trim(), country: $('a-country').value.trim().toLowerCase(), limit: Number($('a-limit').value), traffic: $('a-order').value === 'traffic' };
-      $('fetch').disabled = true; $('fetch').textContent = 'Fetching…';
-      try { preview = await api(P('/import/fetch'), { method: 'POST', body }); selected = new Set(); render2(); } catch (error) { fail(error); $('fetch').disabled = false; $('fetch').textContent = 'Fetch keywords'; }
-    }
-    async function parse() { const text = $('paste').value; if (!text.trim()) return toast('Nothing to read.', true); try { preview = await api(P('/import/preview'), { method: 'POST', body: text, raw: true }); selected = new Set(); render2(); } catch (error) { fail(error); } }
-    const visible = () => (preview?.candidates || []).filter((c) => (!filters.hideExisting || !c.existing) && (metric(c) == null || metric(c) >= filters.min) && (c.position == null || c.position <= filters.posMax) && (!filters.hideBrand || !(c.branded || (filters.brand && c.query.toLowerCase().includes(filters.brand.toLowerCase())))) && (!filters.text || c.query.toLowerCase().includes(filters.text)));
-    const render2 = () => {
-      const rows = visible();
-      $('main').innerHTML = `${crumbs}<div class="page-head"><h1>Choose ${isAhrefs() ? 'keywords' : 'queries'}</h1><span class="secondary">${preview.total} found · ${sourceLine()}</span><div class="spacer"><button class="btn" type="button" id="back1">Back</button><button class="btn" type="button" id="import-all">Import all visible</button><button class="btn primary" type="button" id="next3">Continue</button></div></div>${step(2)}
-        <div class="card pad form-grid"><label class="field"><span>${isAhrefs() ? 'Min volume' : 'Min impressions'}</span><input type="number" id="f-min" value="${filters.min}"></label><label class="field"><span>Max position</span><input type="number" id="f-pos" value="${filters.posMax}"></label><label class="field"><span>Brand term to exclude</span><input type="text" id="f-brand" value="${esc(filters.brand)}"></label><label class="field"><span>Search</span><input type="search" id="f-text" placeholder="filter…"></label><label class="field row"><input type="checkbox" id="f-existing" ${filters.hideExisting ? 'checked' : ''}><span>hide already monitored</span></label><label class="field row"><input type="checkbox" id="f-hidebrand" ${filters.hideBrand ? 'checked' : ''}><span>hide brand queries${isAhrefs() ? ' (Ahrefs flag or the brand term)' : ''}</span></label></div>
-        <div class="row-between"><span class="form-actions"><button class="btn small" type="button" id="sel-all">Select visible</button><button class="btn small" type="button" id="sel-none">Clear</button><button class="btn small" type="button" id="sel-top">Select top 50</button></span><span class="estimate" id="estimate"></span></div>
-        <div class="card cands clip"><div class="cr head" style="${cols()}">${head()}</div><div id="cand-rows">${rows.slice(0, 500).map((c) => `<label class="cr ${c.existing ? 'existing' : ''}" style="${cols()}"><input type="checkbox" data-q="${esc(c.query)}" ${selected.has(c.query) ? 'checked' : ''} ${c.existing ? 'disabled' : ''}><span class="nowrap">${esc(c.query)}${c.existing ? ' <span class="small">· already monitored</span>' : ''}</span>${cells(c)}</label>`).join('') || '<div class="empty-card">No candidates match the filters.</div>'}</div>${rows.length > 500 ? `<div class="gf">Showing 500 of ${rows.length}; narrow the filters.</div>` : ''}</div>`;
-      const est = () => { $('estimate').innerHTML = `<b>${selected.size}</b> selected · about <b>${selected.size * perPanel}</b> credits / day, <b>${n(selected.size * perPanel * 30)}</b> / month${set.ai_overview === 'expand' ? ' (with AI Overview expansion)' : ''}`; };
-      $('cand-rows').addEventListener('change', (e) => { const cb = e.target.closest('input[data-q]'); if (!cb) return; cb.checked ? selected.add(cb.dataset.q) : selected.delete(cb.dataset.q); est(); });
-      const rerender = () => { filters = { min: Number($('f-min').value) || 0, posMax: Number($('f-pos').value) || 100, brand: $('f-brand').value.trim(), hideExisting: $('f-existing').checked, hideBrand: $('f-hidebrand').checked, text: $('f-text').value.trim().toLowerCase() }; render2(); };
-      ['f-min', 'f-pos', 'f-brand', 'f-existing', 'f-hidebrand'].forEach((id) => $(id).addEventListener('change', rerender)); $('f-text').addEventListener('input', rerender);
-      $('sel-all').addEventListener('click', () => { visible().filter((c) => !c.existing).forEach((c) => selected.add(c.query)); render2(); });
-      $('sel-none').addEventListener('click', () => { selected.clear(); render2(); });
-      $('sel-top').addEventListener('click', () => { selected.clear(); visible().filter((c) => !c.existing).slice(0, 50).forEach((c) => selected.add(c.query)); render2(); });
-      $('import-all').addEventListener('click', () => { const all = visible().filter((c) => !c.existing); if (!all.length) return toast('Nothing to import.', true); selected = new Set(all.map((c) => c.query)); render3(); });
-      $('back1').addEventListener('click', render1); $('next3').addEventListener('click', () => (selected.size ? render3() : toast('Select at least one query.', true)));
-      est();
-    };
-    const render3 = () => {
-      const items = (preview.candidates || []).filter((c) => selected.has(c.query));
-      $('main').innerHTML = `${crumbs}<div class="page-head"><h1>Confirm</h1><span class="secondary">${plural(items.length, 'panel')} will be created · existing panels are untouched</span><div class="spacer"><button class="btn" type="button" id="back2">Back</button><button class="btn primary" type="button" id="create">Create panels</button></div></div>${step(3)}
-        <div class="card pad form-grid"><label class="field"><span>Engine</span>${select('id="c-engine"', Object.entries(s.engines), s.search?.engine || 'google')}</label><label class="field"><span>Country (gl)</span><input type="text" id="c-gl" value="${esc(isAhrefs() && preview.source.country ? preview.source.country : (s.search?.gl || 'us'))}"></label><label class="field"><span>Language (hl)</span><input type="text" id="c-hl" value="${esc(s.search?.hl || 'en')}"></label><label class="field"><span>Device</span>${select('id="c-device"', DEVICES, s.search?.device || 'desktop')}</label><label class="field row"><input type="checkbox" id="c-collect" checked><span>collect the first capture now (${items.length * perPanel} credits)</span></label><label class="field row"><input type="checkbox" id="c-intent" checked><span>use the suggested intent as the declared page intent when a page is set later</span></label></div>
-        <div class="card cands clip"><div class="cr head" style="${cols()}">${head()}</div>${items.map((c) => `<div class="cr" style="${cols()}"><span></span><span class="nowrap">${esc(c.query)}</span>${cells(c)}</div>`).join('')}</div>`;
-      $('back2').addEventListener('click', render2);
-      $('create').addEventListener('click', async () => {
-        const engine = $('c-engine').value, gl = $('c-gl').value.trim(), hl = $('c-hl').value.trim(), device = $('c-device').value;
-        const panels = items.map((c) => ({ query: c.query, engine, gl, hl, device }));
-        $('create').disabled = true; $('create').textContent = 'Creating…';
-        try { const r = await api(P('/panels/bulk'), { method: 'POST', body: { panels, source: isAhrefs() ? 'ahrefs' : 'search-console', collect: $('c-collect').checked } }); toast(`${r.created.length} created, ${r.skipped.length} skipped${r.errors.length ? `, ${r.errors.length} errors` : ''}.`); invalidate(); await loadStatus(); if (r.collect_started) startPolling(); go(`#/p/${encodeURIComponent(state.project)}`); } catch (error) { fail(error); $('create').disabled = false; $('create').textContent = 'Create panels'; }
-      });
-    };
-    render1();
+  // --- log -------------------------------------------------------------------------------------------------------------
+  function eventText(e) {
+    const p = e.payload || {};
+    if (e.kind === 'import_fetch') return `Fetched ${p.rows} keywords from Ahrefs for ${p.target}${p.units != null ? ` (${p.units} units)` : ''}`;
+    if (e.kind === 'notification') return `Notification ${p.kind || ''} · ${p.ok ? 'delivered' : 'failed'}${p.status ? ` (${p.status})` : ''}`;
+    if (e.kind === 'import') return `Import from ${p.source}: ${p.created} created, ${p.skipped} skipped, ${p.errors} errors`;
+    if (e.kind === 'baseline_moved') return `Baseline anchored ${p.to ? `from ${D(p.to)}` : 'to the first captures'}`;
+    if (e.kind === 'acknowledged') return `Marked as seen through ${U.DT(p.through)} UTC`;
+    if (e.kind === 'paused' || e.kind === 'resumed') return e.kind === 'paused' ? 'Collection paused' : 'Collection resumed';
+    if (e.kind === 'panel_group') return p.group ? `Group set to “${p.group}”` : 'Group removed';
+    if (e.kind === 'decision') return `Decision: ${p.decision || p.status || ''}`;
+    return `${U.cap(e.kind.replace(/_/g, ' '))}${Object.keys(p).length ? ` · ${Object.entries(p).map(([k, v]) => `${k} ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(', ')}` : ''}`;
+  }
+  async function renderLog(params, portfolio) {
+    const f = params.get('f') || 'changes';
+    const pids = portfolio ? projects().map((p) => p.id) : [state.project];
+    const bundles = await Promise.all(pids.map(async (pid) => { const [act, rep] = await Promise.all([activity(pid), report(pid).catch(() => null)]); return { pid, name: projectRow(pid)?.name || pid, act, names: new Map((rep?.queries || []).map((q) => [q.id, q.query])) }; }));
+    const events = bundles.flatMap((b) => (b.act.events || []).map((e) => ({ ...e, pid: b.pid, pname: b.name, who: b.names.get(e.target_id) || e.target_id })));
+    const runs = bundles.flatMap((b) => (b.act.runs || []).map((r) => ({ ...r, pid: b.pid, pname: b.name, at: r.finished_at || r.started_at })));
+    const changes = events.filter((e) => e.kind === 'status_change'); const config = events.filter((e) => e.kind !== 'status_change');
+    const items = (f === 'changes' ? changes.map((e) => ({ t: 'change', at: e.at, e })) : f === 'runs' ? runs.map((r) => ({ t: 'run', at: r.at, r })) : f === 'config' ? config.map((e) => ({ t: 'config', at: e.at, e })) : [...changes.map((e) => ({ t: 'change', at: e.at, e })), ...runs.map((r) => ({ t: 'run', at: r.at, r })), ...config.map((e) => ({ t: 'config', at: e.at, e }))]).filter((i) => i.at).sort((a, b) => b.at.localeCompare(a.at));
+    const limit = Number(params.get('n') || 60); const shown = items.slice(0, limit);
+    const recent = (id, pid, at) => { const t = new Date(at).getTime(); return changes.filter((c) => c.target_id === id && c.pid === pid && new Date(c.at).getTime() <= t && new Date(c.at).getTime() >= t - 3 * 86400000).length; };
+    const cls = (s) => `to-${U.kind(s) === 'review' || U.kind(s) === 'issue' ? 'review' : U.kind(s) === 'watch' ? 'watch' : 'stable'}`;
+    let lastDay = '';
+    const rows = shown.map((i) => {
+      const day = U.dayKey(i.at); const sep = day !== lastDay ? `<div class="log-day">${esc(U.dayLabel(day))}</div>` : ''; lastDay = day;
+      const tag = portfolio ? `<span class="tag">${esc(i.e?.pname || i.r?.pname)}</span>` : '';
+      if (i.t === 'change') { const e = i.e; const p = e.payload || {}; const k = recent(e.target_id, e.pid, e.at); return `${sep}<a class="log-row" href="${link.panel(e.target_id, '', e.pid)}"><span class="when">${T(e.at)}</span><span class="who">${esc(e.who)}</span><span class="what"><i class="dot ${U.kind(p.before) === 'watch' ? 'watch' : U.kind(p.before) === 'review' ? 'review' : U.kind(p.before) === 'stable' ? 'stable' : 'hollow'}"></i>${esc(U.word(p.before))}<span class="arrow">→</span><i class="dot ${U.kind(p.after) === 'watch' ? 'watch' : U.kind(p.after) === 'review' ? 'review' : U.kind(p.after) === 'stable' ? 'stable' : 'hollow'}"></i><span class="${cls(p.after)}">${esc(U.word(p.after))}</span>${p.score != null ? `<span class="muted">· score ${Math.round(p.score)}</span>` : ''}${tag}</span><span>${k >= 3 ? `<span class="flap">${I('repeat')}${U.ordinal(k)} change in 3 days</span>` : ''}</span></a>`; }
+      if (i.t === 'run') { const r = i.r; return `${sep}<div class="log-row"><span class="when">${T(r.started_at)}</span><span class="who">${esc(U.cap(r.trigger || 'run'))} run</span><span class="what">${r.collected} collected · ${r.skipped} skipped · <span class="${r.failed ? 'to-review' : ''}">${r.failed} failed</span> · ${plural(r.requests, 'request')}${tag}</span><span class="muted nowrap">${esc(r.error || Object.entries(r.errors || {}).map(([k, v]) => `${k}: ${v}`).join(', '))}</span></div>`; }
+      const e = i.e; return `${sep}<div class="log-row"><span class="when">${T(e.at)}</span><span class="who">${esc(e.target_id ? e.who : 'Project')}</span><span class="what">${esc(eventText(e))}${tag}</span><span></span></div>`;
+    }).join('');
+    const perDay = new Map(); const now = Date.now();
+    const firstRun = runs.map((r) => U.dayKey(r.started_at)).filter(Boolean).sort()[0] || new Date(now).toISOString().slice(0, 10);
+    for (let k = 6; k >= 0; k--) { const key = new Date(now - k * 86400000).toISOString().slice(0, 10); if (key >= firstRun) perDay.set(key, 0); }
+    runs.forEach((r) => { const k = U.dayKey(r.started_at); if (perDay.has(k)) perDay.set(k, perDay.get(k) + (r.requests || 0)); });
+    const vals = [...perDay.entries()]; const maxV = Math.max(1, ...vals.map(([, v]) => v));
+    const row0 = portfolio ? null : projectRow(); const budget = row0?.budget;
+    const flappers = [...new Set(changes.filter((c) => new Date(c.at).getTime() >= now - 3 * 86400000).map((c) => `${c.pid}:${c.target_id}`))].map((k) => { const [pid, id] = [k.slice(0, k.indexOf(':')), k.slice(k.indexOf(':') + 1)]; const list = changes.filter((c) => c.pid === pid && c.target_id === id && new Date(c.at).getTime() >= now - 3 * 86400000).sort((a, b) => a.at.localeCompare(b.at)); return { pid, id, who: list[0]?.who, list }; }).filter((x) => x.list.length >= 3).sort((a, b) => b.list.length - a.list.length);
+    const baseHref = portfolio ? '#/portfolio/log' : link.view('log');
+    $('main').innerHTML = `<div class="page">
+      <div class="page-head"><div class="title"><h1>Log</h1><span class="meta">Status changes, collection runs and configuration edits in one timeline</span></div><div class="seg">${[['changes', 'Status changes', changes.length], ['runs', 'Runs', runs.length], ['config', 'Configuration', config.length], ['all', 'All', '']].map(([v, l, c]) => `<a href="${baseHref}?f=${v}"${v === f ? ' aria-current="true"' : ''}>${l}${c !== '' ? `<span class="n">${c}</span>` : ''}</a>`).join('')}</div></div>
+      <div class="with-rail wide"><div class="card clip">${rows || '<div class="empty">Nothing recorded yet.</div>'}${items.length > limit ? `<a class="more-link" href="${baseHref}?f=${f}&n=${limit + 100}">Show earlier entries</a>` : ''}</div>
+        <div class="rail"><div class="card pad"><div class="card-head">${I('activity')}<h3>Requests per day</h3></div><div class="vbars">${vals.map(([k, v], i) => `<div class="${i === vals.length - 1 ? 'cur' : ''}"><span>${v || ''}</span><i style="height:${Math.round(v / maxV * 84)}px"></i></div>`).join('')}</div><div class="vbars-x">${vals.map(([k], i) => `<span>${i === vals.length - 1 ? 'today' : D(`${k}T12:00:00Z`).split(' ')[0]}</span>`).join('')}</div><div class="note">${budget?.cap ? `${n(budget.used)} of ${n(budget.cap)} used${budget.until ? `; collection stops ${D(budget.until)}, ${T(budget.until)} UTC` : ''}.` : `${n(runs.reduce((a, r) => a + (r.requests || 0), 0))} requests in the last ${plural(runs.length, 'run')}.`} ${runs.filter((r) => r.failed).length ? `${plural(runs.filter((r) => r.failed).length, 'run')} had failures.` : `No failed runs in ${runs.length}.`}</div></div>
+          <div class="card pad"><div class="card-head">${I('repeat')}<h3>Flapping panels</h3><span class="grow"></span><span class="meta">72 h</span></div>${flappers.length ? `<p class="note" style="color:var(--text-2);font-size:12.5px">${plural(flappers.length, 'panel')} crossed the watch line three or more times in three days. Their SERPs reshuffle on every capture, so a watch there is noise until something is confirmed.</p><div class="stack">${flappers.slice(0, 8).map((x) => `<a class="row" href="${link.panel(x.id, '', x.pid)}" style="min-height:26px"><span class="grow nowrap">${esc(x.who)}</span><span class="marks">${x.list.map((c) => `<i class="${c.payload?.after === 'watch' ? 'w' : c.payload?.after === 'review' ? 'r' : ''}"></i>`).join('')}</span></a>`).join('')}</div><div class="note" style="border-top:1px solid var(--line);padding-top:10px">Raise the watch threshold in Settings → Collection, or keep it and rely on confirmation.</div>` : '<p class="note">No panel changed status three times in the last three days.</p>'}</div></div></div>
+    </div>`;
+    state.keys = rowKeys('a.log-row');
   }
 
-  // --- connect an agent (MCP) ------------------------------------------------------------------------------------------------
-  const copyText = async (text, label) => { try { await navigator.clipboard.writeText(text); toast(`${label} copied.`); } catch { toast('Copy failed; select the text and copy it by hand.', true); } };
-  async function renderConnect() {
-    const info = await api(P('/mcp')); const row = projectRow(); let client = info.clients[0].id;
-    const current = () => info.clients.find((c) => c.id === client);
-    $('main').innerHTML = `<div class="page-head"><h1>Connect an agent</h1><span class="secondary">${esc(row?.name || state.project)} · Model Context Protocol over stdio</span></div>
-      <p class="pretty" style="max-width:720px">Claude Code, Claude Desktop, Cursor, Codex, VS Code, or any MCP client can read this project's panels, history, comparisons, AI Overview citations, and insights, and start a collection when you allow it. The server runs on this machine from the workspace below; the SearchApi key never leaves it.</p>
-      <div class="two">
-        <div class="vstack g16">
-          <div class="card pad vstack"><div class="card-head"><b>1 · Add the server to your client</b><span class="seg" id="client-seg">${info.clients.map((c) => `<button type="button" data-c="${c.id}" aria-pressed="${c.id === client}">${esc(c.label)}</button>`).join('')}</span></div><div id="client-body"></div></div>
-          <div class="card pad vstack"><div class="card-head"><b>2 · Check it works</b><button class="btn" type="button" id="mcp-test">Test the connection</button></div><p class="secondary">Launches the same command a client would and runs the handshake (initialize, tools/list). Nothing is collected and no credits are spent.</p><div id="mcp-result"></div></div>
-          <div class="card pad vstack"><div class="card-head"><b>3 · Ask</b></div><div class="mini-list">${info.prompts.map((p) => `<span>“${esc(p)}”</span>`).join('')}</div><p class="small muted">Intent labels are lexical estimates: ask the agent for the reasons and evidence before acting. <span class="mono">collect_now</span> spends SearchApi credits, so approve it deliberately.</p></div>
-        </div>
-        <div class="vstack g16">
-          <div class="card pad vstack"><div class="card-head"><b>Server command</b><button class="btn small" type="button" id="copy-shell">Copy</button></div><pre class="code" id="shell">${esc(info.shell)}</pre><p class="small muted">Workspace <span class="mono">${esc(info.workspace)}</span>${info.env.PYTHONPATH ? ' · runs from a source checkout, so PYTHONPATH is included in every snippet' : ''}. Protocol ${esc(info.protocol)}.</p></div>
-          <div class="card clip"><div class="card-title row-between"><b class="ink">Tools the agent gets</b><span class="secondary">${info.tools.length}</span></div>${info.tools.map((t) => `<div class="attn" style="grid-template-columns:150px minmax(0,1fr)"><span class="mono ink">${esc(t.name)}</span><span class="secondary pretty">${esc(t.description)}</span></div>`).join('')}</div>
-        </div>
-      </div>`;
-    const drawClient = () => { const c = current(); $('client-body').innerHTML = `<pre class="code">${esc(c.text)}</pre><div class="row-between mt8"><span class="small muted pretty">${esc(c.where)}</span><button class="btn small" type="button" id="copy-client">Copy</button></div>`; $('copy-client').addEventListener('click', () => copyText(c.text, `${c.label} config`)); };
-    $('client-seg').addEventListener('click', (e) => { const b = e.target.closest('button[data-c]'); if (!b) return; client = b.dataset.c; $('client-seg').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); drawClient(); });
-    $('copy-shell').addEventListener('click', () => copyText(info.shell, 'Command'));
-    $('mcp-test').addEventListener('click', async () => {
-      $('mcp-test').disabled = true; $('mcp-test').textContent = 'Testing…'; $('mcp-result').innerHTML = '<div class="skeleton" style="width:60%"></div>';
-      try { const r = await api(P('/mcp/check'), { method: 'POST', body: {} }); $('mcp-result').innerHTML = r.ok ? `<div class="status ok">${dot('ok')}Connected: ${esc(r.server?.name || 'server')} ${esc(r.server?.version || '')} · ${plural(r.tools.length, 'tool')} · protocol ${esc(r.protocol || '')}</div>` : `<div class="notice">Not working: ${esc(r.error)}<br><span class="mono">${esc(r.command)}</span></div>`; } catch (error) { fail(error); }
-      $('mcp-test').disabled = false; $('mcp-test').textContent = 'Test the connection';
-    });
-    drawClient();
-  }
-
-  // --- portfolio + new project ----------------------------------------------------------------------------------------------------
+  // --- all projects ------------------------------------------------------------------------------------------------------
   async function renderPortfolio() {
-    const pf = state.portfolio = await api('/api/portfolio'); const rows = pf.projects; const lastRuns = rows.map((r) => r.last_run?.finished_at).filter(Boolean).sort();
-    const healthCls = { ok: 'muted', error: 'c-review', stale: 'c-review', muted: 'muted' }; const dotOf = (r) => r.counts?.review ? 'review' : r.health_kind === 'error' ? 'err' : r.health_kind === 'stale' ? 'hollow' : r.counts?.watch ? 'watch' : (r.counts?.building_baseline || r.counts?.awaiting_data) && !r.counts?.stable ? 'info' : 'ok';
-    const statusText = (c) => [c.review ? `${c.review} review` : '', c.watch ? `${c.watch} watch` : '', (c.building_baseline || 0) + (c.baseline_ready || 0) ? `${(c.building_baseline || 0) + (c.baseline_ready || 0)} building` : '', c.collection_error ? `${c.collection_error} errors` : ''].filter(Boolean).join(' · ') || (c.stable ? 'all stable' : 'no captures');
-    const cols = 'grid-template-columns:minmax(0,1.5fr) 150px 70px 220px 140px 90px';
-    $('main').innerHTML = `<div class="page-head"><h1>Portfolio</h1><span class="secondary">${plural(rows.length, 'project')} · ${plural(pf.panels, 'panel')}${lastRuns.length ? ` · collected ${ago(lastRuns[lastRuns.length - 1])} ${T(lastRuns[lastRuns.length - 1])}` : ''}</span><div class="spacer">${state.status.projects_root ? '<a class="btn" href="#/new-project">New project</a>' : ''}<button class="btn primary" type="button" id="collect-all" data-collect="Collect all">Collect all</button></div></div>
-      <section class="section"><div class="section-head"><h2>Needs attention</h2><span class="secondary">${pf.attention.length || ''}</span></div><div class="card list" id="attention">${attentionHtml(pf.attention, true) || `<div class="attn-empty">No unhandled confirmed change. ${plural(pf.panels, 'panel')}${lastRuns.length ? ` collected ${ago(lastRuns[lastRuns.length - 1])}` : ''}.</div>`}</div></section>
-      <section class="section"><h2 class="section-title">Projects</h2><div class="card grid-table"><div class="gh" style="${cols}"><span>Project</span><span>Market</span><span class="right">Panels</span><span>Status</span><span>Collection</span><span class="right">Credits / day</span></div>${rows.map((r) => `<a class="gr" href="#/p/${encodeURIComponent(r.id)}" style="${cols}"><span style="display:flex;align-items:center;gap:10px;min-width:0">${dot(dotOf(r))}<span class="q">${esc(r.name)}</span></span><span class="muted">${esc(r.market || '—')}</span><span class="right">${r.panels}</span><span class="muted">${esc(statusText(r.counts || {}))}</span><span class="${healthCls[r.health_kind] || 'muted'}">${esc(r.health)}</span><span class="right">${r.credits_per_day}</span></a>`).join('')}</div></section>`;
-    bindAttention($('attention'));
-    $('collect-all').addEventListener('click', async () => { try { await api('/api/collect-all', { method: 'POST', body: {} }); toast('Collecting every project…'); startPolling(); } catch (error) { fail(error); } });
-    renderTopActions();
-  }
-  function renderNewProject() {
-    $('main').innerHTML = `<div class="crumbs"><a href="#/portfolio">Portfolio</a> / New project</div><div class="page-head"><h1>New project</h1><span class="secondary">one site, one market default, its own database</span></div>
-      <form class="card pad settings narrow" id="f-new"><div class="lbl"><b>Site</b><p>The hostname the app should look for in results.</p></div><div class="form-grid"><label class="field"><span>Site</span><input type="text" name="site" required placeholder="example.com"></label><label class="field"><span>Name</span><input type="text" name="name" placeholder="defaults to the site"></label></div><div class="lbl"><b>Default market</b><p>Panels inherit it; each panel can override.</p></div><div class="form-grid"><label class="field"><span>Country (gl)</span><input type="text" name="gl" value="us"></label><label class="field"><span>Language (hl)</span><input type="text" name="hl" value="en"></label><label class="field"><span>Device</span>${select('name="device"', DEVICES, 'desktop')}</label></div><div class="lbl"><b>SearchApi key</b><p>Optional here; add it later in the project's Settings.</p></div><div class="form-grid"><label class="field"><span>Key</span><input type="password" name="api_key" autocomplete="off"></label></div><div></div><div class="form-actions"><button class="btn primary" type="submit">Create project</button><a class="btn" href="#/portfolio">Cancel</a></div></form>`;
-    $('f-new').addEventListener('submit', async (e) => { e.preventDefault(); const f = e.target; try { const r = await api('/api/projects', { method: 'POST', body: { site: f.elements.site.value.trim(), name: f.elements.name.value.trim(), gl: f.elements.gl.value.trim(), hl: f.elements.hl.value.trim(), device: f.elements.device.value, api_key: f.elements.api_key.value.trim() || undefined } }); toast(`Project ${r.name} created.`); invalidate(); await loadStatus(); go(`#/p/${encodeURIComponent(r.id)}/import`); } catch (error) { fail(error); } });
+    const pf = await api('/api/portfolio'); const rows = pf.projects;
+    const reps = new Map((await Promise.all(rows.map(async (r) => [r.id, await report(r.id).catch(() => null)]))));
+    const watch = rows.reduce((a, r) => a + (r.counts?.watch || 0), 0); const reviewN = rows.reduce((a, r) => a + (r.counts?.review || 0), 0);
+    const today = new Date().toISOString().slice(0, 10);
+    const collectedToday = rows.filter((r) => (r.last_run?.finished_at || '').startsWith(today) || (reps.get(r.id)?.queries || []).some((q) => (q.latest?.captured_at || '').startsWith(today))).length;
+    const headline = reviewN ? `${reviewN === 1 ? 'One change needs' : `${reviewN} changes need`} a decision.` : watch ? `${watch} ${watch === 1 ? 'panel is' : 'panels are'} drifting across ${plural(rows.length, 'project')}. Nothing is confirmed.` : `All quiet across ${plural(rows.length, 'project')}.`;
+    const sched = state.status.scheduler || {};
+    const explainer = [`${collectedToday === rows.length ? (rows.length === 1 ? 'The project' : `All ${rows.length} projects`) : `${collectedToday} of ${rows.length} projects`} collected today.`, ...rows.filter((r) => r.budget?.until && !r.budget.stopped).map((r) => `${r.name} stops collecting on ${D(r.budget.until)}.`), ...rows.filter((r) => r.budget?.stopped).map((r) => `${r.name} has ended collection.`), sched.enabled ? '' : 'The scheduler is off in this process.'].filter(Boolean).join(' ');
+    const watchList = rows.flatMap((r) => (reps.get(r.id)?.queries || []).filter((q) => q.status === 'watch' || q.status === 'review').map((q) => ({ pid: r.id, pname: r.name, q, events: [] }))).sort((a, b) => (a.q.status === 'review' ? -1 : 0) - (b.q.status === 'review' ? -1 : 0) || siteHit(b.q) - siteHit(a.q) || (b.q.score || 0) - (a.q.score || 0));
+    $('main').innerHTML = `<div class="page">
+      <div class="page-head"><div class="title"><h1>All projects</h1><span class="meta">${plural(rows.length, 'workspace')} on this machine · ${plural(pf.panels, 'panel')} · one scheduler</span></div>${state.status.projects_root ? `<a class="btn" href="#/new-project">${I('plus')}New project</a>` : ''}<button class="btn primary" type="button" id="collect-all"${isRunning() ? ' disabled' : ''}>Collect all due</button></div>
+      <div class="headline"><h2>${esc(headline)}</h2><p>${esc(explainer)}</p></div>
+      <div class="card clip"><div class="table pftable"><div class="thead"><span>Project</span><span>Panels · drift</span><span class="hide-sm">Your site</span><span class="hide-sm">Collection</span><span class="hide-sm">Requests</span><span></span></div>${rows.map((r) => {
+        const rep = reps.get(r.id); const qs = rep?.queries || []; const c = r.counts || {}; const tot = r.panels || 1;
+        const rk = qs.filter((q) => sitePosition(q)); const t3 = rk.filter((q) => sitePosition(q).pos <= 3); const ct = qs.filter(cited);
+        const segs = [['review', c.review], ['watch', c.watch], ['stable', c.stable], ['building', (c.building_baseline || 0) + (c.baseline_ready || 0) + (c.awaiting_data || 0)], ['issues', (c.collection_error || 0) + (c.stale || 0) + (c.data_quality || 0) + (c.insufficient_data || 0)]].filter(([, v]) => v);
+        return `<a class="trow" href="${link.project(r.id)}"><span class="row"><span class="avatar lg">${esc(initial(r.name))}</span><span class="cell-2"><b class="q nowrap">${esc(r.name)}</b><span class="sub nowrap">${esc(r.market || '')}</span></span></span><span class="cell-2" style="width:100%"><span class="spectrum" style="width:100%"><span class="bar" style="height:6px">${segs.map(([k, v]) => `<i class="${k}" style="flex:${v / tot}"></i>`).join('')}</span></span><span class="row" style="gap:12px;font-size:12px"><b style="font-weight:500">${plural(r.panels, 'panel')}</b>${c.review ? `<span class="row" style="gap:5px"><i class="dot review"></i>${c.review} review</span>` : ''}${c.watch ? `<span class="row" style="gap:5px"><i class="dot watch"></i>${c.watch} watch</span>` : ''}<span class="row muted" style="gap:5px"><i class="dot stable"></i>${c.stable || 0} stable</span></span></span><span class="cell-2 hide-sm"><span class="dim">${r.site ? `ranks in ${rk.length} · top 3 in ${t3.length}` : 'no site set'}</span>${ct.length ? `<span class="sub">cited in ${plural(ct.length, 'Overview')}</span>` : ''}</span><span class="hide-sm"><i class="dot ${r.running ? 'run' : r.health_kind === 'ok' ? 'ok' : r.health_kind === 'error' ? 'err' : 'hollow'}"></i><span class="dim nowrap">${esc(r.health || '')}</span></span><span class="cell-2 hide-sm"><span class="dim">${n(r.credits_per_day)} a day</span>${r.budget?.cap ? `<span class="track" style="width:140px"><i style="width:${Math.min(100, r.budget.used / r.budget.cap * 100).toFixed(1)}%"></i></span>` : ''}<span class="sub">${r.budget?.cap ? `${n(r.budget.used)} of ${n(r.budget.cap)}${r.budget.until ? ` · stops ${D(r.budget.until)}` : ''}` : `${n(r.budget?.used || 0)} recorded · no cap`}</span></span><span class="right muted">${I('right')}</span></a>`;
+      }).join('')}</div></div>
+      <div class="card clip"><div class="card-head" style="padding:14px 18px;border-bottom:1px solid var(--line)"><h3>Watching across projects</h3><span class="meta">${watchList.length}</span><span class="grow"></span><a class="link" href="#/portfolio/inbox">Open the merged inbox →</a></div>${watchList.slice(0, 6).map((e) => `<a class="qrow" href="${link.panel(e.q.id, '', e.pid)}"><i class="dot ${e.q.status === 'review' ? 'review' : 'watch'}"></i><div class="t"><div class="row"><b>${esc(e.q.query)}</b><span class="tag">${esc(e.pname)}</span>${siteHit(e.q) ? '<span class="tag you">your site</span>' : ''}</div><small>${esc(U.whyLine(e.q, e.events))}</small></div><div class="s"><b>${U.score(e.q.score)}</b></div>${I('right')}</a>`).join('') || '<div class="empty">No panel is drifting.</div>'}</div>
+    </div>`;
+    $('collect-all').addEventListener('click', collectAll);
+    state.keys = rowKeys('.pftable a.trow');
   }
 
-  // --- router -----------------------------------------------------------------------------------------------------------------------
+  // --- router ------------------------------------------------------------------------------------------------------------
+  const ctx = { $, api, P, link, state, report, panelData, activity, attention, invalidate, loadStatus, go, route, toast, fail, collect, startPolling, projectRow, engines, sortQueries, scoreDelta, deltaHtml, seen, markSeen, sitePosition, render: () => render() };
   async function render() {
     const { parts, params } = route();
-    try { if (!state.status) await loadStatus(); } catch (error) { $('main').innerHTML = `<div class="notice">Cannot reach the app: ${esc(error.message)}</div>`; return; }
-    let view = 'dashboard'; let portfolio = false;
-    if (parts[0] === 'p' && parts[1]) { state.project = parts[1]; view = parts[2] || 'dashboard'; if (view === 'panel') view = 'panel'; }
-    else if (parts[0] === 'portfolio') { portfolio = true; view = parts[1] === 'insights' ? 'pinsights' : parts[1] === 'runs' ? 'pruns' : 'portfolio'; }
+    try { if (!state.status) await loadStatus(); } catch (error) { $('main').innerHTML = `<div class="page"><div class="notice err"><span class="ib">${I('alert')}</span><div class="t"><b>Cannot reach the app</b><p>${esc(error.message)}</p></div></div></div>`; return; }
+    let view = 'inbox'; let portfolio = false;
+    if (parts[0] === 'p' && parts[1]) { state.project = parts[1]; view = parts[2] || 'inbox'; }
+    else if (parts[0] === 'portfolio') { portfolio = true; view = { inbox: 'pinbox', insights: 'pinsights', log: 'plog', runs: 'plog' }[parts[1]] || 'portfolio'; }
     else if (parts[0] === 'new-project') { portfolio = true; view = 'new'; }
     else if (state.status.multi_project && !parts.length) { portfolio = true; view = 'portfolio'; }
-    if (!state.status.projects.some((p) => p.id === state.project)) state.project = state.status.project.id;
-    renderSidebar({ view, portfolio });
-    renderTopActions();
-    $('main').innerHTML = '<div class="skeleton" style="width:40%"></div>';
+    if (!projects().some((p) => p.id === state.project)) state.project = state.status.project.id;
+    if (view === 'activity' || view === 'runs') { view = 'log'; if (!params.get('f')) params.set('f', parts[2] === 'runs' ? 'runs' : 'all'); }
+    if (view === 'import') view = 'add';
+    if (view === 'dashboard') view = 'inbox';
+    state.scope = portfolio ? 'portfolio' : 'project'; state.keys = null;
+    renderSidebar(view, portfolio); renderMobile(view, portfolio);
+    $('main').innerHTML = '<div class="page"><div class="skeleton" style="width:36%"></div><div class="skeleton" style="width:62%;height:28px"></div></div>';
+    document.title = `${portfolio ? 'All projects' : projectRow()?.name || 'serp-drift'} · serp-drift`;
     try {
       if (view === 'portfolio') return await renderPortfolio();
+      if (view === 'pinbox') return await renderInbox(params, true);
       if (view === 'pinsights') return await renderInsights(params, true);
-      if (view === 'pruns') return await renderRuns(true);
-      if (view === 'new') return renderNewProject();
-      if (view === 'panel' && parts[3]) return await renderPanel(parts[3], params.get('tab') || 'overview');
+      if (view === 'plog') return await renderLog(params, true);
+      if (view === 'new') return window.SerpManage.newProject(ctx);
+      if (view === 'panel' && parts[3]) return await window.SerpPanel.render(ctx, parts[3], params.get('tab') || 'summary');
       if (view === 'panels') return await renderPanels();
-      if (view === 'activity') return await renderActivity();
       if (view === 'insights') return await renderInsights(params, false);
-      if (view === 'runs') return await renderRuns(false);
-      if (view === 'settings') return await renderSettings();
-      if (view === 'import') return await renderImport();
-      if (view === 'connect') return await renderConnect();
-      return await renderDashboard();
-    } catch (error) { $('main').innerHTML = `<div class="notice">${esc(error.message)}</div>`; console.error(error); }
+      if (view === 'log') return await renderLog(params, false);
+      if (view === 'settings') return await window.SerpManage.settings(ctx, params.get('s') || 'general');
+      if (view === 'add') return await window.SerpManage.add(ctx);
+      if (view === 'connect') return await window.SerpManage.connect(ctx);
+      return await renderInbox(params, false);
+    } catch (error) { $('main').innerHTML = `<div class="page"><div class="notice err"><span class="ib">${I('alert')}</span><div class="t"><b>Something went wrong</b><p>${esc(error.message)}</p></div></div></div>`; console.error(error); }
   }
   window.addEventListener('hashchange', render);
-  render().then(() => { if ((state.status?.projects || []).some((p) => p.running)) startPolling(); });
+  render().then(() => { if (isRunning()) startPolling(); });
+  setInterval(() => { if (!state.pollTimer && document.visibilityState === 'visible' && state.status) renderCollector(); }, 60000);
 })();

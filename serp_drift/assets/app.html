@@ -2,29 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex">
-  <meta name="color-scheme" content="light dark">
-  <title>SERP Intent Drift Monitor</title>
+  <meta name="color-scheme" content="dark light">
+  <title>SERP Intent Drift Monitor · serp-drift</title>
+  <link rel="preload" href="/assets/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="shell" id="shell">
-    <header class="topbar" id="topbar">
-      <button class="icon-btn" id="menu-toggle" type="button" aria-label="Open navigation">≡</button>
-      <div id="topbar-project"></div>
-      <div class="topbar-actions" id="topbar-actions"></div>
-    </header>
+  <div class="app" id="app">
     <aside class="sidebar" id="sidebar" aria-label="Navigation"></aside>
-    <main class="main" id="main" tabindex="-1"><p class="muted">Loading…</p></main>
+    <div class="main-col">
+      <header class="topbar" id="topbar"></header>
+      <main class="main" id="main" tabindex="-1"><div class="page"><div class="skeleton" style="width:40%"></div></div></main>
+    </div>
   </div>
+  <nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
   <div class="scrim" id="scrim" hidden></div>
-  <dialog class="palette" id="palette" hidden aria-label="Jump to"><div class="palette-box"><input id="palette-input" type="search" aria-label="Search projects and keywords" role="combobox" aria-controls="palette-list" aria-expanded="true" placeholder="Jump to a project or panel…" autocomplete="off"><ul id="palette-list" role="listbox"></ul></div></dialog>
+  <dialog class="palette" id="palette" aria-label="Jump to">
+    <div class="palette-box">
+      <div class="in"><span id="palette-icon"></span><input id="palette-input" type="search" role="combobox" aria-controls="palette-list" aria-expanded="true" aria-label="Search panels, pages and actions" placeholder="Search panels, pages and actions…" autocomplete="off"><span class="kbd">esc</span></div>
+      <ul id="palette-list" role="listbox"></ul>
+      <div class="foot"><span><span class="kbd">↑ ↓</span>move</span><span><span class="kbd">↵</span>open</span><span><span class="kbd">esc</span>close</span></div>
+    </div>
+  </dialog>
   <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="/assets/icons.js"></script>
+  <script src="/assets/ui.js"></script>
   <script src="/assets/labeling.js"></script>
   <script src="/assets/setup.js"></script>
   <script src="/assets/review.js"></script>
+  <script src="/assets/panel.js"></script>
+  <script src="/assets/manage.js"></script>
   <script src="/assets/app.js"></script>
 </body>
 </html>
