@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "serp-intent-drift"
-version = "1.0.0rc1"
+version = "1.0.0"
 description = "Explainable SERP change monitoring with SearchApi, SQLite, and portable reports."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,7 +13,7 @@ authors = [{ name = "Niko Alho" }]
 dependencies = []
 keywords = ["seo", "serp", "search-intent", "monitoring", "searchapi", "ai-overview", "sqlite"]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
   "Environment :: Web Environment",
   "Intended Audience :: Developers",

@@ -1,8 +1,10 @@
 # Changelog
 
-## 1.0.0rc1 · 2026-09-30 · release candidate: the triage redesign
+## 1.0.0 · 2026-09-30 · the triage redesign
 
-Version 0.7 was never released: the redesign below and these fixes make up the 1.0 release candidate. [Compatibility](docs/compatibility.md) lists what 1.x keeps stable.
+Version 0.7 was never released: the redesign below and these fixes make up 1.0.0. [Compatibility](docs/compatibility.md) lists what 1.x keeps stable.
+
+**Known limits.** Intent labels come from lexical rules whose accuracy has not yet been measured against human labels (see [human evaluation](docs/evaluation.md)). The query-term check catches results for another query, not every result set that looks out of place. The interface has no automated browser tests yet.
 
 - **An ended collection is final, not overdue.** When a workspace reaches its request cap or end date, panels keep their last status and say that no new capture will arrive, instead of turning stale after 1.75 intervals. The Inbox shows the end as information rather than a collection problem, and the panel page says *Collection ended* where it showed the next capture.
 - CI also checks the syntax of the app's JavaScript.

@@ -1,6 +1,6 @@
 """SERP Intent Drift Monitor. Runtime dependencies: Python standard library only."""
 
-__version__ = "1.0.0rc1"
+__version__ = "1.0.0"
 
 
 def analysis_version() -> str:
