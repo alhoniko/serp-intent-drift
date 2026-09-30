@@ -72,8 +72,8 @@ svg.i { width: 16px; height: 16px; flex: none; display: block; }
 .app { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); min-height: 100vh; }
 .sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 2px; padding: 14px 12px; border-right: 1px solid var(--line); background: var(--bg); overflow-y: auto; z-index: 20; }
 .brand { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 6px; }
-.brand .mark { width: 14px; height: 14px; border-radius: 3px; background: var(--text); flex: none; }
-.brand b { font-size: 13px; font-weight: 600; letter-spacing: -.2px; }
+.brand .mark { width: 16px; height: 16px; color: var(--text); flex: none; display: block; }
+.brand b { font-size: 14px; font-weight: 600; letter-spacing: -.3px; white-space: nowrap; }
 .brand .ver { font-size: 11px; color: var(--text-3); }
 .brand .grow { flex: 1; }
 .icon-btn { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--text-3); cursor: pointer; flex: none; }
@@ -98,6 +98,7 @@ svg.i { width: 16px; height: 16px; flex: none; display: block; }
 .search-btn { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px 0 10px; border-radius: 6px; border: 0; background: var(--surface-2); color: var(--text-3); cursor: pointer; width: 100%; font-size: 13px; }
 .search-btn span:not(.kbd) { flex: 1; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .search-btn .kbd { flex: none; }
+.search-btn svg.i { width: 14px; height: 14px; }
 .search-btn:hover { color: var(--text-2); }
 .kbd { display: inline-flex; align-items: center; height: 18px; padding: 0 5px; border-radius: 4px; border: 1px solid var(--line-strong); font-size: 11px; color: var(--text-3); line-height: 1; white-space: nowrap; font-family: var(--font); }
 .nav { display: flex; flex-direction: column; gap: 2px; }

@@ -71,5 +71,9 @@ window.SerpIcons = (() => {
     const d = paths[name] || paths.info;
     return `<svg class="i${cls ? ` ${cls}` : ''}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
   }
-  return { get, names: Object.keys(paths) };
+  // The product mark: a rounded square cut along a fault line, the lower half drifted right. Same geometry as favicon.svg.
+  function mark(cls = '') {
+    return `<svg class="mark${cls ? ` ${cls}` : ''}" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 3.5A2.5 2.5 0 0 1 2.5 1h8A2.5 2.5 0 0 1 13 3.5v4H0zM3 8.5h13v4a2.5 2.5 0 0 1-2.5 2.5h-8A2.5 2.5 0 0 1 3 12.5z"/></svg>`;
+  }
+  return { get, mark, names: Object.keys(paths) };
 })();

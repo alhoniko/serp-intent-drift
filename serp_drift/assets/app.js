@@ -102,7 +102,7 @@
     const row = projectRow();
     const name = portfolio ? 'All projects' : row?.name || state.project;
     const meta = portfolio ? `${plural(projects().length, 'project')} · ${plural(projects().reduce((a, p) => a + (p.panels || 0), 0), 'panel')}` : `${row?.site || 'no site set'} · ${plural(row?.panels || 0, 'panel')}`;
-    $('sidebar').innerHTML = `<div class="brand"><i class="mark"></i><b>serp-drift</b><span class="ver">${esc((state.status.version || '').replace(/\.0$/, ''))}</span><span class="grow"></span><a class="icon-btn" href="${REPO}" target="_blank" rel="noopener noreferrer" title="Source code" aria-label="Source code">${I('source')}</a><button class="icon-btn" type="button" id="theme-btn" title="Theme: ${state.theme}" aria-label="Switch theme">${themeIcon()}</button></div>
+    $('sidebar').innerHTML = `<div class="brand">${window.SerpIcons.mark()}<b>SERP Drift</b><span class="ver">${esc((state.status.version || '').replace(/\.0$/, ''))}</span><span class="grow"></span><a class="icon-btn" href="${REPO}" target="_blank" rel="noopener noreferrer" title="Source code" aria-label="Source code">${I('source')}</a><button class="icon-btn" type="button" id="theme-btn" title="Theme: ${state.theme}" aria-label="Switch theme">${themeIcon()}</button></div>
       <div class="gap-10"></div>
       <div class="switcher-wrap"><button class="switcher" id="switcher" type="button" aria-haspopup="menu" aria-expanded="false"><span class="avatar">${portfolio ? '∗' : esc(initial(name))}</span><span class="t"><b class="nowrap">${esc(name)}</b><span class="nowrap">${esc(meta)}</span></span>${I('updown')}</button><div class="menu" id="switcher-menu" role="menu" hidden>${switcherMenu(portfolio)}</div></div>
       <div class="gap-8"></div>

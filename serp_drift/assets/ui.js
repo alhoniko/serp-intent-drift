@@ -115,7 +115,7 @@ window.SerpUI = (() => {
   }
 
   // --- your site, reasons, next capture -------------------------------------------------------------------------------
-  // Palvelin ennen 0.7:ää ei palauta kaappauskohtaista sijaintia: nykyinen sijainti tulee q.site-kentästä, historiasta ei päätellä mitään.
+  // A server before 0.7 returns no per-capture site position: take the current one from q.site and infer nothing from the history.
   const hasTrack = (q) => (q?.timeline || []).some((p) => 'site_position' in p);
   function siteTrack(q) {
     const pts = (q?.timeline || []).filter((p) => capKind(p) !== 'x');
