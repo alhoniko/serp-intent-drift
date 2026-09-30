@@ -1,5 +1,7 @@
 # serp-drift · SERP Intent Drift Monitor
 
+![SERP Drift: know when a SERP changes enough to matter. An open-source SERP intent monitor by Niko Alho, powered by SearchApi.](docs/assets/social-preview.png)
+
 Track when a search results page changes enough to deserve a content review. Google, Bing, YouTube, News, and Shopping results through [SearchApi](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=nikoalho.fi); SQLite history on your own machine; an explainable score that separates URL turnover, ranking moves, result types, SERP features, and estimated intent; AI Overview citations resolved to real URLs; a small app, a static report, a webhook, a digest, and an MCP server. Standard-library Python, no build step, no runtime dependencies.
 
 <a href="https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=nikoalho.fi"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/searchapi-logo-white.png"><img src="docs/assets/searchapi-logo-black.png" alt="SearchApi" width="200"></picture></a>

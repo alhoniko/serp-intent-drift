@@ -17,6 +17,8 @@ Screenshots of the serp-drift **1.0** interface (the triage redesign; captured j
 | [`10-detail-data-quality`](v0.7/branded/10-detail-data-quality.webp) (1200×630) | Readable crop of 08 for article width |
 | [`11-detail-history`](v0.7/branded/11-detail-history.webp) (1200×630) | Readable crop of 04 for article width |
 
+**Repository cover.** [`../assets/social-preview.png`](../assets/social-preview.png) (1280×640) is the README banner and the GitHub social preview: the mark, one line, the author credit and the unmodified SearchApi logo next to a real panel capture from the same session.
+
 **Formats.** In the repository: untouched originals (2880×1800 PNG, `v0.7/originals/`), branded web exports (1600×1000 WebP; cover and details 1200×630) and clickable HTML versions whose credits link to https://nikoalho.fi/ and https://github.com/alhoniko (`v0.7/branded/`). Dark captures sit on the Ink background, the light one on Paper. High-resolution masters (3200×2000 and 2400×1260 PNG) and 1600×1000 PNG exports are kept outside the repository by the author; regenerate them with the commands in [`compose/README.md`](compose/README.md).
 
 **Evidence gap.** No real panel had a confirmed intent change or page-fit mismatch on the capture date, so the decision form in Evidence is not shown with real data. Screenshot 07 shows what Evidence does instead.
