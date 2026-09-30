@@ -115,8 +115,11 @@ window.SerpUI = (() => {
   }
 
   // --- your site, reasons, next capture -------------------------------------------------------------------------------
+  // Palvelin ennen 0.7:ää ei palauta kaappauskohtaista sijaintia: nykyinen sijainti tulee q.site-kentästä, historiasta ei päätellä mitään.
+  const hasTrack = (q) => (q?.timeline || []).some((p) => 'site_position' in p);
   function siteTrack(q) {
     const pts = (q?.timeline || []).filter((p) => capKind(p) !== 'x');
+    if (!hasTrack(q)) return { now: q?.site?.position || null, url: q?.site?.url || null, ever: q?.site?.position ? 1 : 0, captures: pts.length, partial: true };
     const last = pts[pts.length - 1];
     const seen = pts.filter((p) => p.site_position);
     const now = last?.site_position || null;
@@ -128,7 +131,7 @@ window.SerpUI = (() => {
     if (q?.site?.ranking_url_changed) out.urlChanged = q.site.previous_url;
     return out;
   }
-  function positions(q, count = 10) { return (q?.timeline || []).filter((p) => capKind(p) !== 'x').slice(-count).map((p) => p.site_position || null); }
+  function positions(q, count = 10) { return hasTrack(q) ? (q.timeline || []).filter((p) => capKind(p) !== 'x').slice(-count).map((p) => p.site_position || null) : []; }
   function cellsHtml(list) { return `<div class="cells">${list.map((v) => `<i class="${v == null ? '' : v <= 3 ? 'b1' : v <= 6 ? 'b2' : 'b3'}">${v == null ? '–' : v}</i>`).join('')}</div>`; }
   function flapInfo(events, id, days = 7) {
     const since = Date.now() - days * 86400000;
