@@ -24,7 +24,7 @@ SETTLED = r"""(async () => {
   let last = performance.now();
   const observer = new MutationObserver(() => { last = performance.now(); });
   observer.observe(document.body, {subtree: true, childList: true, characterData: true, attributes: true});
-  const loading = () => /Loading(…|\.\.\.)/.test(document.querySelector('main')?.innerText || '');
+  const loading = () => Boolean(document.querySelector('main .skeleton')) || /Loading(…|\.\.\.)/.test(document.querySelector('main')?.innerText || '');
   while ((loading() || performance.now() - last < 1200) && performance.now() - start < 45000) await new Promise((r) => setTimeout(r, 100));
   observer.disconnect();
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));

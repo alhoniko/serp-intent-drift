@@ -7,6 +7,7 @@
 - **Less chrome.** Activity and Runs merge into Log (status changes first, per-event flap counts, requests per day, flapping panels). Settings are split into General, Collection, Notifications, Keys and integrations, Classification and Workspace; the watch threshold previews how many panels it would watch today. Import and *Add a panel by hand* merge into Add keywords, with edge selection, range select and a cost estimate. The sidebar shows the collector, the next run and the request budget.
 - **Tables say which market they mean.** Engine, device, country and location tags tell apart panels that share a query. The panels table adds the last twelve captures and flags flapping panels.
 - ⌘K searches panels, projects, ranking pages and actions. Dark is the default theme; light and system use the same tokens. Geist is bundled (SIL Open Font License, `serp_drift/assets/OFL-Geist.txt`); the app still loads nothing from other hosts.
+- A product mark in the sidebar and as the favicon: a rounded square cut along a fault line, its lower half drifted. The media kit has new screenshots of this interface with live data from 30 September 2026 (`docs/media/v0.7`); `capture.py` waits for the loading skeleton to clear.
 - The report timeline now carries `site_position` and `site_url` for every capture, so lists can show when your page left the top 10 without loading each panel. No change to intent rules, panel identities, scores or the storage schema.
 
 ## 0.6.0 · 2026-09-23 · trustworthy collection (release candidate)

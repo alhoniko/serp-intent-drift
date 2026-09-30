@@ -28,16 +28,16 @@ Prefer no server at all? Fork the repository, add one secret, and [GitHub Action
 - **History you can query.** Every capture, every URL's position over time, a change log between captures, and a compare tool for any two captures or date ranges with the same arithmetic as the alert.
 - **AI Overviews with citations.** Deferred Overviews are expanded and their references resolved to real URLs, so you see which hosts Google cites and whether your page is among them.
 - **Page fit.** Declare the intent your page serves, hand in a local export, or let the collector fetch the public HTML; the report compares the estimated SERP intent with that profile.
-- **One app, one process.** Dashboard, panel views, insights across panels, panel management that edits `monitor.toml`, runs and events, a static export, a webhook with a digest, and `serp-drift mcp` for agents.
+- **One app, one process.** An Inbox for triage, panel views, insights across panels, panel management that edits `monitor.toml`, runs and events, a static export, a webhook with a digest, and `serp-drift mcp` for agents.
 - **Review workflow.** Investigate a confirmed change, record an action and rationale, set a review date, and track its outcome. Notification deduplication follows the signal episode.
 - **Data audit.** Retained search parameters, provider request IDs, quality quarantine, and reversible exclusions with reasons. A query-term check flags captures whose organic results do not contain the query (live data showed results for one word of the query); they stay stored but never count as evidence. Older observations remain explicitly unverified.
 - **Honest limits.** Intent comes from English and Finnish lexical rules (add a language with one TOML file, or an optional LLM for the gaps). Coverage is shown on every capture; unknowns cannot trigger a page-fit alert.
 
-![A serp-drift panel in watch status: the SERP changed (score 47) but the estimated intent did not, so no intent shift is confirmed](docs/media/v0.6/branded/03-panel-watch.webp)
+![A serp-drift panel in watch status: all results in the latest capture are new since the baseline (score 36) and the site's page moved from #5 to #3, but no intent shift is confirmed](docs/media/v0.7/branded/03-panel-summary.webp)
 
-![Data-quality view: 4 of 8 captures of the query domain rating returned results for a different query and are kept but not used](docs/media/v0.6/branded/08-data-quality.webp)
+![Evidence view: 4 of 15 captures of the query domain rating returned results for another query; they are kept but never count as evidence](docs/media/v0.7/branded/08-data-quality.webp)
 
-Screenshots show 0.6.0 with live data captured on 22 September 2026; they are not live statistics. More views, captions and the reproducible capture and composition tools are in [the media kit](docs/media/MEDIA-KIT.md).
+Screenshots show the 0.7 interface with live data captured on 30 September 2026; they are not live statistics. More views, captions and the reproducible capture and composition tools are in [the media kit](docs/media/MEDIA-KIT.md).
 
 ## Run the demo
 

@@ -1,0 +1,367 @@
+{
+  "set": "serp-drift 0.7 media (UI 0.7 on main, app version string 0.6.0)",
+  "captured": "2026-09-30 (UTC), from the operator's local app on 127.0.0.1:8765 with live workspace data",
+  "note": "Illustrative views as of the capture time, not live statistics. All images are real data; none is synthetic. Captures were taken with docs/media/compose/capture.py and composed with docs/media/compose/compose.py; originals are untouched.",
+  "repository": "https://github.com/alhoniko/serp-intent-drift",
+  "attribution": {
+    "website": "https://nikoalho.fi/",
+    "github": "https://github.com/alhoniko"
+  },
+  "disclosure": "Developed for a paid collaboration with SearchApi.",
+  "assets": [
+    {
+      "id": "00-cover",
+      "original": "originals/03-panel-summary.png",
+      "crop": [
+        540,
+        300,
+        2298,
+        1121
+      ],
+      "branded_web": "branded/00-cover.webp",
+      "branded_html": "branded/00-cover.html",
+      "outside_repository": {
+        "master_png": "masters/00-cover@2x.png",
+        "web_png": "web/00-cover.png"
+      },
+      "captured_at": "2026-09-30T09:13:20Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "cover: crop of 03-panel-summary (verdict and the four separate measures)",
+      "route": "/p/ahrefs/panel/link-building",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "case-watch-link-building",
+      "size_px": [
+        1200,
+        630
+      ],
+      "sha256": {
+        "original": "17a2be7f1f2da67d152a01cfbae5b1c6b5fb82bea8ff9a1fd6a9d1059cb50ecf",
+        "branded_web": "4deb93a64cc9eafc17e765fe13dbed4a01f9d3c9b13b87f758b070ce4a37f545"
+      },
+      "caption": "serp-drift keeps SERP change, intent, page fit and data quality apart, and says when a change is not a confirmed intent shift.",
+      "alt": "serp-drift panel for 'link building' in watch: change observed, intent shift unconfirmed, with separate SERP change, intent, page fit and data measures and the score by capture."
+    },
+    {
+      "id": "01-portfolio",
+      "original": "originals/01-portfolio.png",
+      "branded_web": "branded/01-portfolio.webp",
+      "branded_html": "branded/01-portfolio.html",
+      "outside_repository": {
+        "master_png": "masters/01-portfolio@2x.png",
+        "web_png": "web/01-portfolio.png"
+      },
+      "captured_at": "2026-09-30T09:12:58Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "All projects: three workspaces, 77 panels",
+      "route": "/portfolio",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "portfolio",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "4c05acb6f65df665eb48a4cb4abef3fbf0bb70f1622924a59b45ccd4004aaf3e",
+        "branded_web": "7aaab415e98e787929a9144569193280f9a40546171e9a9bc930d30c4f3829d2"
+      },
+      "caption": "All projects on 30 September 2026: three workspaces and 77 panels, 28 of them on watch and none confirmed. The seven-day study workspace has ended collection at 407 of 1,415 requests.",
+      "alt": "serp-drift All projects view: 28 panels on watch across three projects, nothing confirmed, with per-workspace status bars and a list of watched panels."
+    },
+    {
+      "id": "02-inbox",
+      "original": "originals/02-inbox.png",
+      "branded_web": "branded/02-inbox.webp",
+      "branded_html": "branded/02-inbox.html",
+      "outside_repository": {
+        "master_png": "masters/02-inbox@2x.png",
+        "web_png": "web/02-inbox.png"
+      },
+      "captured_at": "2026-09-30T09:13:08Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "Inbox of the Ahrefs example workspace with the first watched panel previewed",
+      "route": "/p/ahrefs/inbox",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "triage-inbox",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "19cd3c750846532afd448e4f6a96fac2081522b7d72bb5e8ff14b1d8966faf7b",
+        "branded_web": "cb18018ede711b7c6322d29fccdbc3faf58448298217f35b13989724c37152f7"
+      },
+      "caption": "The Inbox of the Ahrefs example workspace: five panels on watch, nothing confirmed. Panels that touch your site come first; the preview says that all 7 results in the latest 'search intent' capture are new since the baseline and that ahrefs.com/blog/search-intent left the top ten.",
+      "alt": "serp-drift Inbox: a queue of five watched panels next to a preview of 'search intent' with its verdict, score by capture and intent mix."
+    },
+    {
+      "id": "03-panel-summary",
+      "original": "originals/03-panel-summary.png",
+      "branded_web": "branded/03-panel-summary.webp",
+      "branded_html": "branded/03-panel-summary.html",
+      "outside_repository": {
+        "master_png": "masters/03-panel-summary@2x.png",
+        "web_png": "web/03-panel-summary.png"
+      },
+      "captured_at": "2026-09-30T09:13:20Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "Panel summary: 'link building' in watch",
+      "route": "/p/ahrefs/panel/link-building",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "case-watch-link-building",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "17a2be7f1f2da67d152a01cfbae5b1c6b5fb82bea8ff9a1fd6a9d1059cb50ecf",
+        "branded_web": "2eadc336f2ed2c1321e90daffffeee1f788f2576e606c93f088e83cb19b3b65f"
+      },
+      "caption": "'link building' (Ahrefs example) on 30 September 2026: watch since 28 September at a score of 36. All 8 results in the latest capture are new since the 16–18 September baseline, and ahrefs.com's glossary page moved from #5 to #3. The intent shift is not confirmed.",
+      "alt": "serp-drift panel summary for 'link building': watch verdict, four separate measures, score by capture over 15 captures, your site at position 3 and AI Overview citations."
+    },
+    {
+      "id": "04-history",
+      "original": "originals/04-history.png",
+      "branded_web": "branded/04-history.webp",
+      "branded_html": "branded/04-history.html",
+      "outside_repository": {
+        "master_png": "masters/04-history@2x.png",
+        "web_png": "web/04-history.png"
+      },
+      "captured_at": "2026-09-30T09:13:33Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "Panel history: score by capture and URL trajectories",
+      "route": "/p/ahrefs/panel/link-building?tab=history",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "case-watch-link-building",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "c79ebb4250a7b02974d8e2a03a72f9b6f5f9d09f1d8d6998c33f063104caa3a5",
+        "branded_web": "dc70b97759d89ce94888c38b08c9a0e8d0c3be2d45c212384fd9baffa8ee43a1"
+      },
+      "caption": "History of 'link building': the score by capture from 16 to 29 September and the positions of 24 URLs across 15 accepted captures.",
+      "alt": "serp-drift history tab: score bars by capture with two captures above the watch threshold, and a URL trajectory matrix with the ahrefs.com glossary page marked as your site."
+    },
+    {
+      "id": "05-compare",
+      "original": "originals/05-compare.png",
+      "branded_web": "branded/05-compare.webp",
+      "branded_html": "branded/05-compare.html",
+      "outside_repository": {
+        "master_png": "masters/05-compare@2x.png",
+        "web_png": "web/05-compare.png"
+      },
+      "captured_at": "2026-09-30T09:13:43Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "Compare: the baseline window against the latest capture",
+      "route": "/p/ahrefs/panel/link-building?tab=compare",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "case-watch-link-building",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "64784cdb8064005fdd0f71c2b46acd657d244c1343902508db741a720d21dbc6",
+        "branded_web": "39b38ded87f8f5c790a03a4d4e7214edfc50bb8111f964c7399ccda19c4c38e6"
+      },
+      "caption": "Compare for 'link building': the 16–18 September baseline (three captures, averaged) against the 29 September capture. Score 36 = URL turnover 25.0 + intent mix 6.4 + result types 3.7 + SERP features 1.0; rank movement does not apply because no URL is in both.",
+      "alt": "serp-drift compare tab: baseline window against the latest capture, the change score of 36 broken into weighted components, and the aligned results."
+    },
+    {
+      "id": "06-ai-overview",
+      "original": "originals/06-ai-overview.png",
+      "branded_web": "branded/06-ai-overview.webp",
+      "branded_html": "branded/06-ai-overview.html",
+      "outside_repository": {
+        "master_png": "masters/06-ai-overview@2x.png",
+        "web_png": "web/06-ai-overview.png"
+      },
+      "captured_at": "2026-09-30T09:13:52Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "AI Overview: 'canonical tags', a stable control panel",
+      "route": "/p/ahrefs/panel/canonical-tags?tab=ai",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "case-control-canonical-tags",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "1b6f6177fda790e2cc8ef5aa657add523d9e569d62207154e40e37cbf56e31e6",
+        "branded_web": "1f7da2626b7f97ab0a0b662a5ec13694a940c1cb6b7bae95470a263b355b35f7"
+      },
+      "caption": "'canonical tags' (Ahrefs example): an AI Overview appeared in 15 of 15 captures and cited ahrefs.com in 13, the declared page in 12, with 7.7 references per Overview.",
+      "alt": "serp-drift AI Overview tab for 'canonical tags': cited hosts, citations over time and the text of the latest captured AI Overview."
+    },
+    {
+      "id": "07-evidence",
+      "original": "originals/07-evidence.png",
+      "branded_web": "branded/07-evidence.webp",
+      "branded_html": "branded/07-evidence.html",
+      "outside_repository": {
+        "master_png": "masters/07-evidence@2x.png",
+        "web_png": "web/07-evidence.png"
+      },
+      "captured_at": "2026-09-30T09:14:02Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "Evidence: every capture kept, with a query-relevance notice",
+      "route": "/p/ahrefs/panel/link-building?tab=evidence",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "case-watch-link-building",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "511ba445902f3bc23352e8985022e42fb88d577c4b64675549013b33c4fcc7d0",
+        "branded_web": "d457ca3b2aa7721891ac6e75378516586b82bfb80ef4dd28a3167bcecd4d3105"
+      },
+      "caption": "Evidence for 'link building': every capture is kept; 10 of 15 are accepted as evidence and none is rejected. Because result titles differ substantially between captures, the page asks to inspect query relevance instead of excluding anything automatically.",
+      "alt": "serp-drift evidence tab: capture counts, a notice to inspect query relevance, the observation ledger and the status trail."
+    },
+    {
+      "id": "08-data-quality",
+      "original": "originals/08-data-quality.png",
+      "branded_web": "branded/08-data-quality.webp",
+      "branded_html": "branded/08-data-quality.html",
+      "outside_repository": {
+        "master_png": "masters/08-data-quality@2x.png",
+        "web_png": "web/08-data-quality.png"
+      },
+      "captured_at": "2026-09-30T09:14:10Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "Evidence: captures rejected as results for another query",
+      "route": "/p/ahrefs/panel/domain-rating?tab=evidence",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "data-quality-domain-rating",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "0c9f84b54416ff3c665934e271e9ba124914f01b4eb33632d78f3e6f284e718d",
+        "branded_web": "d944776587ceda92862eb699b9cf33fe313c5694b41df684c288c726af910970"
+      },
+      "caption": "'domain rating' (Ahrefs example): 4 of 15 captures returned results for another query. They are kept as observations and never counted as evidence.",
+      "alt": "serp-drift evidence tab for 'domain rating': four captures rejected as results for another query, marked in the observation ledger."
+    },
+    {
+      "id": "09-study-panels",
+      "original": "originals/09-study-panels.png",
+      "branded_web": "branded/09-study-panels.webp",
+      "branded_html": "branded/09-study-panels.html",
+      "outside_repository": {
+        "master_png": "masters/09-study-panels@2x.png",
+        "web_png": "web/09-study-panels.png"
+      },
+      "captured_at": "2026-09-30T09:14:19Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "The seven-day study's 23 panels after collection ended (light theme)",
+      "route": "/p/ahrefs-7d/panels",
+      "theme": "light",
+      "data": "real",
+      "case_id": "study-ahrefs-7d-final",
+      "size_px": [
+        2880,
+        1800
+      ],
+      "sha256": {
+        "original": "4529b4605439336ea01196d5ac9cda4d0736e4b068e9283aeded445f7497ce1b",
+        "branded_web": "5ed0cee894a1976470faffc35a29283ac21c5f4996c18f65a54ce21facf51966"
+      },
+      "caption": "The 23-panel ahrefs.com study after collection ended on 30 September 2026: 10 watch, 13 stable, no confirmed change. Watch records volatility above the threshold, not intent drift; the last run's result sets (29 September 22:24–22:40 UTC) are unconfirmed.",
+      "alt": "serp-drift panels table in the light theme: the 23 study panels with status, score, last 12 captures, intent coverage, your site and AI Overview citation."
+    },
+    {
+      "id": "10-detail-data-quality",
+      "original": "originals/08-data-quality.png",
+      "crop": [
+        560,
+        290,
+        2250,
+        1098
+      ],
+      "branded_web": "branded/10-detail-data-quality.webp",
+      "branded_html": "branded/10-detail-data-quality.html",
+      "outside_repository": {
+        "master_png": "masters/10-detail-data-quality@2x.png",
+        "web_png": "web/10-detail-data-quality.png"
+      },
+      "captured_at": "2026-09-30T09:14:10Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "detail crop of 08-data-quality",
+      "route": "/p/ahrefs/panel/domain-rating?tab=evidence",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "data-quality-domain-rating",
+      "size_px": [
+        1200,
+        630
+      ],
+      "sha256": {
+        "original": "0c9f84b54416ff3c665934e271e9ba124914f01b4eb33632d78f3e6f284e718d",
+        "branded_web": "8eb09f7fa7d42e7c0ee879eb2a1f28d1255af0ab6b0e57343042aa7ef5fea4d1"
+      },
+      "caption": "Readable detail for articles: 'domain rating' keeps 15 captures, accepts 9 as evidence and rejects 4 that returned results for another query.",
+      "alt": "Detail of the serp-drift evidence tab for 'domain rating': 15 captures stored, 9 accepted, 4 rejected as results for another query, with the explanation."
+    },
+    {
+      "id": "11-detail-history",
+      "original": "originals/04-history.png",
+      "crop": [
+        560,
+        380,
+        2250,
+        1098
+      ],
+      "branded_web": "branded/11-detail-history.webp",
+      "branded_html": "branded/11-detail-history.html",
+      "outside_repository": {
+        "master_png": "masters/11-detail-history@2x.png",
+        "web_png": "web/11-detail-history.png"
+      },
+      "captured_at": "2026-09-30T09:13:33Z",
+      "app_version": "0.6.0 (UI 0.7, unreleased)",
+      "commit": "5c9469a",
+      "source_view": "detail crop of 04-history",
+      "route": "/p/ahrefs/panel/link-building?tab=history",
+      "theme": "dark",
+      "data": "real",
+      "case_id": "case-watch-link-building",
+      "size_px": [
+        1200,
+        630
+      ],
+      "sha256": {
+        "original": "c79ebb4250a7b02974d8e2a03a72f9b6f5f9d09f1d8d6998c33f063104caa3a5",
+        "branded_web": "1c3b638551ed06e28ba83a96c439a375a1e8be317de1932ed7d21e640474ffee"
+      },
+      "caption": "Readable detail for articles: the last two captures of 'link building' score above the watch threshold (41 and 36) as new URLs enter the top ten and ahrefs.com's glossary page moves from #5 to #3.",
+      "alt": "Detail of the serp-drift history tab: score bars above the threshold on 28 and 29 September and URL trajectories with entered URLs and the ahrefs.com glossary page marked as your site."
+    }
+  ]
+}

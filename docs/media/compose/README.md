@@ -13,14 +13,14 @@ compose/
 
 ## Capture
 
-`capture.py` loads app views from a running `serp-drift serve` through the same headless DevTools pipe, waits until data has rendered, and writes 2880x1800 PNGs. It only issues GET requests. Pick views that show no workspace paths (Settings and Connect agent do).
+`capture.py` loads app views from a running `serp-drift serve` through the same headless DevTools pipe, waits until the loading skeleton is gone and the page has stopped changing, and writes 2880x1800 PNGs. It only issues GET requests. Pick views that show no workspace paths (Settings and the agent connection page do).
 
 ```sh
 cd docs/media/compose
-python3 capture.py --out ../v0.6/originals '03-panel-watch=/p/serp-intent-drift/panel/best-crm-software' '09-example-dashboard-dark=/p/ahrefs/dashboard@dark'
+python3 capture.py --out ../v0.7/originals '03-panel-summary=/p/ahrefs/panel/link-building@dark' '09-study-panels=/p/ahrefs-7d/panels'
 ```
 
-The exact views and capture times of the 0.6 set are in `docs/media/v0.6/manifest.json`.
+Views default to the light theme; add `@dark` for the dark one. Panel tabs are hash parameters, for example `/p/ahrefs/panel/link-building?tab=history@dark`. The exact views, crops and capture times of the 0.7 set are in `docs/media/v0.7/manifest.json`.
 
 ## Usage
 
@@ -28,13 +28,13 @@ Requirements: macOS `sips`, `cwebp` (`brew install webp`) and Brave. Chrome, Chr
 
 ```sh
 # 1600x1000 image (light background)
-python3 docs/media/compose/compose.py docs/media/v0.6/originals/03-panel-watch.png --out-dir docs/media/v0.6/branded --name 03-panel-watch
+python3 docs/media/compose/compose.py docs/media/v0.7/originals/09-study-panels.png --out-dir docs/media/v0.7/branded --name 09-study-panels
 
 # dark-theme capture on the Ink background
-python3 docs/media/compose/compose.py docs/media/v0.6/originals/09-example-dashboard-dark.png --out-dir docs/media/v0.6/branded --theme dark
+python3 docs/media/compose/compose.py docs/media/v0.7/originals/03-panel-summary.png --out-dir docs/media/v0.7/branded --theme dark
 
 # 1200x630 cover built from a readable crop: --focus x,y,w,h in source pixels
-python3 docs/media/compose/compose.py docs/media/v0.6/originals/03-panel-watch.png --out-dir docs/media/v0.6/branded --name 00 --cover --focus 530,356,2270,1107
+python3 docs/media/compose/compose.py docs/media/v0.7/originals/03-panel-summary.png --out-dir docs/media/v0.7/branded --name 00 --cover --focus 540,300,2298,1121 --theme dark
 
 # screenshot of fixture data: adds a corner label outside the screenshot
 python3 docs/media/compose/compose.py capture.png --out-dir OUT --label "Synthetic data"
