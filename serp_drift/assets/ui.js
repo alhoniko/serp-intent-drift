@@ -115,7 +115,7 @@ window.SerpUI = (() => {
   }
 
   // --- your site, reasons, next capture -------------------------------------------------------------------------------
-  // A server before 0.7 returns no per-capture site position: take the current one from q.site and infer nothing from the history.
+  // A 0.6 server returns no per-capture site position: take the current one from q.site and infer nothing from the history.
   const hasTrack = (q) => (q?.timeline || []).some((p) => 'site_position' in p);
   function siteTrack(q) {
     const pts = (q?.timeline || []).filter((p) => capKind(p) !== 'x');
@@ -151,7 +151,7 @@ window.SerpUI = (() => {
     if (!parts.length) parts.push(q.decision?.title || word(q));
     return cap(parts.join(' · '));
   }
-  function nextCapture(q) { const at = q?.last_attempt?.attempted_at || q?.latest?.captured_at; return at ? addHours(at, q?.settings?.interval_hours ?? 24) : null; }
+  function nextCapture(q) { if (q?.collection_ended) return null; const at = q?.last_attempt?.attempted_at || q?.latest?.captured_at; return at ? addHours(at, q?.settings?.interval_hours ?? 24) : null; }
   function verdictText(q) {
     const out = []; const cmp = q.comparison; const s = siteTrack(q); const lat = q.latest || {};
     if (cmp) { const ent = (cmp.entered || []).length; const ex = (cmp.exited || []).length; const tu = cmp.components?.url_turnover; if (tu != null && tu >= 0.99 && ent) out.push(`All ${ent} results in the latest capture are new since the baseline; ${ex} left.`); else if (ent || ex) out.push(`${ent} ${ent === 1 ? 'result' : 'results'} entered and ${ex} left since the baseline.`); }

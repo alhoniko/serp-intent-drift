@@ -1,6 +1,6 @@
 # Media kit
 
-Screenshots of the serp-drift **0.7** interface (the triage redesign, on `main` before its release; the app still reports version 0.6.0), captured on 30 September 2026 (UTC) from the author's local app with live workspace data. They are illustrative views as of that time, not live statistics. Every image is real data; none is synthetic. Per-image details (capture time, commit, route, theme, case, caption, alt text, checksums) are in [`v0.7/manifest.json`](v0.7/manifest.json).
+Screenshots of the serp-drift **1.0** interface (the triage redesign; captured just before the version number changed, so the sidebar still reads 0.6), captured on 30 September 2026 (UTC) from the author's local app with live workspace data. They are illustrative views as of that time, not live statistics. Every image is real data; none is synthetic. Per-image details (capture time, commit, route, theme, case, caption, alt text, checksums) are in [`v0.7/manifest.json`](v0.7/manifest.json).
 
 | Image | What it shows |
 | --- | --- |

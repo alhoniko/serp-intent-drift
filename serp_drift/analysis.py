@@ -87,7 +87,7 @@ def mismatch(snapshot: dict, page: dict | None = None) -> bool:
 
 
 def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetime | None = None, last_attempt: dict | None = None,
-            baseline_from: str | None = None, site: str | None = None) -> dict:
+            baseline_from: str | None = None, site: str | None = None, ended: bool = False) -> dict:
     """Fixed-baseline analysis. `baseline_from` re-anchors the panel: captures before it stay in history but leave this analysis."""
     now = now or datetime.now(UTC)
     all_snapshots = snapshots
@@ -194,7 +194,7 @@ def analyze(target: dict, snapshots: list[dict], settings: dict, *, now: datetim
     if latest.get("quality", {}).get("state") in INVALID_STATES:
         result["status"] = "data_quality"
         result["reasons"] = latest["quality"].get("reasons", []) or ["This observation is excluded from comparisons."]
-    if latest["source"] != "synthetic" and (now - parse_time(latest["captured_at"])).total_seconds() > interval * 1.75:
+    if not ended and latest["source"] != "synthetic" and (now - parse_time(latest["captured_at"])).total_seconds() > interval * 1.75:
         result["status"] = "stale"
         # An old comparison says nothing current; keep only what explains the gap.
         result["reasons"] = [reason for reason in result["reasons"] if "different query" in reason]

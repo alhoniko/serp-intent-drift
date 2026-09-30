@@ -37,7 +37,7 @@ Prefer no server at all? Fork the repository, add one secret, and [GitHub Action
 
 ![Evidence view: 4 of 15 captures of the query domain rating returned results for another query; they are kept but never count as evidence](docs/media/v0.7/branded/08-data-quality.webp)
 
-Screenshots show the 0.7 interface with live data captured on 30 September 2026; they are not live statistics. More views, captions and the reproducible capture and composition tools are in [the media kit](docs/media/MEDIA-KIT.md).
+Screenshots show the 1.0 interface with live data captured on 30 September 2026; they are not live statistics. More views, captions and the reproducible capture and composition tools are in [the media kit](docs/media/MEDIA-KIT.md).
 
 ## Run the demo
 
@@ -170,7 +170,7 @@ The change score is a configurable-threshold review priority, **not a probabilit
 
 ## Documentation
 
-[Methodology](docs/methodology.md) · [Human evaluation](docs/evaluation.md) · [0.6 release notes](docs/release-v06.md) · [0.5 upgrade and rollback](docs/release-v05.md) · [SearchApi integration and live observations](docs/searchapi.md) · [Language packs](docs/language-packs.md) · [Notifications](docs/notifications.md) · [Insights and dataset](docs/insights.md) · [MCP](docs/mcp.md) · [Labeling](docs/labeling.md) · [Deployment](docs/deployment.md) · [GitHub Actions](docs/github-actions.md) · [The client on its own](docs/client.md) · [Acceptance testing](docs/acceptance.md) · [Architecture](ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
+[Methodology](docs/methodology.md) · [Compatibility](docs/compatibility.md) · [Human evaluation](docs/evaluation.md) · [0.6 release notes](docs/release-v06.md) · [0.5 upgrade and rollback](docs/release-v05.md) · [SearchApi integration and live observations](docs/searchapi.md) · [Language packs](docs/language-packs.md) · [Notifications](docs/notifications.md) · [Insights and dataset](docs/insights.md) · [MCP](docs/mcp.md) · [Labeling](docs/labeling.md) · [Deployment](docs/deployment.md) · [GitHub Actions](docs/github-actions.md) · [The client on its own](docs/client.md) · [Acceptance testing](docs/acceptance.md) · [Architecture](ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
 
 ## Development
 

@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased · 0.7 · the triage redesign
+## 1.0.0rc1 · 2026-09-30 · release candidate: the triage redesign
+
+Version 0.7 was never released: the redesign below and these fixes make up the 1.0 release candidate. [Compatibility](docs/compatibility.md) lists what 1.x keeps stable.
+
+- **An ended collection is final, not overdue.** When a workspace reaches its request cap or end date, panels keep their last status and say that no new capture will arrive, instead of turning stale after 1.75 intervals. The Inbox shows the end as information rather than a collection problem, and the panel page says *Collection ended* where it showed the next capture.
+- CI also checks the syntax of the app's JavaScript.
 
 - **Inbox replaces the dashboard.** One status sentence, a status bar for every panel, and a queue grouped as Needs a decision, Watching, Collection health, Seen and Settled in the last 24 hours, with a preview of the selected panel beside it. Panels where your site moved or left the top 10 sort first; J/K move and Enter opens. *Mark as seen* acknowledges a watch until the next capture. All projects has a merged inbox.
 - **One panel, one story.** The panel page leads with a verdict and the next capture, then SERP change, intent, page fit and data as four measures, the score by capture (baseline window, threshold, rejected captures), the score as its five contributions, the intent mix and the top 10 against the baseline. Seven tabs become six: Review and Data quality merge into Evidence, an observation ledger with exclusions, decisions and the status trail.

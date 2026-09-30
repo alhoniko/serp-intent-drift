@@ -235,7 +235,7 @@ class ProjectState:
             # Deliberately ended collection is one fact, not one overdue warning per panel.
             used = f"{budget['used']} of {budget['cap']}" if budget["cap"] else str(budget["used"])
             end = f", end {budget['until']}" if budget["until"] else ""
-            items.append({"kind": "config", "panel": None, "title": "Collection ended", "action": "settings",
+            items.append({"kind": "config", "level": "info", "panel": None, "title": "Collection ended", "action": "settings",
                           "why": f"The workspace request cap or end date was reached ({used} requests{end}). Panels show their last observations."})
         for query in report["queries"]:
             latest = query["latest"] or {}
@@ -263,7 +263,9 @@ class ProjectState:
         with Store(self.workspace.database) as store:
             snapshots = store.history(target)
             settings = store.panel_settings(target)
-            analysis = analyze(target, snapshots, config["settings"], last_attempt=store.last_attempt(target), baseline_from=settings.get("baseline_from"), site=site)
+            ended = budget_exhausted(config, store)
+            analysis = analyze(target, snapshots, config["settings"], last_attempt=store.last_attempt(target), baseline_from=settings.get("baseline_from"), site=site, ended=ended)
+            analysis["collection_ended"] = ended
             analysis["reviews"] = store.cases(target)
             analysis["group"] = settings.get("group", "")
             analysis["paused"] = settings.get("paused") == "1"

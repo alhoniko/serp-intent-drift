@@ -368,10 +368,17 @@ class QueryCheckTests(unittest.TestCase):
                 for hours in (0, 24, 48, 72):
                     store.add(target, decay_snapshot(hours), decay_payload())
             query = project.report()['queries'][0]
-            self.assertEqual(query['status'], 'stale')
-            self.assertEqual(query['decision']['title'], 'Collection ended')
+            # The last status stands; an ended collection is final, not overdue.
+            self.assertNotEqual(query['status'], 'stale')
+            self.assertTrue(query['collection_ended'])
+            self.assertIn('Collection ended', ' '.join(query['reasons']))
+            self.assertEqual(query['decision']['next_action'], 'Read the final observations; no new capture will arrive.')
+            panel = project.panel('content-decay')
+            self.assertEqual(panel['analysis']['status'], query['status'])
+            self.assertTrue(panel['analysis']['collection_ended'])
             attention = project.attention()
             self.assertEqual([item['title'] for item in attention if item['kind'] != 'config' or item['title'] == 'Collection ended'], ['Collection ended'])
+            self.assertEqual(next(item for item in attention if item['title'] == 'Collection ended')['level'], 'info')
             self.assertTrue(project.budget()['stopped'])
 
     def test_annotation_sample_is_fixed_and_skips_mismatched_captures(self):

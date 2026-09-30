@@ -14,6 +14,8 @@ jobs:
           python-version: "3.12"
       - run: pip install ruff==0.16.7
       - run: ruff check .
+      - name: Check the app's JavaScript syntax
+        run: for f in serp_drift/assets/*.js; do node --check "$f"; done
   test:
     runs-on: ubuntu-latest
     strategy:

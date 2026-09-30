@@ -1,4 +1,4 @@
-/* serp-drift app · triage redesign (0.7). Hash routes over the JSON API; no build step, no dependencies. */
+/* serp-drift app · triage redesign (1.0). Hash routes over the JSON API; no build step, no dependencies. */
 (() => {
   'use strict';
   const U = window.SerpUI;
@@ -193,7 +193,8 @@
     const byKey = new Map(all.map((e) => [e.key, e]));
     const reviews = bundles.flatMap((b) => b.att.filter((a) => a.kind === 'review' && a.panel).map((a) => ({ ...byKey.get(`${b.pid}:${a.panel}`), att: a }))).filter((e) => e.q);
     const reviewKeys = new Set(reviews.map((e) => e.key));
-    const issues = bundles.flatMap((b) => b.att.filter((a) => a.kind !== 'review').map((a, i) => { const base = a.panel ? byKey.get(`${b.pid}:${a.panel}`) : null; return { ...(base || { pid: b.pid, pname: b.name, events: b.events }), key: a.panel ? `${b.pid}:${a.panel}` : `${b.pid}:!${i}`, att: a, issue: true }; }));
+    const ended = bundles.filter((b) => b.att.some((a) => a.level === 'info'));
+    const issues = bundles.flatMap((b) => b.att.filter((a) => a.kind !== 'review' && a.level !== 'info').map((a, i) => { const base = a.panel ? byKey.get(`${b.pid}:${a.panel}`) : null; return { ...(base || { pid: b.pid, pname: b.name, events: b.events }), key: a.panel ? `${b.pid}:${a.panel}` : `${b.pid}:!${i}`, att: a, issue: true }; }));
     const watching = all.filter((e) => e.q.status === 'watch' && !reviewKeys.has(e.key)).sort((a, b) => siteHit(b.q) - siteHit(a.q) || (b.q.score || 0) - (a.q.score || 0));
     const unseen = watching.filter((e) => !seen(e.q)); const seenList = watching.filter((e) => seen(e.q));
     const since = Date.now() - 86400000;
@@ -211,7 +212,7 @@
       : `All quiet${across || ` across ${plural(total, 'panel')}`}.`;
     const building = all.filter((e) => U.BUILDING.includes(e.q.status));
     const firstScore = building.map((e) => U.addHours(e.q.latest?.captured_at, ((e.q.settings?.baseline_size ?? 3) - (e.q.baseline?.length ?? 0) + 1) * (e.q.settings?.interval_hours ?? 24))).filter(Boolean).sort()[0];
-    const explainer = [capturedToday === total ? `All ${plural(total, 'panel')} were captured today.` : `${capturedToday} of ${plural(total, 'panel')} were captured today.`, nIssue ? `${plural(nIssue, 'collection issue')} ${nIssue === 1 ? 'needs' : 'need'} a fix.` : '', building.length ? `${plural(building.length, 'panel')} still ${building.length === 1 ? 'builds its' : 'build their'} baseline${firstScore ? `; first scores around ${D(firstScore)}` : ''}.` : '', nWatch && !nReview ? 'A watch becomes a review only when two spaced captures agree on an intent or page-fit change, so a reshuffled top 10 alone never asks you to rewrite a page.' : ''].filter(Boolean).join(' ');
+    const explainer = [capturedToday === total ? `All ${plural(total, 'panel')} were captured today.` : `${capturedToday} of ${plural(total, 'panel')} were captured today.`, ended.length ? (portfolio ? `${ended.map((b) => b.name).join(', ')} ${ended.length === 1 ? 'has' : 'have'} ended collection.` : 'Collection has ended; panels show their final observations.') : '', nIssue ? `${plural(nIssue, 'collection issue')} ${nIssue === 1 ? 'needs' : 'need'} a fix.` : '', building.length ? `${plural(building.length, 'panel')} still ${building.length === 1 ? 'builds its' : 'build their'} baseline${firstScore ? `; first scores around ${D(firstScore)}` : ''}.` : '', nWatch && !nReview ? 'A watch becomes a review only when two spaced captures agree on an intent or page-fit change, so a reshuffled top 10 alone never asks you to rewrite a page.' : ''].filter(Boolean).join(' ');
     const seg = [['review', count('review'), 'Review'], ['watch', count('watch'), 'Watch'], ['stable', count('stable'), 'Stable'], ['building', count('building'), 'Building'], ['issues', count('issue'), 'Collection issues']];
     const rep0 = bundles[0].rep; const last = all.map((e) => e.q.latest?.captured_at).filter(Boolean).sort().pop();
     const meta = portfolio ? `${plural(pids.length, 'project')} · ${plural(total, 'panel')}${last ? ` · last capture ${T(last)} UTC` : ''}` : `${U.marketText(rep0.search, engines())} · ${plural(total, 'panel')}${last ? ` · last capture ${T(last)} UTC, ${ago(last)}` : ''}`;
