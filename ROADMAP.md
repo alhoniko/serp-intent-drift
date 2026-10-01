@@ -54,8 +54,16 @@ staying dependency-free. Items are ordered; each lands as one verified commit.
 - [x] Optional retry of rejected responses without spending an Overview expansion
 - [x] Workspace request cap and collection end date for bounded studies
 - [x] Deterministic human-review samples
-- [ ] Seven-day prospective study on ahrefs.com (running 22–30 September 2026) and its evidence report
+- [x] Seven-day prospective study on ahrefs.com (22–29 September 2026): 15 of 15 runs, 13 stable, 10 watch, no confirmed intent shift
 - [ ] Human annotation of the pilot sample; publish measured numbers only after it returns
+
+## 6. Triage redesign (1.0.0)
+- [x] Inbox with a decision queue, watched panels (your site first), collection health and a preview
+- [x] Panel page that leads with a verdict and four separate measures; Review and Data quality merged into Evidence
+- [x] Log, sectioned Settings with a threshold preview, Add keywords, ⌘K, dark/light/system themes, a product mark
+- [x] Ended collections keep their final statuses; a [compatibility promise](docs/compatibility.md) for 1.x
+- [ ] Guard against run-wide result swaps that pass the query-term check
+- [ ] Automated browser tests for the interface; upgrade tests on databases from 0.4–0.6
 
 ## Next
 - Publish the first real dataset after thirty days of collection and write the benchmark piece on it

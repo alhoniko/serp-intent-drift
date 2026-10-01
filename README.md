@@ -8,7 +8,7 @@ Track when a search results page changes enough to deserve a content review. Goo
 
 [![Check](https://github.com/alhoniko/serp-intent-drift/actions/workflows/check.yml/badge.svg)](https://github.com/alhoniko/serp-intent-drift/actions/workflows/check.yml) ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue) ![License MIT](https://img.shields.io/badge/license-MIT-black)
 
-**0.6.0 beta (release candidate):** detects captures whose results do not match the query and keeps them out of the evidence, retries them, and bounds collection by a request cap and an end date. Built on 0.5's evidence quality, separate intent/page-fit decisions and review workflow. Classification accuracy has not yet been independently measured. See [the 0.6 release notes](docs/release-v06.md).
+**1.0.0:** a triage Inbox, one page per panel that leads with its verdict and evidence, and a [compatibility promise](docs/compatibility.md) for commands, config, storage, exports, the JSON API and the MCP tools. Captures whose results do not match the query stay out of the evidence, and collection can be bounded by a request cap and an end date. Intent accuracy has not yet been independently measured; the [changelog](CHANGELOG.md) lists the known limits.
 
 ## Quickstart
 
@@ -172,7 +172,7 @@ The change score is a configurable-threshold review priority, **not a probabilit
 
 ## Documentation
 
-[Methodology](docs/methodology.md) · [Compatibility](docs/compatibility.md) · [Human evaluation](docs/evaluation.md) · [0.6 release notes](docs/release-v06.md) · [0.5 upgrade and rollback](docs/release-v05.md) · [SearchApi integration and live observations](docs/searchapi.md) · [Language packs](docs/language-packs.md) · [Notifications](docs/notifications.md) · [Insights and dataset](docs/insights.md) · [MCP](docs/mcp.md) · [Labeling](docs/labeling.md) · [Deployment](docs/deployment.md) · [GitHub Actions](docs/github-actions.md) · [The client on its own](docs/client.md) · [Acceptance testing](docs/acceptance.md) · [Architecture](ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
+[Changelog](CHANGELOG.md) · [Methodology](docs/methodology.md) · [Compatibility](docs/compatibility.md) · [Human evaluation](docs/evaluation.md) · [0.6 release notes](docs/release-v06.md) · [0.5 upgrade and rollback](docs/release-v05.md) · [SearchApi integration and live observations](docs/searchapi.md) · [Language packs](docs/language-packs.md) · [Notifications](docs/notifications.md) · [Insights and dataset](docs/insights.md) · [MCP](docs/mcp.md) · [Labeling](docs/labeling.md) · [Deployment](docs/deployment.md) · [GitHub Actions](docs/github-actions.md) · [The client on its own](docs/client.md) · [Acceptance testing](docs/acceptance.md) · [Architecture](ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
 
 ## Development
 

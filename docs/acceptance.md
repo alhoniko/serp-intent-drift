@@ -1,6 +1,6 @@
 # Acceptance testing and release gate
 
-For 0.6.0, start with [the release notes and verification record](release-v06.md) and the [human benchmark](evaluation.md). Automated checks verify software behavior; they do not measure intent accuracy. The following tests require the operator's credentials, judgment, or publication environment. They are intentionally not marked as passed by synthetic tests.
+For 1.0.0, start with [the changelog](../CHANGELOG.md), whose known limits apply, and the [human benchmark](evaluation.md); the 0.6 [release notes and verification record](release-v06.md) still describe how collection checks were verified. Automated checks verify software behavior; they do not measure intent accuracy. The following tests require the operator's credentials, judgment, or publication environment. They are intentionally not marked as passed by synthetic tests.
 
 ## Offline verification
 
